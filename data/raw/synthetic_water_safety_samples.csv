@@ -1,0 +1,13 @@
+# AQUORA AI — Synthetic Benchmark Dataset for ML Development
+# NOTICE: All data below is synthetic/simulated for hackathon prototype testing. Real incidents are not fabricated.
+sample_id,site_type,water_temp_c,flow_rate_cms,depth_meters,rainfall_last_24h_mm,wind_speed_kmh,visibility_meters,risk_score,risk_label,data_origin
+1,lake,22.5,0.5,3.0,0.0,8.0,6000.0,15.0,low,synthetic_hackathon_benchmark
+2,lake,21.0,0.8,4.5,5.0,12.0,5000.0,20.0,low,synthetic_hackathon_benchmark
+3,river,14.5,5.5,2.5,20.0,22.0,3000.0,48.0,moderate,synthetic_hackathon_benchmark
+4,river,11.5,9.2,3.8,48.0,34.0,1400.0,78.0,high,synthetic_hackathon_benchmark
+5,coastal,16.0,3.2,6.5,8.0,28.0,4000.0,45.0,moderate,synthetic_hackathon_benchmark
+6,coastal,9.0,8.0,9.0,35.0,52.0,900.0,85.0,extreme,synthetic_hackathon_benchmark
+7,reservoir,19.0,0.4,12.0,2.0,10.0,5500.0,18.0,low,synthetic_hackathon_benchmark
+8,river,7.5,14.0,4.2,65.0,45.0,700.0,92.0,extreme,synthetic_hackathon_benchmark
+9,lake,8.0,1.2,5.0,15.0,18.0,3200.0,55.0,moderate,synthetic_hackathon_benchmark
+10,river,18.0,2.1,1.8,0.0,9.0,5800.0,16.0,low,synthetic_hackathon_benchmark
