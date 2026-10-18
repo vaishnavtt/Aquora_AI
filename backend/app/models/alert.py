@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from backend.app.db.session import Base
+from app.db.session import Base
 
 class AlertModel(Base):
     __tablename__ = "alerts"

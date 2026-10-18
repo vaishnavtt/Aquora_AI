@@ -6,6 +6,8 @@ import { MapSection } from './components/MapSection';
 import { LocationDetailsPanel } from './components/LocationDetailsPanel';
 import { WhatIfSimulationPanel } from './components/WhatIfSimulationPanel';
 import { RiskTrendChart } from './components/RiskTrendChart';
+import { WaterLevelForecastingPanel } from './components/WaterLevelForecastingPanel';
+import { DashboardOverview } from './components/DashboardOverview';
 import { LoadingSkeleton, EmptyState, ErrorBanner } from './components/States';
 import { api, DEMO_WATER_BODIES, DEMO_RISK_CHANGES } from './services/api';
 import { HealthResponse, WaterBody, RiskChangeEvent, DashboardResponse } from './types';
@@ -14,6 +16,7 @@ import { Waves, Droplets, Compass, ShieldAlert, Sliders, ExternalLink } from 'lu
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [waterBodies, setWaterBodies] = useState<WaterBody[]>(DEMO_WATER_BODIES);
   const [riskChanges, setRiskChanges] = useState<RiskChangeEvent[]>(DEMO_RISK_CHANGES);
   const [selectedStation, setSelectedStation] = useState<WaterBody | null>(DEMO_WATER_BODIES[1]); // Default to Cascade Canyon River
@@ -26,11 +29,13 @@ export function App() {
     setLoading(true);
     setError(null);
     try {
-      const [healthData, stationsData] = await Promise.all([
+      const [healthData, stationsData, dashData] = await Promise.all([
         api.getHealth(),
         api.getWaterBodies(),
+        api.getDashboard(),
       ]);
       setHealth(healthData);
+      setDashboard(dashData);
       if (stationsData && stationsData.length > 0) {
         setWaterBodies(stationsData);
         setSelectedStation(stationsData[0]);
@@ -133,7 +138,23 @@ export function App() {
                 </div>
               )}
 
-              {/* TAB 2: GEOSPATIAL MAP */}
+              {/* TAB 2: AUTHORITY DASHBOARD & OUTBOUND ALERTS */}
+              {activeTab === 'authority' && (
+                <div className="space-y-6">
+                  <DashboardOverview
+                    dashboard={dashboard}
+                    waterBodies={waterBodies}
+                    loading={loading}
+                    onSelectWaterBody={(wb) => {
+                      setSelectedStation(wb);
+                      setActiveTab('simulator');
+                    }}
+                    onNavigateToPredict={() => setActiveTab('simulator')}
+                  />
+                </div>
+              )}
+
+              {/* TAB 3: GEOSPATIAL MAP */}
               {activeTab === 'map' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   <div className="lg:col-span-8">
@@ -252,6 +273,13 @@ export function App() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* TAB 6: EXPERIMENTAL WATER LEVEL FORECASTING */}
+              {activeTab === 'forecasting' && (
+                <div className="space-y-6">
+                  <WaterLevelForecastingPanel />
                 </div>
               )}
             </>

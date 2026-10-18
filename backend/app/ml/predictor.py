@@ -9,7 +9,7 @@ can be persisted and loaded here directly.
 
 from typing import Tuple, List, Optional
 import os
-from backend.app.schemas.prediction import PredictRequest, PredictResponse
+from app.schemas.prediction import PredictRequest, PredictResponse
 
 class AquaticRiskPredictor:
     def __init__(self):

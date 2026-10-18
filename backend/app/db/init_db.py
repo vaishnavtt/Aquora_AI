@@ -8,15 +8,16 @@ import sys
 
 # Ensure root directory is on sys.path if run directly
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+backend_dir = os.path.dirname(os.path.dirname(current_dir))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from backend.app.db.session import engine, Base, SessionLocal
-from backend.app.models.water_body import WaterBodyModel
-from backend.app.models.alert import AlertModel
+from app.db.session import engine, Base, SessionLocal
+from app.models.water_body import WaterBodyModel
+from app.models.alert import AlertModel
+from app.models.alert_delivery import AlertDeliveryModel
 
 def init_database():
     # Create all tables in SQLite

@@ -30,4 +30,22 @@ class Settings(BaseModel):
     # Optional Gemini API Key
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY", None)
 
+    # Outbound Alert & Notification Dispatch Settings
+    # Safe test mode: when True, simulates delivery without contacting external network
+    ALERT_TEST_MODE: bool = os.getenv("ALERT_TEST_MODE", "false").lower() in ("true", "1", "yes")
+    ALERT_WEBHOOK_URL: str | None = os.getenv("ALERT_WEBHOOK_URL", None)
+    ALERT_WEBHOOK_AUTH_TOKEN: str | None = os.getenv("ALERT_WEBHOOK_AUTH_TOKEN", None)
+    SMTP_HOST: str | None = os.getenv("SMTP_HOST", None)
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str | None = os.getenv("SMTP_USERNAME", None)
+    SMTP_PASSWORD: str | None = os.getenv("SMTP_PASSWORD", None)
+    ALERT_FROM_EMAIL: str = os.getenv("ALERT_FROM_EMAIL", "alerts@aquora.local")
+    ALERT_TO_EMAIL: str | None = os.getenv("ALERT_TO_EMAIL", None)
+
+    # Official River Telemetry API Configuration
+    NWIC_API_KEY: str | None = os.getenv("NWIC_API_KEY", None)
+    NWIC_API_BASE_URL: str = os.getenv("NWIC_API_BASE_URL", "https://nwdp.gov.in/api/v1")
+    USGS_API_BASE_URL: str = os.getenv("USGS_API_BASE_URL", "https://waterservices.usgs.gov/nwis/iv/")
+    USGS_DEFAULT_SITE: str = os.getenv("USGS_DEFAULT_SITE", "11164500")
+
 settings = Settings()

@@ -9,9 +9,10 @@ import {
   Info,
   ChevronRight,
   Sparkles,
+  Waves,
 } from 'lucide-react';
 
-export type NavTab = 'overview' | 'map' | 'simulator' | 'trends' | 'stations';
+export type NavTab = 'overview' | 'authority' | 'map' | 'simulator' | 'trends' | 'stations' | 'forecasting';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -32,17 +33,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       desc: 'Metrics & Hazard Feeds',
     },
     {
+      id: 'authority' as NavTab,
+      label: 'Authority Dashboard',
+      icon: ShieldAlert,
+      badge: highRiskCount > 0 ? `${highRiskCount} Active` : undefined,
+      badgeColor: 'rose',
+      desc: 'Surveillance & Outbound Dispatch',
+    },
+    {
       id: 'map' as NavTab,
       label: 'Geospatial Map',
       icon: MapPin,
-      badge: 'Google Maps Ready',
+      badge: 'OpenStreetMap',
       desc: 'Interactive Stations',
     },
     {
       id: 'simulator' as NavTab,
       label: 'What-If Simulation',
       icon: Sliders,
-      badge: 'AI Powered',
+      badge: 'Interactive',
       desc: 'Rainfall & Surge Lab',
     },
     {
@@ -55,9 +64,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'stations' as NavTab,
       label: 'Telemetry Stations',
       icon: Droplets,
-      badge: highRiskCount > 0 ? `${highRiskCount} Alerts` : undefined,
-      badgeColor: 'rose',
       desc: 'Full Directory',
+    },
+    {
+      id: 'forecasting' as NavTab,
+      label: 'Water Level Forecast',
+      icon: Waves,
+      badge: 'Ridge ML (Kerala)',
+      badgeColor: 'cyan',
+      desc: 'Ramamangalam Bridge 1h Ahead',
     },
   ];
 
