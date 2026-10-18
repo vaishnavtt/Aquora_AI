@@ -17,4 +17,4 @@ if __name__ == "__main__":
     
     print(f"🌊 Starting AQUORA AI Backend Server at http://{host}:{port}")
     print(f"📖 Swagger Docs available at http://{host}:{port}/docs")
-    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload)
+    uvicorn.run("app.main:app", host=host, port=port, reload=reload)

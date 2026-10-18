@@ -13,8 +13,13 @@ This module provides:
 import os
 import logging
 from typing import List, Optional
-from backend.app.schemas.prediction import PredictRequest, PredictResponse
-from backend.app.ml.base import BaseRiskPredictor
+
+try:
+    from app.schemas.prediction import PredictRequest, PredictResponse
+    from app.ml.base import BaseRiskPredictor
+except ImportError:
+    from backend.app.schemas.prediction import PredictRequest, PredictResponse
+    from backend.app.ml.base import BaseRiskPredictor
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +163,10 @@ class BaselineHeuristicPredictor(BaseRiskPredictor):
             return response.text.strip()
         except Exception:
             return f"AI Advisory: {level.capitalize()} hazard score ({score}/100). Caution is recommended due to {', '.join(hazards[:2])}."
+
+
+# Backward compatibility alias
+AquaticRiskPredictor = BaselineHeuristicPredictor
 
 
 class PredictionService:

@@ -1,7 +1,8 @@
 """
 AQUORA AI - RESTful API v1 Routes
 Endpoints for system health telemetry, water body directory exploration,
-hydrodynamic risk prediction inference, and executive dashboard metrics.
+hydrodynamic risk prediction inference, executive dashboard metrics,
+river level forecasting, and outbound alert delivery.
 """
 
 from datetime import datetime, timezone
@@ -9,22 +10,69 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
 from sqlalchemy.orm import Session
 
-from backend.app.core.config import settings
-from backend.app.db.session import get_db
-from backend.app.models.water_body import WaterBodyModel
-from backend.app.models.alert import AlertModel
-from backend.app.schemas.common import (
-    RiskLevelEnum,
-    WaterBodyTypeEnum,
-    ErrorResponse,
-)
-from backend.app.schemas.health import HealthResponse
-from backend.app.schemas.water_body import WaterBodySchema
-from backend.app.schemas.prediction import PredictRequest, PredictResponse
-from backend.app.schemas.dashboard import DashboardResponse, DashboardAlertSchema
-from backend.app.ml.predictor import PredictionService, get_prediction_service
+try:
+    from app.core.config import settings
+    from app.db.session import get_db
+    from app.models.water_body import WaterBodyModel
+    from app.models.alert import AlertModel
+    from app.schemas.common import (
+        RiskLevelEnum,
+        WaterBodyTypeEnum,
+        ErrorResponse,
+    )
+    from app.schemas.health import HealthResponse
+    from app.schemas.water_body import WaterBodySchema
+    from app.schemas.prediction import PredictRequest, PredictResponse
+    from app.schemas.dashboard import DashboardResponse, DashboardAlertSchema
+    from app.schemas.forecast import WaterLevelForecastRequest, WaterLevelForecastResponse
+    from app.schemas.river_data import RiverDataResponse
+    from app.schemas.alert import (
+        AlertDispatchRequest,
+        AlertTestRequest,
+        AlertDispatchResponse,
+        AlertDeliverySchema,
+        AlertChannelStatusResponse,
+    )
+    from app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
+    from app.ml.water_level_forecaster import WaterLevelForecaster
+    from app.services.river_data_service import river_data_service
+    from app.services.alert_service import alert_service
+except ImportError:
+    from backend.app.core.config import settings
+    from backend.app.db.session import get_db
+    from backend.app.models.water_body import WaterBodyModel
+    from backend.app.models.alert import AlertModel
+    from backend.app.schemas.common import (
+        RiskLevelEnum,
+        WaterBodyTypeEnum,
+        ErrorResponse,
+    )
+    from backend.app.schemas.health import HealthResponse
+    from backend.app.schemas.water_body import WaterBodySchema
+    from backend.app.schemas.prediction import PredictRequest, PredictResponse
+    from backend.app.schemas.dashboard import DashboardResponse, DashboardAlertSchema
+    from backend.app.schemas.forecast import WaterLevelForecastRequest, WaterLevelForecastResponse
+    from backend.app.schemas.river_data import RiverDataResponse
+    from backend.app.schemas.alert import (
+        AlertDispatchRequest,
+        AlertTestRequest,
+        AlertDispatchResponse,
+        AlertDeliverySchema,
+        AlertChannelStatusResponse,
+    )
+    from backend.app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
+    from backend.app.ml.water_level_forecaster import WaterLevelForecaster
+    from backend.app.services.river_data_service import river_data_service
+    from backend.app.services.alert_service import alert_service
 
 router = APIRouter()
+
+# Instantiate forecasting pipeline singleton
+try:
+    water_level_forecaster = WaterLevelForecaster()
+except Exception:
+    water_level_forecaster = None
+
 
 @router.get(
     "/health",
@@ -155,6 +203,45 @@ def predict_hazard_risk(
     return predictor.predict(req)
 
 
+@router.post(
+    "/forecast/water-level",
+    response_model=WaterLevelForecastResponse,
+    tags=["Forecasting"],
+    summary="Forecast River Water Level",
+    description="Experimental one-hour-ahead river water level forecasting for calibrated monitoring stations."
+)
+def forecast_river_water_level(req: WaterLevelForecastRequest):
+    """
+    Experimental one-hour-ahead river water level forecasting for RAMAMANGALAM BRIDGE.
+    Requires at least 13 consecutive hourly telemetry readings in chronological order.
+    Notice: This is an experimental river stage forecast for prototype research,
+    NOT a validated drowning-risk prediction or public flood warning.
+    """
+    if req.station_name.strip().upper() != "RAMAMANGALAM BRIDGE":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Water-level forecasting is currently calibrated exclusively for 'RAMAMANGALAM BRIDGE'; received '{req.station_name}'."
+        )
+
+    if water_level_forecaster is None or not water_level_forecaster.is_loaded:
+        raise HTTPException(
+            status_code=503,
+            detail="Water level forecasting model artifact is not loaded on this server."
+        )
+
+    try:
+        raw_readings = [
+            {"timestamp": r.timestamp, "water_level_m": r.water_level_m}
+            for r in req.readings
+        ]
+        result = water_level_forecaster.predict_from_timestamped_readings(raw_readings)
+        return WaterLevelForecastResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Forecasting error: {str(e)}")
+
+
 @router.get(
     "/dashboard",
     response_model=DashboardResponse,
@@ -189,3 +276,59 @@ def get_dashboard(db: Session = Depends(get_db)):
         last_sync=datetime.now(timezone.utc),
         recent_alerts=[DashboardAlertSchema.model_validate(a) for a in recent_alerts]
     )
+
+
+@router.get("/river-data/{station_name}", response_model=RiverDataResponse, tags=["River Telemetry"])
+def get_river_data(
+    station_name: str,
+    mode: Optional[str] = Query("auto", description="Data retrieval mode: 'auto', 'live', or 'historical'")
+):
+    """
+    Returns the latest river water-level telemetry observation for a station.
+    Accurately indicates whether data is LIVE, CACHED, HISTORICAL, or UNAVAILABLE,
+    and provides verified historical reference data without fabricating live streams.
+    """
+    return river_data_service.get_river_data(station_name, mode=mode)
+
+
+@router.post("/alerts/dispatch", response_model=AlertDispatchResponse, tags=["Alerts"])
+def dispatch_alert(req: AlertDispatchRequest, db: Session = Depends(get_db)):
+    """
+    Dispatches an outbound emergency water safety alert via a real external delivery channel
+    (Webhook/HTTP Gateway or SMTP Email).
+    Features:
+    - Safe test mode execution (set test_mode=True to validate and simulate without external network side-effects).
+    - Upstream provider confirmation: strictly does NOT claim delivery unless confirmed by the upstream service.
+    - Persistent delivery audit logging into database.
+    """
+    return alert_service.dispatch_alert(req, db)
+
+
+@router.post("/alerts/test", response_model=AlertDispatchResponse, tags=["Alerts"])
+def send_test_alert(req: AlertTestRequest, db: Session = Depends(get_db)):
+    """
+    Dispatches an explicitly authorized test notification.
+    Includes safe test mode simulation by default.
+    Clearly identifies messages with test prefixes to prevent accidental alarm.
+    """
+    return alert_service.dispatch_test_notification(req, db)
+
+
+@router.get("/alerts/deliveries", response_model=List[AlertDeliverySchema], tags=["Alerts"])
+def get_alert_deliveries(
+    limit: int = Query(20, ge=1, le=100, description="Max delivery records to retrieve"),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns recent outbound alert delivery audit logs and their upstream provider confirmation statuses.
+    """
+    records = alert_service.get_recent_deliveries(db, limit=limit)
+    return [AlertDeliverySchema.model_validate(r) for r in records]
+
+
+@router.get("/alerts/status", response_model=AlertChannelStatusResponse, tags=["Alerts"])
+def get_alert_channel_status():
+    """
+    Returns the configuration and readiness status of outbound alert channels.
+    """
+    return alert_service.get_channel_status()

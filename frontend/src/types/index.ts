@@ -67,6 +67,58 @@ export interface DashboardResponse {
   recent_alerts: DashboardAlert[];
 }
 
+// Experimental River Water-Level Forecasting Types
+export interface HourlyReading {
+  timestamp: string;
+  water_level_m: number;
+}
+
+export interface WaterLevelForecastRequest {
+  station_name: string;
+  readings: HourlyReading[];
+}
+
+export interface WaterLevelForecastResponse {
+  station: string;
+  district: string;
+  forecast_horizon: string;
+  latest_observation_timestamp: string;
+  forecast_target_timestamp: string;
+  current_water_level_m: number;
+  persistence_baseline_m: number;
+  predicted_delta_m: number;
+  forecasted_water_level_m: number;
+  rate_of_change_trend: 'rising' | 'falling' | 'steady';
+  model_type: string;
+  is_experimental: boolean;
+  notice: string;
+}
+
+// Government River Telemetry Types
+export interface LatestHistoricalReading {
+  timestamp: string;
+  water_level_m: number;
+  description: string;
+}
+
+export type RiverDataStatus = 'LIVE' | 'CACHED' | 'HISTORICAL' | 'UNAVAILABLE';
+
+export interface RiverDataResponse {
+  station_name: string;
+  district: string;
+  status: RiverDataStatus;
+  water_level_m?: number | null;
+  flow_rate_cms?: number | null;
+  observation_timestamp?: string | null;
+  is_live: boolean;
+  is_cached: boolean;
+  data_source: string;
+  data_freshness: string;
+  notice: string;
+  access_requirements?: string | null;
+  latest_historical_reading?: LatestHistoricalReading | null;
+}
+
 // UI-Specific Demonstration & Visualization Types
 export interface RiskChangeEvent {
   id: string;
@@ -88,4 +140,69 @@ export interface TrendDataPoint {
   flowRate: number;
   rainfall: number;
   isForecast?: boolean;
+}
+
+// Outbound Alert Dispatch & Emergency Notification Types
+export type AlertDeliveryStatus =
+  | 'DELIVERED'
+  | 'ACCEPTED'
+  | 'FAILED'
+  | 'TEST_MODE_SIMULATED'
+  | 'UNCONFIGURED'
+  | 'DUPLICATE_SUPPRESSED';
+
+export interface AlertDispatchRequest {
+  water_body_id?: number | null;
+  water_body_name: string;
+  severity: string;
+  message: string;
+  channel: 'webhook' | 'email';
+  recipient?: string | null;
+  test_mode?: boolean;
+  force?: boolean;
+}
+
+export interface AlertTestRequest {
+  channel: 'webhook' | 'email';
+  recipient?: string | null;
+  water_body_name?: string;
+  safe_simulation_only?: boolean;
+}
+
+export interface AlertDispatchResponse {
+  delivery_id: string;
+  channel: string;
+  recipient: string;
+  severity: string;
+  status: AlertDeliveryStatus;
+  confirmed_by_provider: boolean;
+  provider_message: string;
+  dispatched_at: string;
+  test_mode: boolean;
+  notice: string;
+}
+
+export interface AlertDelivery {
+  id: string;
+  alert_id?: number | null;
+  water_body_id?: number | null;
+  water_body_name: string;
+  severity: string;
+  channel: string;
+  recipient: string;
+  message: string;
+  status: AlertDeliveryStatus;
+  confirmed_by_provider: boolean;
+  provider_message: string;
+  is_test_mode: boolean;
+  created_at: string;
+}
+
+export interface AlertChannelStatus {
+  webhook_configured: boolean;
+  email_configured: boolean;
+  default_webhook_url?: string | null;
+  default_email_recipient?: string | null;
+  test_mode_enforced: boolean;
+  notice: string;
 }

@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
-from backend.app.db.session import Base
+try:
+    from app.db.session import Base
+except ImportError:
+    from backend.app.db.session import Base
 
 class WaterBodyModel(Base):
     __tablename__ = "water_bodies"

@@ -12,14 +12,15 @@ from datetime import datetime, timezone
 
 # Ensure project root is available in sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+backend_dir = os.path.dirname(os.path.dirname(current_dir))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
 from sqlalchemy.orm import Session
-from backend.app.db.session import engine, Base, SessionLocal
-from backend.app.models.water_body import WaterBodyModel
-from backend.app.models.alert import AlertModel
+from app.db.session import engine, Base, SessionLocal
+from app.models.water_body import WaterBodyModel
+from app.models.alert import AlertModel
+from app.models.alert_delivery import AlertDeliveryModel
 
 def get_demonstration_water_bodies() -> list[WaterBodyModel]:
     """Returns the standardized synthetic demonstration water bodies."""

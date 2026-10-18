@@ -1,0 +1,131 @@
+{
+  "station_name": "RAMAMANGALAM BRIDGE",
+  "district": "ERNAKULAM",
+  "state": "Kerala",
+  "agency": "Kerala SW",
+  "forecast_horizon": "1 hour ahead (t+1)",
+  "approach": "residual_delta",
+  "gap_threshold_hours": 3.0,
+  "random_seed": 42,
+  "features": [
+    "wl_t",
+    "lag_1h",
+    "lag_2h",
+    "lag_3h",
+    "lag_6h",
+    "lag_12h",
+    "delta_1h",
+    "delta_2h",
+    "delta_3h",
+    "delta_6h",
+    "delta_12h",
+    "roll_mean_3h",
+    "roll_std_3h",
+    "roll_mean_6h",
+    "roll_std_6h",
+    "roll_min_6h",
+    "roll_max_6h",
+    "roll_mean_12h",
+    "roll_std_12h",
+    "roll_min_12h",
+    "roll_max_12h",
+    "delta_accel_1h",
+    "delta_ratio_3h",
+    "relative_pos_6h",
+    "relative_pos_12h"
+  ],
+  "feature_count": 25,
+  "split_counts": {
+    "train": 5612,
+    "validation": 2396,
+    "test": 3103,
+    "total_usable": 11118
+  },
+  "split_periods": {
+    "train": "2021-06-09 23:00:00 to 2022-07-30 10:00:00",
+    "validation": "2022-08-02 00:00:00 to 2022-11-25 14:00:00",
+    "test": "2024-05-19 12:00:00 to 2024-10-04 08:00:00"
+  },
+  "metrics": {
+    "validation": {
+      "persistence_baseline": {
+        "model": "Persistence Baseline",
+        "mae_m": 0.016926,
+        "rmse_m": 0.027768,
+        "r2": 0.9992
+      },
+      "random_forest": {
+        "model": "RandomForestRegressor (Delta)",
+        "mae_m": 0.011583,
+        "rmse_m": 0.017962,
+        "r2": 0.999665
+      },
+      "hist_gradient_boosting": {
+        "model": "HistGradientBoostingRegressor (Delta)",
+        "mae_m": 0.012363,
+        "rmse_m": 0.019351,
+        "r2": 0.999611
+      },
+      "extra_trees": {
+        "model": "ExtraTreesRegressor (Delta)",
+        "mae_m": 0.011542,
+        "rmse_m": 0.018122,
+        "r2": 0.999659
+      },
+      "ridge_regressor": {
+        "model": "RidgeRegressor (Kinematic Delta)",
+        "mae_m": 0.010788,
+        "rmse_m": 0.015217,
+        "r2": 0.99976
+      }
+    },
+    "test": {
+      "persistence_baseline": {
+        "model": "Persistence Baseline",
+        "mae_m": 0.017054,
+        "rmse_m": 0.028102,
+        "r2": 0.998454
+      },
+      "random_forest": {
+        "model": "RandomForestRegressor (Delta)",
+        "mae_m": 0.011418,
+        "rmse_m": 0.017791,
+        "r2": 0.99938
+      },
+      "hist_gradient_boosting": {
+        "model": "HistGradientBoostingRegressor (Delta)",
+        "mae_m": 0.011996,
+        "rmse_m": 0.019103,
+        "r2": 0.999285
+      },
+      "extra_trees": {
+        "model": "ExtraTreesRegressor (Delta)",
+        "mae_m": 0.011189,
+        "rmse_m": 0.017756,
+        "r2": 0.999383
+      },
+      "ridge_regressor": {
+        "model": "RidgeRegressor (Kinematic Delta)",
+        "mae_m": 0.01039,
+        "rmse_m": 0.014528,
+        "r2": 0.999587
+      }
+    }
+  },
+  "rf_improvement_over_baseline_pct": {
+    "mae": 33.05,
+    "rmse": 36.69
+  },
+  "ridge_improvement_over_baseline_pct": {
+    "mae": 39.08,
+    "rmse": 48.3
+  },
+  "ridge_improvement_over_rf_pct": {
+    "mae": 9.0,
+    "rmse": 18.34
+  },
+  "ml_outperforms_baseline": true,
+  "selected_model": "RidgeRegressor (Kinematic Delta Approach)",
+  "preserved_model": "RandomForestRegressor (Delta Approach)",
+  "trained_at": "2026-10-17T21:07:43.389792+00:00"
+}

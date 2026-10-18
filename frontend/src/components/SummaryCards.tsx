@@ -49,10 +49,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
             <span className="text-xs text-slate-400 font-mono">Zones Monitored</span>
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/60 pt-2 font-mono">
-            <span>DEMO STREAM</span>
-            <span className="text-cyan-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-              Live Telemetry
+            <span>SYNTHETIC DEMO</span>
+            <span className="text-amber-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              Demo / Historical Nodes
             </span>
           </div>
         </div>
