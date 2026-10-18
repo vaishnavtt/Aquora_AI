@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from backend.app.db.session import Base
 
 class AlertModel(Base):
@@ -11,3 +11,4 @@ class AlertModel(Base):
     severity = Column(String(30), default="moderate") # low, moderate, high, extreme
     message = Column(String(255), nullable=False)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    is_demonstration_data = Column(Boolean, default=True, nullable=False)

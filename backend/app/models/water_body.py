@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
 from backend.app.db.session import Base
 
 class WaterBodyModel(Base):
@@ -16,3 +16,5 @@ class WaterBodyModel(Base):
     flow_rate_cms = Column(Float, default=1.0)
     depth_meters = Column(Float, default=4.0)
     last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    description = Column(String(255), nullable=True)
+    is_demonstration_data = Column(Boolean, default=True, nullable=False)
