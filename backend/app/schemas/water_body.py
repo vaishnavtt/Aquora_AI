@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 class WaterBodySchema(BaseModel):
@@ -14,4 +15,8 @@ class WaterBodySchema(BaseModel):
     water_temp_c: float
     flow_rate_cms: float
     depth_meters: float
+    elevation_meters: Optional[float] = None
+    basin_region: Optional[str] = None
+    data_source: Optional[str] = "Synthetic Prototype Node"
+    description: Optional[str] = None
     last_updated: datetime

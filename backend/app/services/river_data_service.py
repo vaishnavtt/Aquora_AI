@@ -18,7 +18,14 @@ import urllib.error
 import urllib.parse
 import json
 
-from app.schemas.river_data import RiverDataResponse, LatestHistoricalReading
+from app.schemas.river_data import (
+    RiverDataResponse,
+    LatestHistoricalReading,
+    HistoricalReadingPoint,
+    HistoricalSeriesResponse,
+    ForecastObservationComparisonPoint,
+    ForecastVsObservationResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -331,6 +338,19 @@ class RiverDataService:
         self.live_nwic_provider = LiveNWICProvider()
         self.live_usgs_provider = LiveUSGSProvider()
         self.historical_provider = HistoricalRiverDataProvider()
+        self._cached_features_df = None
+
+    def _get_ramamangalam_features_df(self):
+        if self._cached_features_df is None:
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+            csv_path = os.path.join(project_root, "data", "processed", "ramamangalam_hourly_features.csv")
+            if os.path.exists(csv_path):
+                try:
+                    import pandas as pd
+                    self._cached_features_df = pd.read_csv(csv_path)
+                except Exception as e:
+                    logger.warning("Failed to load historical features CSV: %s", e)
+        return self._cached_features_df
 
     def get_river_data(self, station_query: str, mode: str = "auto") -> RiverDataResponse:
         clean = station_query.replace("-", " ").replace("_", " ").strip().upper()
@@ -365,6 +385,143 @@ class RiverDataService:
             access_requirements=None,
             latest_historical_reading=None,
         )
+
+    def get_historical_series(self, station_name: str, limit: int = 48) -> HistoricalSeriesResponse:
+        clean = station_name.replace("-", " ").replace("_", " ").strip().upper()
+        if "RAMAMANGALAM" in clean:
+            df = self._get_ramamangalam_features_df()
+            if df is not None and not df.empty:
+                tail = df.tail(min(limit, len(df)))
+                readings = [
+                    HistoricalReadingPoint(
+                        timestamp=str(row["datetime"]),
+                        water_level_m=round(float(row["wl_t"]), 4),
+                        flow_rate_cms=None,
+                        source="Kerala State Water Resources Department (Kerala SW)"
+                    )
+                    for _, row in tail.iterrows()
+                ]
+                return HistoricalSeriesResponse(
+                    station_name=STATION_CANONICAL,
+                    district=DISTRICT_CANONICAL,
+                    status="AVAILABLE_HISTORICAL",
+                    data_source=OFFICIAL_SOURCE_AGENCY,
+                    total_records=len(readings),
+                    readings=readings,
+                    notice="Authentic historical river stage telemetry from official Kerala SW archive (2021-2025)."
+                )
+            return HistoricalSeriesResponse(
+                station_name=STATION_CANONICAL,
+                district=DISTRICT_CANONICAL,
+                status="AVAILABLE_HISTORICAL",
+                data_source=OFFICIAL_SOURCE_AGENCY,
+                total_records=1,
+                readings=[
+                    HistoricalReadingPoint(
+                        timestamp=LATEST_HISTORICAL_RECORD["timestamp"],
+                        water_level_m=LATEST_HISTORICAL_RECORD["water_level_m"],
+                        flow_rate_cms=None,
+                        source=OFFICIAL_SOURCE_AGENCY
+                    )
+                ],
+                notice="Confirmed historical observation point from Kerala SW archive."
+            )
+
+        if "USGS" in clean or "STANFORD" in clean or "FRANCISQUITO" in clean or any(ch.isdigit() for ch in clean):
+            live_data = self.live_usgs_provider.fetch_station_data(station_name)
+            if live_data.is_live and live_data.water_level_m is not None:
+                return HistoricalSeriesResponse(
+                    station_name=live_data.station_name,
+                    district=live_data.district,
+                    status="AVAILABLE_LIVE",
+                    data_source=live_data.data_source,
+                    total_records=1,
+                    readings=[
+                        HistoricalReadingPoint(
+                            timestamp=str(live_data.observation_timestamp),
+                            water_level_m=live_data.water_level_m,
+                            flow_rate_cms=live_data.flow_rate_cms,
+                            source=live_data.data_source
+                        )
+                    ],
+                    notice="Instantaneous stream telemetry reading directly from USGS NWIS API."
+                )
+
+        return HistoricalSeriesResponse(
+            station_name=station_name,
+            district="UNKNOWN",
+            status="UNAVAILABLE",
+            data_source="None",
+            total_records=0,
+            readings=[],
+            notice=f"Historical telemetry series is unavailable for '{station_name}'. AQUORA AI does not synthesize historical trends."
+        )
+
+    def get_forecast_vs_observation(self, station_name: str, sample_size: int = 24) -> ForecastVsObservationResponse:
+        clean = station_name.replace("-", " ").replace("_", " ").strip().upper()
+        if "RAMAMANGALAM" not in clean:
+            return ForecastVsObservationResponse(
+                station_name=station_name,
+                model_name="N/A",
+                evaluation_dataset="None",
+                comparisons=[],
+                model_mae_m=0.0,
+                baseline_persistence_mae_m=0.0,
+                mae_reduction_percent=0.0,
+                disclaimer=f"Forecasting model is calibrated exclusively for 'RAMAMANGALAM BRIDGE'; no model exists for '{station_name}'."
+            )
+
+        df = self._get_ramamangalam_features_df()
+        if df is None or df.empty:
+            raise RuntimeError("Historical evaluation features dataset is missing.")
+
+        from app.ml.water_level_forecaster import WaterLevelForecaster
+        forecaster = WaterLevelForecaster()
+        if not forecaster.is_loaded:
+            raise RuntimeError("Ridge forecasting model artifact is not loaded.")
+
+        sample_df = df.tail(min(sample_size, len(df)))
+        comparisons = []
+        model_errors = []
+        baseline_errors = []
+
+        for _, row in sample_df.iterrows():
+            wl_t = float(row["wl_t"])
+            actual_t1 = float(row["target_wl_1h"])
+            feat_values = row[forecaster.feature_names].values.reshape(1, -1)
+            predicted_delta = float(forecaster.model.predict(feat_values)[0])
+            forecasted_t1 = round(wl_t + predicted_delta, 4)
+
+            err_model = round(abs(forecasted_t1 - actual_t1), 4)
+            err_baseline = round(abs(wl_t - actual_t1), 4)
+            model_errors.append(err_model)
+            baseline_errors.append(err_baseline)
+
+            comparisons.append(ForecastObservationComparisonPoint(
+                target_timestamp=str(row["datetime"]),
+                water_level_t=round(wl_t, 4),
+                forecasted_water_level_1h=forecasted_t1,
+                actual_water_level_1h=round(actual_t1, 4),
+                absolute_error_m=err_model,
+                baseline_persistence_error_m=err_baseline,
+                model_beat_persistence=err_model <= err_baseline
+            ))
+
+        avg_model_mae = round(sum(model_errors) / max(len(model_errors), 1), 4)
+        avg_base_mae = round(sum(baseline_errors) / max(len(baseline_errors), 1), 4)
+        reduction = round(((avg_base_mae - avg_model_mae) / avg_base_mae * 100), 2) if avg_base_mae > 0 else 0.0
+
+        return ForecastVsObservationResponse(
+            station_name=STATION_CANONICAL,
+            model_name="RidgeRegressor (Kinematic Residual Delta)",
+            evaluation_dataset="Kerala SW Ramamangalam Telemetry Archive (Out-of-sample Test Sequence)",
+            comparisons=comparisons,
+            model_mae_m=avg_model_mae,
+            baseline_persistence_mae_m=avg_base_mae,
+            mae_reduction_percent=reduction,
+            disclaimer="Genuine ground-truth comparison: Ridge delta forecast vs subsequent recorded observation (t+1 hour). Prototype research only."
+        )
+
 
 
 river_data_service = RiverDataService()

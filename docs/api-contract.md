@@ -149,7 +149,72 @@ Aggregated telemetry and status alerts across monitored sites for the overview d
 
 ---
 
-## 5. Error Responses
+## 5. Location by Coordinates Lookup
+### `GET /api/v1/water-bodies/by-coordinates`
+Queries the database for monitored stations near a geographic point. Returns `is_monitored: false` when no station exists, with a clear availability message.
+
+**Query Parameters:**
+- `lat` (float, required): Latitude
+- `lng` (float, required): Longitude
+- `max_distance_km` (float, optional, default 15.0): Maximum radius in km
+
+---
+
+## 6. Environmental Data Pipeline Audit
+### `GET /api/v1/environmental-data/{water_body_id}`
+Audits the availability and provenance of the 6 core environmental dimensions (rainfall, water level, water body type, terrain/elevation, historical hazard incidents, observation metadata).
+
+---
+
+## 7. River Telemetry & Historical Series
+### `GET /api/v1/river-data/{station_query}`
+Fetches current river telemetry status (`LIVE`, `HISTORICAL`, `CACHED`, or `UNAVAILABLE`).
+
+### `GET /api/v1/river-data/history/{station_name}`
+Returns sequential historical observations (stage in meters and discharge in m³/s) from verified telemetry records.
+
+### `GET /api/v1/river-data/forecast-vs-observation/{station_name}`
+Compares sequential 1-hour ML Ridge forecasts against actual ground-truth observations ($wl_{t+1}$), computing Model MAE vs. Baseline Persistence MAE.
+
+---
+
+## 8. Hydrodynamic Stage Forecasting
+### `POST /api/v1/forecast/water-level`
+Calculates an experimental 1-hour-ahead river water level (stage height in metres) using a trained Ridge regression model and 25 hydrodynamic momentum features.
+
+---
+
+## 9. Emergency Alerting Infrastructure
+### `POST /api/v1/alerts/dispatch`
+Dispatches an emergency alert via Webhook or SMTP Email, respecting safe test mode and deduplication windows.
+
+### `POST /api/v1/alerts/test`
+Sends an authorized test notification to verify integration connectivity.
+
+### `GET /api/v1/alerts/deliveries`
+Returns the SQLite durable delivery audit log.
+
+### `GET /api/v1/alerts/status`
+Returns configuration status of Webhook and SMTP channels.
+
+---
+
+## 10. Automated Hazard Monitoring
+### `POST /api/v1/monitoring/evaluate`
+Executes an immediate hazard evaluation sweep over monitored stations, checking for stage surges ($\Delta h \ge 0.15\text{ m}$), flow breaches ($\ge 6.0\text{ m}^3\text{/s}$), and risk score thresholds ($\ge 60.0$).
+
+### `GET /api/v1/monitoring/status`
+Returns background scheduler status, configured thresholds, and recent evaluations.
+
+### `POST /api/v1/monitoring/start`
+Starts the periodic background evaluation scheduler thread.
+
+### `POST /api/v1/monitoring/stop`
+Stops the periodic background evaluation scheduler thread.
+
+---
+
+## 11. Error Responses
 All endpoints return standard RFC-7807 compatible error payloads:
 
 ```json
@@ -163,3 +228,4 @@ All endpoints return standard RFC-7807 compatible error payloads:
   ]
 }
 ```
+

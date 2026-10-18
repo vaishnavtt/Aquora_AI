@@ -15,6 +15,12 @@ import {
   AlertDispatchResponse,
   AlertDelivery,
   AlertChannelStatus,
+  EnvironmentalPipelineAuditResponse,
+  HistoricalSeriesResponse,
+  ForecastVsObservationResponse,
+  HazardEvaluationResult,
+  HazardMonitoringEvaluationRequest,
+  HazardMonitoringStatusResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -432,6 +438,94 @@ export const api = {
       test_mode_enforced: true,
       notice: 'Operating in safe client-side mode. Configure ALERT_WEBHOOK_URL or SMTP_HOST in backend environment.',
     };
+  },
+
+  async getWaterBodyById(id: number): Promise<WaterBody> {
+    const res = await fetch(`${API_BASE_URL}/water-bodies/${id}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Location #${id} not found in monitored database.`);
+    }
+    return await res.json();
+  },
+
+  async getWaterBodyByCoordinates(latitude: number, longitude: number, toleranceDeg: number = 0.08): Promise<WaterBody> {
+    const res = await fetch(`${API_BASE_URL}/water-bodies/by-coordinates?latitude=${latitude}&longitude=${longitude}&tolerance_deg=${toleranceDeg}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `No monitored water body found near coordinates (${latitude.toFixed(4)}, ${longitude.toFixed(4)}).`);
+    }
+    return await res.json();
+  },
+
+  async getEnvironmentalPipelineAudit(waterBodyId: number): Promise<EnvironmentalPipelineAuditResponse> {
+    const res = await fetch(`${API_BASE_URL}/environmental-data/${waterBodyId}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to audit environmental pipeline for station #${waterBodyId}`);
+    }
+    return await res.json();
+  },
+
+  async getRiverHistory(stationName: string = 'RAMAMANGALAM-BRIDGE', limit: number = 48): Promise<HistoricalSeriesResponse> {
+    const res = await fetch(`${API_BASE_URL}/river-data/history/${encodeURIComponent(stationName)}?limit=${limit}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to fetch historical series for ${stationName}`);
+    }
+    return await res.json();
+  },
+
+  async getForecastVsObservation(stationName: string = 'RAMAMANGALAM-BRIDGE', sampleSize: number = 24): Promise<ForecastVsObservationResponse> {
+    const res = await fetch(`${API_BASE_URL}/river-data/forecast-vs-observation/${encodeURIComponent(stationName)}?sample_size=${sampleSize}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to fetch forecast vs observation for ${stationName}`);
+    }
+    return await res.json();
+  },
+
+  async evaluateHazardMonitoring(req?: HazardMonitoringEvaluationRequest): Promise<HazardEvaluationResult[]> {
+    const res = await fetch(`${API_BASE_URL}/monitoring/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req || { safe_simulation_only: true }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Hazard evaluation sweep failed`);
+    }
+    return await res.json();
+  },
+
+  async getHazardMonitoringStatus(): Promise<HazardMonitoringStatusResponse> {
+    const res = await fetch(`${API_BASE_URL}/monitoring/status`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to fetch monitoring status`);
+    }
+    return await res.json();
+  },
+
+  async startHazardMonitoring(intervalSeconds?: number): Promise<HazardMonitoringStatusResponse> {
+    const url = intervalSeconds
+      ? `${API_BASE_URL}/monitoring/start?interval_seconds=${intervalSeconds}`
+      : `${API_BASE_URL}/monitoring/start`;
+    const res = await fetch(url, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to start hazard monitoring scheduler`);
+    }
+    return await res.json();
+  },
+
+  async stopHazardMonitoring(): Promise<HazardMonitoringStatusResponse> {
+    const res = await fetch(`${API_BASE_URL}/monitoring/stop`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to stop hazard monitoring scheduler`);
+    }
+    return await res.json();
   },
 };
 

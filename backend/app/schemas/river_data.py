@@ -20,3 +20,42 @@ class RiverDataResponse(BaseModel):
     notice: str = Field(..., description="Advisory or disclaimer regarding telemetry nature")
     access_requirements: Optional[str] = Field(None, description="Official credentials or gateway access needed for live feed")
     latest_historical_reading: Optional[LatestHistoricalReading] = Field(None, description="Last recorded historical reading from telemetry archive")
+
+
+class HistoricalReadingPoint(BaseModel):
+    timestamp: str
+    water_level_m: float
+    flow_rate_cms: Optional[float] = None
+    source: str
+
+
+class HistoricalSeriesResponse(BaseModel):
+    station_name: str
+    district: str
+    status: str
+    data_source: str
+    total_records: int
+    readings: list[HistoricalReadingPoint]
+    notice: str
+
+
+class ForecastObservationComparisonPoint(BaseModel):
+    target_timestamp: str
+    water_level_t: float
+    forecasted_water_level_1h: float
+    actual_water_level_1h: float
+    absolute_error_m: float
+    baseline_persistence_error_m: float
+    model_beat_persistence: bool
+
+
+class ForecastVsObservationResponse(BaseModel):
+    station_name: str
+    model_name: str
+    evaluation_dataset: str
+    comparisons: list[ForecastObservationComparisonPoint]
+    model_mae_m: float
+    baseline_persistence_mae_m: float
+    mae_reduction_percent: float
+    disclaimer: str
+

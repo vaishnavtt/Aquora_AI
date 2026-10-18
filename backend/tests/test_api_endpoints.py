@@ -166,6 +166,97 @@ class TestAPIEndpoints(unittest.TestCase):
         del_data = res_del.json()
         self.assertIsInstance(del_data, list)
 
+    def test_get_water_body_by_id_success(self):
+        res = self.client.get("/api/v1/water-bodies/1")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["id"], 1)
+        self.assertIn("elevation_meters", data)
+        self.assertIn("basin_region", data)
+        self.assertIn("data_source", data)
+
+    def test_get_water_body_by_id_not_found(self):
+        res = self.client.get("/api/v1/water-bodies/999999")
+        self.assertEqual(res.status_code, 404)
+        self.assertIn("not found in monitored database", res.json()["detail"])
+
+    def test_get_water_body_by_coordinates_success(self):
+        # Emerald Lake coordinates: 37.7749, -122.4194
+        res = self.client.get("/api/v1/water-bodies/by-coordinates?latitude=37.775&longitude=-122.419")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("Emerald", data["name"])
+
+    def test_get_water_body_by_coordinates_unsupported(self):
+        # Middle of Sahara coordinates: 20.0, 10.0
+        res = self.client.get("/api/v1/water-bodies/by-coordinates?latitude=20.0&longitude=10.0")
+        self.assertEqual(res.status_code, 404)
+        detail = res.json()["detail"]
+        self.assertIn("No monitored water body found", detail)
+        self.assertIn("does not assign fabricated environmental observations", detail)
+
+    def test_environmental_data_pipeline_audit(self):
+        res = self.client.get("/api/v1/environmental-data/1")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("dimensions", data)
+        dims = data["dimensions"]
+        # Verify Rainfall is UNAVAILABLE (not fabricated)
+        self.assertEqual(dims["rainfall"]["status"], "UNAVAILABLE")
+        self.assertIsNone(dims["rainfall"]["value"])
+        # Verify Historical incidents are UNAVAILABLE (not fabricated)
+        self.assertEqual(dims["historical_incidents"]["status"], "UNAVAILABLE")
+        self.assertIsNone(dims["historical_incidents"]["value"])
+        # Verify water level and metadata are present
+        self.assertIn(dims["water_level"]["status"], ["AVAILABLE_STATIC", "AVAILABLE_LIVE", "AVAILABLE_HISTORICAL"])
+        self.assertEqual(dims["water_body_type"]["status"], "AVAILABLE_STATIC")
+
+    def test_river_data_history_endpoint(self):
+        res = self.client.get("/api/v1/river-data/history/RAMAMANGALAM-BRIDGE?limit=10")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["station_name"], "RAMAMANGALAM BRIDGE")
+        self.assertEqual(data["status"], "AVAILABLE_HISTORICAL")
+        self.assertIsInstance(data["readings"], list)
+        self.assertGreater(len(data["readings"]), 0)
+
+    def test_river_data_forecast_vs_observation_endpoint(self):
+        res = self.client.get("/api/v1/river-data/forecast-vs-observation/RAMAMANGALAM-BRIDGE?sample_size=10")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["station_name"], "RAMAMANGALAM BRIDGE")
+        self.assertIn("RidgeRegressor", data["model_name"])
+        self.assertIsInstance(data["comparisons"], list)
+        self.assertGreater(len(data["comparisons"]), 0)
+        self.assertGreater(data["model_mae_m"], 0.0)
+        self.assertGreater(data["baseline_persistence_mae_m"], 0.0)
+
+    def test_monitoring_evaluate_endpoint(self):
+        payload = {"safe_simulation_only": True}
+        res = self.client.post("/api/v1/monitoring/evaluate", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIsInstance(data, list)
+        self.assertGreater(len(data), 0)
+
+    def test_monitoring_status_and_scheduler_lifecycle(self):
+        res_status = self.client.get("/api/v1/monitoring/status")
+        self.assertEqual(res_status.status_code, 200)
+        status_data = res_status.json()
+        self.assertIn("is_scheduler_running", status_data)
+        self.assertIn("thresholds", status_data)
+
+        # Start scheduler
+        res_start = self.client.post("/api/v1/monitoring/start?interval_seconds=60")
+        self.assertEqual(res_start.status_code, 200)
+        self.assertTrue(res_start.json()["is_scheduler_running"])
+
+        # Stop scheduler
+        res_stop = self.client.post("/api/v1/monitoring/stop")
+        self.assertEqual(res_stop.status_code, 200)
+        self.assertFalse(res_stop.json()["is_scheduler_running"])
+
 if __name__ == "__main__":
     unittest.main()
+
 

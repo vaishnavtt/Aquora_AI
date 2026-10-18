@@ -10,7 +10,7 @@ import { WaterLevelForecastingPanel } from './components/WaterLevelForecastingPa
 import { DashboardOverview } from './components/DashboardOverview';
 import { LoadingSkeleton, EmptyState, ErrorBanner } from './components/States';
 import { api, DEMO_WATER_BODIES, DEMO_RISK_CHANGES } from './services/api';
-import { HealthResponse, WaterBody, RiskChangeEvent, DashboardResponse } from './types';
+import { HealthResponse, WaterBody, RiskChangeEvent, DashboardResponse, formatCoordinates } from './types';
 import { Waves, Droplets, Compass, ShieldAlert, Sliders, ExternalLink } from 'lucide-react';
 
 export function App() {
@@ -258,7 +258,7 @@ export function App() {
 
                         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                           <span className="font-mono text-[10px] text-slate-500">
-                            {wb.latitude.toFixed(3)}°N, {wb.longitude.toFixed(3)}°W
+                            {formatCoordinates(wb.latitude, wb.longitude, 3)}
                           </span>
                           <button
                             onClick={(e) => {

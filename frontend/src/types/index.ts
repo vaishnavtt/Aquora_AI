@@ -22,9 +22,13 @@ export interface WaterBody {
   water_temp_c: number;
   flow_rate_cms: number;
   depth_meters: number;
+  elevation_meters?: number | null;
+  basin_region?: string | null;
+  data_source?: string | null;
   last_updated: string;
   description?: string;
 }
+
 
 export interface PredictRequest {
   water_body_id?: number | null;
@@ -57,6 +61,15 @@ export interface DashboardAlert {
   timestamp: string;
 }
 
+export interface StationAvailability {
+  station_name: string;
+  station_type: string;
+  telemetry_status: string;
+  data_source: string;
+  freshness: string;
+  is_live: boolean;
+}
+
 export interface DashboardResponse {
   total_monitored_sites: number;
   high_risk_sites_count: number;
@@ -65,6 +78,7 @@ export interface DashboardResponse {
   system_status: string;
   last_sync: string;
   recent_alerts: DashboardAlert[];
+  station_availability?: StationAvailability[];
 }
 
 // Experimental River Water-Level Forecasting Types
@@ -206,3 +220,117 @@ export interface AlertChannelStatus {
   test_mode_enforced: boolean;
   notice: string;
 }
+
+// Environmental Data Pipeline Audit Types
+export interface DimensionAudit {
+  dimension: string;
+  status: 'AVAILABLE_LIVE' | 'AVAILABLE_HISTORICAL' | 'AVAILABLE_STATIC' | 'UNAVAILABLE';
+  value?: any;
+  units?: string | null;
+  source?: string | null;
+  observation_timestamp?: string | null;
+  limitation_reason?: string | null;
+}
+
+export interface EnvironmentalPipelineAuditResponse {
+  station_id?: number | null;
+  station_name: string;
+  water_body_type: string;
+  basin_region?: string | null;
+  latitude: number;
+  longitude: number;
+  audit_timestamp: string;
+  data_freshness: string;
+  dimensions: Record<string, DimensionAudit>;
+  available_dimensions_count: number;
+  unavailable_dimensions_count: number;
+  ethical_data_notice: string;
+}
+
+// Historical Telemetry Series Types
+export interface HistoricalReadingPoint {
+  timestamp: string;
+  water_level_m: number;
+  flow_rate_cms?: number | null;
+  source: string;
+}
+
+export interface HistoricalSeriesResponse {
+  station_name: string;
+  district: string;
+  status: string;
+  data_source: string;
+  total_records: number;
+  readings: HistoricalReadingPoint[];
+  notice: string;
+}
+
+// Forecast vs Observation Comparison Types
+export interface ForecastObservationComparisonPoint {
+  target_timestamp: string;
+  water_level_t: number;
+  forecasted_water_level_1h: number;
+  actual_water_level_1h: number;
+  absolute_error_m: number;
+  baseline_persistence_error_m: number;
+  model_beat_persistence: boolean;
+}
+
+export interface ForecastVsObservationResponse {
+  station_name: string;
+  model_name: string;
+  evaluation_dataset: string;
+  comparisons: ForecastObservationComparisonPoint[];
+  model_mae_m: number;
+  baseline_persistence_mae_m: number;
+  mae_reduction_percent: number;
+  disclaimer: string;
+}
+
+// Automated Hazard Monitoring Types
+export interface HazardEvaluationTrigger {
+  trigger_type: string;
+  observed_value: number;
+  threshold_value: number;
+  description: string;
+}
+
+export interface HazardEvaluationResult {
+  station_name: string;
+  evaluation_status: 'HAZARD_DETECTED' | 'NOMINAL' | 'TELEMETRY_UNAVAILABLE';
+  is_live: boolean;
+  observed_stage_m?: number | null;
+  stage_delta_m?: number | null;
+  observed_flow_cms?: number | null;
+  recalculated_risk_score?: number | null;
+  recalculated_risk_level?: RiskLevel | null;
+  triggers_detected: HazardEvaluationTrigger[];
+  generated_alert_id?: number | null;
+  outbound_delivery_status?: string | null;
+  confirmed_by_provider: boolean;
+  evaluated_at: string;
+  notice: string;
+}
+
+export interface HazardMonitoringEvaluationRequest {
+  station_query?: string | null;
+  safe_simulation_only?: boolean;
+}
+
+export interface HazardMonitoringStatusResponse {
+  is_scheduler_running: boolean;
+  monitoring_interval_seconds: number;
+  safe_simulation_enforced: boolean;
+  thresholds: Record<string, number>;
+  monitored_stations: string[];
+  last_evaluation_timestamp?: string | null;
+  evaluations_count: number;
+  recent_evaluations: HazardEvaluationResult[];
+}
+
+export function formatCoordinates(lat: number, lng: number, digits: number = 4): string {
+  const latDir = lat >= 0 ? 'N' : 'S';
+  const lngDir = lng >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(digits)}°${latDir}, ${Math.abs(lng).toFixed(digits)}°${lngDir}`;
+}
+

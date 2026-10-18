@@ -11,6 +11,10 @@ from app.services.alert_service import (
     WebhookAlertProvider,
     EmailAlertProvider,
 )
+from app.services.hazard_monitoring_service import (
+    HazardMonitoringService,
+    hazard_monitoring_service,
+)
 
 __all__ = [
     "RiverDataService",
@@ -22,4 +26,6 @@ __all__ = [
     "alert_service",
     "WebhookAlertProvider",
     "EmailAlertProvider",
+    "HazardMonitoringService",
+    "hazard_monitoring_service",
 ]

@@ -20,7 +20,14 @@ import {
   Activity
 } from 'lucide-react';
 import { api, HISTORICAL_SAMPLE_SCENARIOS, HistoricalScenario } from '../services/api';
-import { WaterLevelForecastResponse, HourlyReading, RiverDataResponse, RiverDataStatus } from '../types';
+import {
+  WaterLevelForecastResponse,
+  HourlyReading,
+  RiverDataResponse,
+  RiverDataStatus,
+  ForecastVsObservationResponse,
+  HistoricalSeriesResponse
+} from '../types';
 
 export const WaterLevelForecastingPanel: React.FC = () => {
   // Telemetry Station Status State
@@ -30,6 +37,11 @@ export const WaterLevelForecastingPanel: React.FC = () => {
   const [riverError, setRiverError] = useState<string | null>(null);
   const [telemetryMode, setTelemetryMode] = useState<'auto' | 'historical'>('auto');
 
+  // Ground-Truth Evaluation & Historical Series State
+  const [forecastVsObs, setForecastVsObs] = useState<ForecastVsObservationResponse | null>(null);
+  const [historySeries, setHistorySeries] = useState<HistoricalSeriesResponse | null>(null);
+  const [evaluationLoading, setEvaluationLoading] = useState<boolean>(false);
+
   // Forecasting Pipeline State
   const [selectedScenario, setSelectedScenario] = useState<HistoricalScenario>(
     HISTORICAL_SAMPLE_SCENARIOS[0]
@@ -38,6 +50,24 @@ export const WaterLevelForecastingPanel: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [forecastResult, setForecastResult] = useState<WaterLevelForecastResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Fetch ground-truth evaluation and historical series
+  const fetchEvaluationData = async (targetStation: string) => {
+    setEvaluationLoading(true);
+    try {
+      const cleanName = targetStation === 'USGS-11164500' ? 'USGS 11164500' : 'RAMAMANGALAM BRIDGE';
+      const [vsObs, hist] = await Promise.all([
+        api.getForecastVsObservation(cleanName, 8).catch(() => null),
+        api.getRiverHistory(cleanName, 12).catch(() => null)
+      ]);
+      setForecastVsObs(vsObs);
+      setHistorySeries(hist);
+    } catch {
+      // Non-fatal
+    } finally {
+      setEvaluationLoading(false);
+    }
+  };
 
   // Fetch river station telemetry on mount, station change, or mode change
   const fetchRiverTelemetry = async (
@@ -58,6 +88,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
 
   useEffect(() => {
     fetchRiverTelemetry(stationQuery, telemetryMode);
+    fetchEvaluationData(stationQuery);
   }, [stationQuery, telemetryMode]);
 
   const handleScenarioChange = (scenario: HistoricalScenario) => {
@@ -542,6 +573,192 @@ export const WaterLevelForecastingPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ============================================================== */}
+      {/* SECTION 4: GROUND-TRUTH EVALUATION: FORECAST VS ACTUAL         */}
+      {/* ============================================================== */}
+      {forecastVsObs && forecastVsObs.comparisons && forecastVsObs.comparisons.length > 0 && (
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
+            <div>
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Ground-Truth Model Evaluation: Forecast vs. Actual Observation
+                </h3>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Evaluates the Ridge hydrodynamic momentum model against consecutive ground-truth observations (wl_t+1) recorded at {forecastVsObs.station_name}.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-800">
+                Model MAE: {(forecastVsObs.model_mae_m * 1000).toFixed(1)} mm
+              </span>
+              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+                Persistence MAE: {(forecastVsObs.baseline_persistence_mae_m * 1000).toFixed(1)} mm
+              </span>
+              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-950 text-cyan-300 border border-cyan-800">
+                Error Reduction: {forecastVsObs.mae_reduction_percent.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono">
+              <thead>
+                <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Target Time</th>
+                  <th className="py-2.5 px-3">Actual (wl_t+1)</th>
+                  <th className="py-2.5 px-3">Ridge Forecast (t+1)</th>
+                  <th className="py-2.5 px-3">Persistence (wl_t)</th>
+                  <th className="py-2.5 px-3">Model Error</th>
+                  <th className="py-2.5 px-3">Persistence Error</th>
+                  <th className="py-2.5 px-3 text-right">Performance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                {forecastVsObs.comparisons.map((pt, idx) => (
+                  <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-2.5 px-3 text-slate-300">
+                      {new Date(pt.target_timestamp).toLocaleString([], {
+                        month: 'short',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-emerald-300">
+                      {pt.actual_water_level_1h.toFixed(3)} m
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-cyan-300">
+                      {pt.forecasted_water_level_1h.toFixed(3)} m
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-400">
+                      {pt.water_level_t.toFixed(3)} m
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-200">
+                      {(pt.absolute_error_m * 1000).toFixed(1)} mm
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-400">
+                      {(pt.baseline_persistence_error_m * 1000).toFixed(1)} mm
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {pt.model_beat_persistence ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Outperformed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                          <Minus className="w-3 h-3" />
+                          Par
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 text-[10px] text-slate-500 font-mono flex items-center justify-between border-t border-slate-800/80 pt-2">
+            <span>Basis: {forecastVsObs.evaluation_dataset}</span>
+            <span>Evaluated: {forecastVsObs.comparisons.length} ground-truth intervals</span>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* SECTION 5: HISTORICAL WATER LEVEL & DISCHARGE ARCHIVE          */}
+      {/* ============================================================== */}
+      {historySeries && historySeries.readings && historySeries.readings.length > 0 && (() => {
+        const levels = historySeries.readings.map(r => r.water_level_m);
+        const minStage = Math.min(...levels);
+        const maxStage = Math.max(...levels);
+        const avgStage = levels.reduce((a, b) => a + b, 0) / levels.length;
+
+        return (
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Database className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    Historical Water Level &amp; Discharge Trend Archive
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Official hydrological records from {historySeries.data_source} ({historySeries.total_records} hourly data points).
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  Min Stage: {minStage.toFixed(3)} m
+                </span>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  Max Stage: {maxStage.toFixed(3)} m
+                </span>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800">
+                  Avg Stage: {avgStage.toFixed(3)} m
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-wider">
+                    <th className="py-2 px-3">Timestamp</th>
+                    <th className="py-2 px-3">Water Level (m)</th>
+                    <th className="py-2 px-3">Discharge (m³/s)</th>
+                    <th className="py-2 px-3">Source Provider</th>
+                    <th className="py-2 px-3 text-right">Stage Delta</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                  {historySeries.readings.map((item, idx) => {
+                    const prevLevel = idx > 0 ? historySeries.readings[idx - 1].water_level_m : item.water_level_m;
+                    const delta = item.water_level_m - prevLevel;
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-2 px-3 text-slate-300">
+                          {new Date(item.timestamp).toLocaleString([], {
+                            month: 'short',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="py-2 px-3 font-bold text-amber-300">
+                          {item.water_level_m.toFixed(3)} m
+                        </td>
+                        <td className="py-2 px-3 text-slate-300">
+                          {item.flow_rate_cms !== null && item.flow_rate_cms !== undefined
+                            ? `${item.flow_rate_cms.toFixed(2)} m³/s`
+                            : '—'}
+                        </td>
+                        <td className="py-2 px-3 text-slate-400 text-[10px]">
+                          {item.source}
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          {idx === 0 ? (
+                            <span className="text-slate-600">—</span>
+                          ) : (
+                            <span className={delta > 0 ? 'text-amber-400' : delta < 0 ? 'text-cyan-400' : 'text-slate-500'}>
+                              {delta >= 0 ? '+' : ''}{(delta * 100).toFixed(1)} cm
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ============================================================== */}
       {/* OBSERVATIONS INPUT SEQUENCE TABLE                              */}

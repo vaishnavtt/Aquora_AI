@@ -11,6 +11,14 @@ class DashboardAlertSchema(BaseModel):
     message: str
     timestamp: datetime
 
+class StationAvailabilitySchema(BaseModel):
+    station_name: str
+    station_type: str
+    telemetry_status: str
+    data_source: str
+    freshness: str
+    is_live: bool
+
 class DashboardResponse(BaseModel):
     total_monitored_sites: int
     high_risk_sites_count: int
@@ -19,3 +27,5 @@ class DashboardResponse(BaseModel):
     system_status: str
     last_sync: datetime
     recent_alerts: list[DashboardAlertSchema]
+    station_availability: list[StationAvailabilitySchema] = []
+

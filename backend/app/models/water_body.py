@@ -15,4 +15,8 @@ class WaterBodyModel(Base):
     water_temp_c = Column(Float, default=19.0)
     flow_rate_cms = Column(Float, default=1.0)
     depth_meters = Column(Float, default=4.0)
+    elevation_meters = Column(Float, nullable=True) # Terrain elevation in meters
+    basin_region = Column(String(100), nullable=True) # Watershed / Basin jurisdiction
+    data_source = Column(String(120), default="Synthetic Prototype Node") # Originating source or agency
+    description = Column(String(300), nullable=True) # Station geographic notes
     last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))

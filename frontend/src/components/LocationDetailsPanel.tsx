@@ -1,18 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  ShieldAlert,
   Thermometer,
   Waves,
   ArrowDownCircle,
-  Wind,
   Clock,
   Sliders,
   CheckCircle2,
   AlertCircle,
   MapPin,
   Compass,
+  Mountain,
+  FolderGit2,
+  ChevronDown,
+  ChevronUp,
+  FileCheck2,
+  AlertTriangle,
+  XCircle,
+  Info,
 } from 'lucide-react';
-import { WaterBody, RiskLevel } from '../types';
+import { WaterBody, RiskLevel, EnvironmentalPipelineAuditResponse, formatCoordinates } from '../types';
+import { api } from '../services/api';
 
 interface LocationDetailsPanelProps {
   station: WaterBody | null;
@@ -23,6 +30,34 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
   station,
   onSendToSimulator,
 }) => {
+  const [pipelineAudit, setPipelineAudit] = useState<EnvironmentalPipelineAuditResponse | null>(null);
+  const [auditLoading, setAuditLoading] = useState<boolean>(false);
+  const [showAudit, setShowAudit] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!station) {
+      setPipelineAudit(null);
+      return;
+    }
+    // Fetch pipeline audit whenever selected station changes
+    let active = true;
+    setAuditLoading(true);
+    api.getEnvironmentalPipelineAudit(station.id)
+      .then((data) => {
+        if (active) setPipelineAudit(data);
+      })
+      .catch(() => {
+        if (active) setPipelineAudit(null);
+      })
+      .finally(() => {
+        if (active) setAuditLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [station?.id]);
+
   if (!station) {
     return (
       <div className="p-8 rounded-2xl bg-slate-900/80 border border-slate-800 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2 h-full min-h-[320px]">
@@ -94,30 +129,38 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
   const riskStyle = getRiskColor(station.current_risk_level);
 
   return (
-    <div className="rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md p-5 flex flex-col justify-between space-y-5">
+    <div className="rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md p-5 flex flex-col justify-between space-y-4">
       <div>
         {/* Header */}
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-800/80">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] font-mono uppercase text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/50">
                 {station.type}
               </span>
-              <span className="text-[9px] font-bold text-amber-300 bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-800/40">
-                DEMO
-              </span>
+              {station.basin_region && (
+                <span className="text-[9px] font-mono text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                  {station.basin_region}
+                </span>
+              )}
             </div>
-            <h3 className="text-base font-bold text-white mt-1 leading-snug">
+            <h3 className="text-base font-bold text-white mt-1.5 leading-snug">
               {station.name.replace(' (DEMO Station)', '')}
             </h3>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
-              <Compass className="w-3 h-3 text-slate-500" />
-              <span>{station.latitude.toFixed(4)}°N, {station.longitude.toFixed(4)}°W</span>
+            <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono mt-1 flex-wrap">
+              <span className="flex items-center gap-1">
+                <Compass className="w-3 h-3 text-slate-500" />
+                {formatCoordinates(station.latitude, station.longitude, 4)}
+              </span>
+              <span className="flex items-center gap-1 text-slate-300">
+                <Mountain className="w-3 h-3 text-emerald-400" />
+                {station.elevation_meters ? `${station.elevation_meters.toFixed(1)} m MSL` : 'Elevation Unsurveyed'}
+              </span>
             </div>
           </div>
 
           {/* Risk Level Badge */}
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <span
               className={`inline-block px-2.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider ${riskStyle.bg} ${riskStyle.text} border ${riskStyle.border}`}
             >
@@ -126,10 +169,17 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
           </div>
         </div>
 
+        {/* Description / Bathymetry */}
+        {station.description && (
+          <p className="text-[11px] text-slate-400 mt-2.5 leading-relaxed bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
+            {station.description}
+          </p>
+        )}
+
         {/* Risk Score Gauge Card */}
-        <div className="my-4 p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 text-center space-y-2">
+        <div className="my-3 p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 text-center space-y-2">
           <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-            Calculated Hazard Score
+            Explainable Environmental Hazard Score
           </span>
           <div className="flex items-center justify-center gap-1">
             <span className={`text-4xl font-black tracking-tight ${riskStyle.text}`}>
@@ -148,7 +198,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
           <p className="text-[11px] text-slate-400 pt-1">
             {station.current_risk_level === 'low'
-              ? 'Recreational activity within normal margins.'
+              ? 'Recreational activity within nominal margins.'
               : station.current_risk_level === 'moderate'
               ? 'Heightened caution required due to rapid flow or cold temperature.'
               : 'Immediate hazard. Entry prohibited for non-rescue personnel.'}
@@ -170,7 +220,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
             <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1">
               <Waves className="w-3 h-3 text-blue-400" />
-              <span>Flow Velocity</span>
+              <span>Discharge Flow</span>
             </div>
             <span className="text-sm font-bold font-mono text-white">
               {station.flow_rate_cms.toFixed(1)} m³/s
@@ -180,7 +230,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
             <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1">
               <ArrowDownCircle className="w-3 h-3 text-indigo-400" />
-              <span>Avg Depth</span>
+              <span>Gauge Depth</span>
             </div>
             <span className="text-sm font-bold font-mono text-white">
               {station.depth_meters.toFixed(1)} m
@@ -189,15 +239,15 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
         </div>
 
         {/* Contributing Danger Factors */}
-        <div className="mt-4 space-y-2">
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+        <div className="mt-3 space-y-1.5">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Primary Contributing Factors
           </h4>
           <div className="space-y-1.5">
             {contributingFactors.map((fac, idx) => (
               <div
                 key={idx}
-                className="p-2.5 rounded-lg bg-slate-950/50 border border-slate-800 text-xs flex items-start gap-2"
+                className="p-2 rounded-lg bg-slate-950/50 border border-slate-800 text-xs flex items-start gap-2"
               >
                 {fac.severity === 'high' ? (
                   <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
@@ -214,16 +264,134 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
             ))}
           </div>
         </div>
+
+        {/* Environmental Pipeline Audit Collapsible (Task 2 Transparency) */}
+        <div className="mt-3.5 rounded-xl border border-slate-800/80 bg-slate-950/70 overflow-hidden">
+          <button
+            onClick={() => setShowAudit(!showAudit)}
+            className="w-full p-2.5 flex items-center justify-between text-xs text-slate-300 font-semibold hover:bg-slate-800/40 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <FileCheck2 className="w-3.5 h-3.5 text-cyan-400" />
+              Environmental Pipeline Audit (6 Dimensions)
+            </span>
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
+              {pipelineAudit && (
+                <span className="text-emerald-400 font-bold">
+                  {pipelineAudit.available_dimensions_count}/6 Available
+                </span>
+              )}
+              {showAudit ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </div>
+          </button>
+
+          {showAudit && (
+            <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
+              {auditLoading ? (
+                <div className="text-center py-2 text-slate-400 text-[11px]">Auditing pipeline dimensions...</div>
+              ) : pipelineAudit ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Dimension 1: Rainfall */}
+                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-300 text-[11px]">Rainfall (24h)</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50">
+                          {pipelineAudit.dimensions.rainfall?.status || 'UNAVAILABLE'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                        {pipelineAudit.dimensions.rainfall?.limitation_reason || 'No real-time raingauge connected.'}
+                      </p>
+                    </div>
+
+                    {/* Dimension 2: Water Level */}
+                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-300 text-[11px]">Water Level / Stage</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/50">
+                          {pipelineAudit.dimensions.water_level?.status || 'AVAILABLE'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                        Value: {pipelineAudit.dimensions.water_level?.value ?? station.depth_meters} m &bull; Source: {pipelineAudit.dimensions.water_level?.source || 'Telemetry Node'}
+                      </p>
+                    </div>
+
+                    {/* Dimension 3: Water Body Type */}
+                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-300 text-[11px]">Water-Body Type</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/50">
+                          AVAILABLE
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                        Classification: <span className="capitalize">{station.type}</span> &bull; Source: AQUORA Registry
+                      </p>
+                    </div>
+
+                    {/* Dimension 4: Terrain / Elevation */}
+                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-300 text-[11px]">Terrain & Elevation</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${station.elevation_meters ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/50' : 'bg-slate-800 text-slate-400'}`}>
+                          {station.elevation_meters ? 'AVAILABLE' : 'UNAVAILABLE'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                        {station.elevation_meters ? `${station.elevation_meters.toFixed(1)} m MSL (SRTM Digital Elevation)` : 'Elevation not surveyed for this coordinates.'}
+                      </p>
+                    </div>
+
+                    {/* Dimension 5: Historical Drowning Incidents */}
+                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-300 text-[11px]">Historical Hazard / Drowning Records</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-950/80 text-rose-300 border border-rose-800/50">
+                          UNAVAILABLE (NOT FABRICATED)
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                        No validated public Kerala drowning incident registry is accessible. AQUORA AI strictly does NOT invent or synthesize historical accident records.
+                      </p>
+                    </div>
+
+                    {/* Dimension 6: Source Metadata & Freshness */}
+                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-300 text-[11px]">Source Metadata & Timestamps</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/50">
+                          AVAILABLE
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                        Agency: {station.data_source || 'AQUORA Hydrological DB Baseline'} &bull; Last Sync: {new Date(station.last_updated).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-[10px] text-cyan-300 flex items-start gap-1.5">
+                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
+                    <span>{pipelineAudit.ethical_data_notice}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-slate-500 italic text-[11px] py-1 text-center">Pipeline audit unavailable.</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer & Actions */}
-      <div className="pt-3 border-t border-slate-800 space-y-2.5">
+      <div className="pt-2 border-t border-slate-800 space-y-2.5">
         <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             Last Sync: {new Date(station.last_updated).toLocaleTimeString()}
           </span>
-          <span>Source: Demo Telemetry Node</span>
+          <span className="truncate max-w-[180px]">Source: {station.data_source || 'Hydrological Survey'}</span>
         </div>
 
         <button

@@ -18,6 +18,16 @@ from app.schemas.alert import (
     AlertDeliverySchema,
     AlertChannelStatusResponse,
 )
+from app.schemas.environmental import (
+    DimensionAudit,
+    EnvironmentalPipelineAuditResponse,
+)
+from app.schemas.monitoring import (
+    HazardEvaluationTrigger,
+    HazardEvaluationResult,
+    HazardMonitoringEvaluationRequest,
+    HazardMonitoringStatusResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -36,4 +46,10 @@ __all__ = [
     "AlertDispatchResponse",
     "AlertDeliverySchema",
     "AlertChannelStatusResponse",
+    "DimensionAudit",
+    "EnvironmentalPipelineAuditResponse",
+    "HazardEvaluationTrigger",
+    "HazardEvaluationResult",
+    "HazardMonitoringEvaluationRequest",
+    "HazardMonitoringStatusResponse",
 ]

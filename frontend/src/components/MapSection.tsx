@@ -14,8 +14,10 @@ import {
   AlertTriangle,
   Globe,
   Satellite,
+  X,
 } from 'lucide-react';
-import { WaterBody, RiskLevel } from '../types';
+import { WaterBody, RiskLevel, formatCoordinates } from '../types';
+import { api } from '../services/api';
 
 interface MapSectionProps {
   waterBodies: WaterBody[];
@@ -39,6 +41,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [showRings, setShowRings] = useState(true);
   const [satelliteNotice, setSatelliteNotice] = useState<string | null>(null);
+  const [unsupportedLocationNotice, setUnsupportedLocationNotice] = useState<string | null>(null);
 
   // Check for authorized satellite map provider credentials
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -112,6 +115,19 @@ export const MapSection: React.FC<MapSectionProps> = ({
 
       mapInstanceRef.current = map;
       markersLayerRef.current = L.layerGroup().addTo(map);
+
+      // Handle map clicks: coordinate lookup or explicit data-availability message (Task 1)
+      map.on('click', async (e: L.LeafletMouseEvent) => {
+        try {
+          const found = await api.getWaterBodyByCoordinates(e.latlng.lat, e.latlng.lng, 0.08);
+          onSelectStation(found);
+          setUnsupportedLocationNotice(null);
+        } catch {
+          setUnsupportedLocationNotice(
+            `Coordinates (${formatCoordinates(e.latlng.lat, e.latlng.lng, 4)}): No monitored telemetry sensor is stationed here. AQUORA AI strictly does NOT assign fabricated observations to unsupported coordinates.`
+          );
+        }
+      });
     }
 
     const map = mapInstanceRef.current;
@@ -235,6 +251,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
       const marker = L.marker(pos, { icon: customIcon });
       marker.on('click', () => {
         onSelectStation(station);
+        setUnsupportedLocationNotice(null);
       });
       layerGroup.addLayer(marker);
     });
@@ -375,6 +392,23 @@ export const MapSection: React.FC<MapSectionProps> = ({
         </div>
       )}
 
+      {/* Unsupported Location Data-Availability Notice (Task 1) */}
+      {unsupportedLocationNotice && (
+        <div className="bg-amber-950/90 border-b border-amber-700/70 px-4 py-2.5 text-xs text-amber-200 flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="font-medium">{unsupportedLocationNotice}</span>
+          </div>
+          <button
+            onClick={() => setUnsupportedLocationNotice(null)}
+            className="text-amber-400 hover:text-amber-100 p-1 rounded hover:bg-amber-900/50 transition-colors"
+            title="Dismiss notice"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Map Viewport Area */}
       <div className="relative w-full h-[460px] bg-slate-950 overflow-hidden select-none">
         {/* Real Leaflet Map Container */}
@@ -467,8 +501,8 @@ export const MapSection: React.FC<MapSectionProps> = ({
             <Compass className="w-3.5 h-3.5 text-cyan-400" />
             <span>
               {selectedStation
-                ? `${selectedStation.name.replace(' (DEMO Station)', '')} (${selectedStation.latitude.toFixed(4)}°N, ${selectedStation.longitude.toFixed(4)}°W)`
-                : 'California Basin Hydrodynamic Stations'}
+                ? `${selectedStation.name.replace(' (DEMO Station)', '')} (${formatCoordinates(selectedStation.latitude, selectedStation.longitude, 4)})`
+                : 'AQUORA Monitored Hydrological Stations'}
             </span>
           </div>
 
