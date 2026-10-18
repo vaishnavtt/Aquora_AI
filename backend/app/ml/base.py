@@ -9,7 +9,10 @@ FastAPI routing or controller layers.
 """
 
 from abc import ABC, abstractmethod
-from backend.app.schemas.prediction import PredictRequest, PredictResponse
+try:
+    from app.schemas.prediction import PredictRequest, PredictResponse
+except ImportError:
+    from backend.app.schemas.prediction import PredictRequest, PredictResponse
 
 class BaseRiskPredictor(ABC):
     """

@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
-from backend.app.schemas.common import RiskLevelEnum, WaterBodyTypeEnum
+try:
+    from app.schemas.common import RiskLevelEnum, WaterBodyTypeEnum
+except ImportError:
+    from backend.app.schemas.common import RiskLevelEnum, WaterBodyTypeEnum
 
 class WaterBodySchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)

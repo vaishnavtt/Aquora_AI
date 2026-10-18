@@ -1,6 +1,9 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field, model_validator
-from backend.app.schemas.common import RiskLevelEnum
+try:
+    from app.schemas.common import RiskLevelEnum
+except ImportError:
+    from backend.app.schemas.common import RiskLevelEnum
 
 class PredictRequest(BaseModel):
     water_body_id: Optional[int] = Field(
