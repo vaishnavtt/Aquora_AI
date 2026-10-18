@@ -7,6 +7,7 @@ except ImportError:
 
 class WaterBodyModel(Base):
     __tablename__ = "water_bodies"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(120), nullable=False, index=True)

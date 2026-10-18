@@ -4,9 +4,14 @@ Verifies that the ML lead can integrate a trained model without altering API rou
 """
 
 import pytest
-from backend.app.ml.base import BaseRiskPredictor
-from backend.app.ml.predictor import prediction_service, BaselineHeuristicPredictor
-from backend.app.schemas.prediction import PredictRequest, PredictResponse
+try:
+    from app.ml.base import BaseRiskPredictor
+    from app.ml.predictor import prediction_service, BaselineHeuristicPredictor
+    from app.schemas.prediction import PredictRequest, PredictResponse
+except ImportError:
+    from backend.app.ml.base import BaseRiskPredictor
+    from backend.app.ml.predictor import prediction_service, BaselineHeuristicPredictor
+    from backend.app.schemas.prediction import PredictRequest, PredictResponse
 
 class DummyTrainedMLPredictor(BaseRiskPredictor):
     """Simulates a trained scikit-learn model wrapped by the ML Lead."""

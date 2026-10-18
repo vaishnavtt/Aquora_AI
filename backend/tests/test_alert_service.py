@@ -15,6 +15,10 @@ from app.services.alert_service import AlertService, WebhookAlertProvider, Email
 from app.schemas.alert import AlertDispatchRequest, AlertTestRequest
 
 class TestAlertService(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from app.db.init_db import init_database
+        init_database()
 
     def setUp(self):
         self.client = TestClient(app)

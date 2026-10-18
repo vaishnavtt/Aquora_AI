@@ -3,8 +3,12 @@ Tests for GET /api/v1/health endpoint.
 """
 
 from unittest.mock import MagicMock
-from backend.app.db.session import get_db
-from backend.app.main import app
+try:
+    from app.db.session import get_db
+    from app.main import app
+except ImportError:
+    from backend.app.db.session import get_db
+    from backend.app.main import app
 
 def test_health_check_healthy(client):
     """Verifies that GET /api/v1/health returns 200 with healthy status when DB is connected."""

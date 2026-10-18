@@ -13,17 +13,31 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-# Ensure root directory is on python path
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Ensure root directory and backend directory are on python path
+test_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.dirname(test_dir)
+root_dir = os.path.dirname(backend_dir)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-from backend.app.db.session import Base, get_db
-from backend.app.models.water_body import WaterBodyModel
-from backend.app.models.alert import AlertModel
-from backend.app.db.init_db import get_demonstration_water_bodies
-from backend.app.main import app
-from backend.app.ml.predictor import prediction_service
+try:
+    from app.db.session import Base, get_db
+    from app.models.water_body import WaterBodyModel
+    from app.models.alert import AlertModel
+    from app.models.alert_delivery import AlertDeliveryModel
+    from app.db.init_db import get_demonstration_water_bodies, init_database
+    from app.main import app
+    from app.ml.predictor import prediction_service
+except ImportError:
+    from backend.app.db.session import Base, get_db
+    from backend.app.models.water_body import WaterBodyModel
+    from backend.app.models.alert import AlertModel
+    from backend.app.models.alert_delivery import AlertDeliveryModel
+    from backend.app.db.init_db import get_demonstration_water_bodies, init_database
+    from backend.app.main import app
+    from backend.app.ml.predictor import prediction_service
 
 # In-memory SQLite engine with StaticPool for thread-safe test isolation
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -38,6 +52,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
     """Initializes tables in the in-memory SQLite database for the test session."""
+    init_database()
     Base.metadata.create_all(bind=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)

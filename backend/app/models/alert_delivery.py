@@ -1,10 +1,14 @@
 from datetime import datetime, timezone
 import uuid
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
-from app.db.session import Base
+try:
+    from app.db.session import Base
+except ImportError:
+    from backend.app.db.session import Base
 
 class AlertDeliveryModel(Base):
     __tablename__ = "alert_deliveries"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     alert_id = Column(Integer, nullable=True)

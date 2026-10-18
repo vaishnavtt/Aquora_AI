@@ -7,6 +7,7 @@ except ImportError:
 
 class AlertModel(Base):
     __tablename__ = "alerts"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     water_body_id = Column(Integer, ForeignKey("water_bodies.id"), nullable=True)

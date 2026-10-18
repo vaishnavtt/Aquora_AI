@@ -3,9 +3,14 @@ Tests for database initialization, idempotency, and model CRUD operations.
 """
 
 from datetime import datetime, timezone
-from backend.app.models.water_body import WaterBodyModel
-from backend.app.models.alert import AlertModel
-from backend.app.db.init_db import get_demonstration_water_bodies
+try:
+    from app.models.water_body import WaterBodyModel
+    from app.models.alert import AlertModel
+    from app.db.init_db import get_demonstration_water_bodies
+except ImportError:
+    from backend.app.models.water_body import WaterBodyModel
+    from backend.app.models.alert import AlertModel
+    from backend.app.db.init_db import get_demonstration_water_bodies
 
 def test_demonstration_water_bodies_structure():
     """Verifies demonstration water bodies meet schema and ethics requirements."""
