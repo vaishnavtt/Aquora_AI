@@ -23,8 +23,10 @@ from app.core.config import settings
 from app.db.session import Base
 from app.models import WaterBodyModel, AlertModel, AlertDeliveryModel
 
-# Set database URL dynamically from app settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Set database URL dynamically from app settings if not explicitly overridden
+current_url = config.get_main_option("sqlalchemy.url")
+if not current_url or "driver://user:pass" in current_url:
+    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 target_metadata = Base.metadata
 
