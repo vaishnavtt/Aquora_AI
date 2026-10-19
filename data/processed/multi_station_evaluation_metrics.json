@@ -1,0 +1,540 @@
+{
+  "RAMAMANGALAM BRIDGE": {
+    "station_name": "RAMAMANGALAM BRIDGE",
+    "station_type": "primary_full_span",
+    "split_strategy": "standard_multi_year_with_540d_hiatus",
+    "audit": {
+      "station_name": "RAMAMANGALAM BRIDGE",
+      "district": "ERNAKULAM",
+      "raw_rows": 21230,
+      "deduped_rows": 21230,
+      "raw_latitude": 10.89916667,
+      "raw_longitude": 91.4725,
+      "coordinate_anomaly_detected": true,
+      "coordinate_anomaly_detail": "Longitude 91.4725\u00b0E lies outside Kerala geographic boundary (expected ~74.8\u00b0E - 77.4\u00b0E). Real physical location in Ernakulam is ~76.5167\u00b0E.",
+      "has_2024_telemetry": true,
+      "min_timestamp": "2021-06-09 11:40:00",
+      "max_timestamp": "2025-03-10 08:30:00",
+      "invalid_timestamps": 0,
+      "invalid_water_levels": 0,
+      "min_water_level_m": 2.161,
+      "max_water_level_m": 13.761,
+      "mean_water_level_m": 7.473515355628826,
+      "std_water_level_m": 5.098252955105183,
+      "gaps_greater_than_3h": 139,
+      "largest_gap_hours": 12969.0,
+      "largest_gap_days": 540.4
+    },
+    "segments_count": 91,
+    "samples": {
+      "total_hourly": 11118,
+      "train": 5612,
+      "validation": 2396,
+      "test": 3103
+    },
+    "periods": {
+      "train": "2021-06-09 23:00:00 to 2022-07-30 10:00:00",
+      "validation": "2022-08-02 00:00:00 to 2022-11-25 14:00:00",
+      "test": "2024-05-19 12:00:00 to 2024-10-04 08:00:00"
+    },
+    "metrics": {
+      "validation": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.016926,
+          "mae_cm": 1.69,
+          "rmse_m": 0.027768,
+          "rmse_cm": 2.78,
+          "r2": 0.9992
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.011583,
+          "mae_cm": 1.16,
+          "rmse_m": 0.017962,
+          "rmse_cm": 1.8,
+          "r2": 0.999665
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.010788,
+          "mae_cm": 1.08,
+          "rmse_m": 0.015217,
+          "rmse_cm": 1.52,
+          "r2": 0.99976
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 36.26,
+          "rmse_percent": 45.2
+        }
+      },
+      "test": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.017054,
+          "mae_cm": 1.71,
+          "rmse_m": 0.028102,
+          "rmse_cm": 2.81,
+          "r2": 0.998454
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.011418,
+          "mae_cm": 1.14,
+          "rmse_m": 0.017791,
+          "rmse_cm": 1.78,
+          "r2": 0.99938
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.01039,
+          "mae_cm": 1.04,
+          "rmse_m": 0.014528,
+          "rmse_cm": 1.45,
+          "r2": 0.999587
+        },
+        "zero_shot_ramamangalam_transfer": null,
+        "improvement_vs_persistence": {
+          "mae_percent": 39.08,
+          "rmse_percent": 48.3
+        }
+      }
+    }
+  },
+  "MALAYATTOOR KODANAD BRIDGE": {
+    "station_name": "MALAYATTOOR KODANAD BRIDGE",
+    "station_type": "primary_truncated",
+    "split_strategy": "truncated_active_span_chronological",
+    "audit": {
+      "station_name": "MALAYATTOOR KODANAD BRIDGE",
+      "district": "ERNAKULAM",
+      "raw_rows": 14107,
+      "deduped_rows": 14107,
+      "raw_latitude": 10.18138889,
+      "raw_longitude": 76.505,
+      "coordinate_anomaly_detected": false,
+      "coordinate_anomaly_detail": "Coordinates fall within normal Kerala geographic bounds",
+      "has_2024_telemetry": false,
+      "min_timestamp": "2021-06-09 19:45:00",
+      "max_timestamp": "2022-11-25 15:00:00",
+      "invalid_timestamps": 0,
+      "invalid_water_levels": 0,
+      "min_water_level_m": 0.589,
+      "max_water_level_m": 13.462,
+      "mean_water_level_m": 8.298836251506344,
+      "std_water_level_m": 5.273369272529313,
+      "gaps_greater_than_3h": 101,
+      "largest_gap_hours": 1669.5,
+      "largest_gap_days": 69.6
+    },
+    "segments_count": 72,
+    "samples": {
+      "total_hourly": 7860,
+      "train": 5016,
+      "validation": 1060,
+      "test": 1784
+    },
+    "periods": {
+      "train": "2021-06-10 07:00:00 to 2022-05-02 22:00:00",
+      "validation": "2022-07-12 01:00:00 to 2022-08-31 23:00:00",
+      "test": "2022-09-01 00:00:00 to 2022-11-25 14:00:00"
+    },
+    "metrics": {
+      "validation": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.058878,
+          "mae_cm": 5.89,
+          "rmse_m": 0.104883,
+          "rmse_cm": 10.49,
+          "r2": 0.992836
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.034852,
+          "mae_cm": 3.49,
+          "rmse_m": 0.067274,
+          "rmse_cm": 6.73,
+          "r2": 0.997052
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.052327,
+          "mae_cm": 5.23,
+          "rmse_m": 0.064927,
+          "rmse_cm": 6.49,
+          "r2": 0.997254
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 11.13,
+          "rmse_percent": 38.1
+        }
+      },
+      "test": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.02958,
+          "mae_cm": 2.96,
+          "rmse_m": 0.072889,
+          "rmse_cm": 7.29,
+          "r2": 0.988954
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.021603,
+          "mae_cm": 2.16,
+          "rmse_m": 0.051313,
+          "rmse_cm": 5.13,
+          "r2": 0.994526
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.047309,
+          "mae_cm": 4.73,
+          "rmse_m": 0.05994,
+          "rmse_cm": 5.99,
+          "r2": 0.992531
+        },
+        "zero_shot_ramamangalam_transfer": {
+          "model": "Ramamangalam Model (Zero-Shot Transfer)",
+          "mae_m": 0.02518,
+          "mae_cm": 2.52,
+          "rmse_m": 0.063441,
+          "rmse_cm": 6.34,
+          "r2": 0.991632
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": -59.94,
+          "rmse_percent": 17.77
+        }
+      }
+    }
+  },
+  "PALA": {
+    "station_name": "PALA",
+    "station_type": "primary_truncated",
+    "split_strategy": "truncated_active_span_chronological",
+    "audit": {
+      "station_name": "PALA",
+      "district": "KOTTAYAM",
+      "raw_rows": 15771,
+      "deduped_rows": 15771,
+      "raw_latitude": 9.70111111,
+      "raw_longitude": 76.68222222,
+      "coordinate_anomaly_detected": false,
+      "coordinate_anomaly_detail": "Coordinates fall within normal Kerala geographic bounds",
+      "has_2024_telemetry": false,
+      "min_timestamp": "2021-06-05 16:40:00",
+      "max_timestamp": "2022-11-25 15:00:00",
+      "invalid_timestamps": 0,
+      "invalid_water_levels": 0,
+      "min_water_level_m": 6.4,
+      "max_water_level_m": 14.669,
+      "mean_water_level_m": 11.373877052818465,
+      "std_water_level_m": 3.2503428287316036,
+      "gaps_greater_than_3h": 127,
+      "largest_gap_hours": 1670.0,
+      "largest_gap_days": 69.6
+    },
+    "segments_count": 83,
+    "samples": {
+      "total_hourly": 8062,
+      "train": 5205,
+      "validation": 1046,
+      "test": 1811
+    },
+    "periods": {
+      "train": "2021-06-06 04:00:00 to 2022-05-02 22:00:00",
+      "validation": "2022-07-12 01:00:00 to 2022-08-31 23:00:00",
+      "test": "2022-09-01 00:00:00 to 2022-11-25 14:00:00"
+    },
+    "metrics": {
+      "validation": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.03387,
+          "mae_cm": 3.39,
+          "rmse_m": 0.072239,
+          "rmse_cm": 7.22,
+          "r2": 0.99664
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.021982,
+          "mae_cm": 2.2,
+          "rmse_m": 0.050216,
+          "rmse_cm": 5.02,
+          "r2": 0.998376
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.022944,
+          "mae_cm": 2.29,
+          "rmse_m": 0.049703,
+          "rmse_cm": 4.97,
+          "r2": 0.998409
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 32.26,
+          "rmse_percent": 31.2
+        }
+      },
+      "test": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.019856,
+          "mae_cm": 1.99,
+          "rmse_m": 0.056484,
+          "rmse_cm": 5.65,
+          "r2": 0.989099
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.016079,
+          "mae_cm": 1.61,
+          "rmse_m": 0.043385,
+          "rmse_cm": 4.34,
+          "r2": 0.993569
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.017841,
+          "mae_cm": 1.78,
+          "rmse_m": 0.037034,
+          "rmse_cm": 3.7,
+          "r2": 0.995314
+        },
+        "zero_shot_ramamangalam_transfer": {
+          "model": "Ramamangalam Model (Zero-Shot Transfer)",
+          "mae_m": 0.017429,
+          "mae_cm": 1.74,
+          "rmse_m": 0.049155,
+          "rmse_cm": 4.92,
+          "r2": 0.991744
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 10.15,
+          "rmse_percent": 34.43
+        }
+      }
+    }
+  },
+  "MANIYAR DAM": {
+    "station_name": "MANIYAR DAM",
+    "station_type": "comparator_full_span",
+    "split_strategy": "standard_multi_year_with_540d_hiatus",
+    "audit": {
+      "station_name": "MANIYAR DAM",
+      "district": "PATHANAMTHITTA",
+      "raw_rows": 21413,
+      "deduped_rows": 21413,
+      "raw_latitude": 9.32944444,
+      "raw_longitude": 76.87972222,
+      "coordinate_anomaly_detected": false,
+      "coordinate_anomaly_detail": "Coordinates fall within normal Kerala geographic bounds",
+      "has_2024_telemetry": true,
+      "min_timestamp": "2021-05-31 17:25:00",
+      "max_timestamp": "2025-03-10 14:00:00",
+      "invalid_timestamps": 0,
+      "invalid_water_levels": 0,
+      "min_water_level_m": 2.625,
+      "max_water_level_m": 35.731,
+      "mean_water_level_m": 13.705360435249617,
+      "std_water_level_m": 13.282020518579147,
+      "gaps_greater_than_3h": 136,
+      "largest_gap_hours": 12969.5,
+      "largest_gap_days": 540.4
+    },
+    "segments_count": 91,
+    "samples": {
+      "total_hourly": 11445,
+      "train": 5919,
+      "validation": 2470,
+      "test": 3056
+    },
+    "periods": {
+      "train": "2021-06-01 05:00:00 to 2022-07-30 10:00:00",
+      "validation": "2022-08-02 00:00:00 to 2022-11-25 14:00:00",
+      "test": "2024-05-19 12:00:00 to 2024-10-04 08:00:00"
+    },
+    "metrics": {
+      "validation": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.103887,
+          "mae_cm": 10.39,
+          "rmse_m": 0.154185,
+          "rmse_cm": 15.42,
+          "r2": 0.810765
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.093684,
+          "mae_cm": 9.37,
+          "rmse_m": 0.142242,
+          "rmse_cm": 14.22,
+          "r2": 0.838945
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.095351,
+          "mae_cm": 9.54,
+          "rmse_m": 0.140015,
+          "rmse_cm": 14.0,
+          "r2": 0.843949
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 8.22,
+          "rmse_percent": 9.19
+        }
+      },
+      "test": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.127195,
+          "mae_cm": 12.72,
+          "rmse_m": 0.193588,
+          "rmse_cm": 19.36,
+          "r2": 0.829503
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.260514,
+          "mae_cm": 26.05,
+          "rmse_m": 0.316867,
+          "rmse_cm": 31.69,
+          "r2": 0.543214
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 1.43716,
+          "mae_cm": 143.72,
+          "rmse_m": 1.447343,
+          "rmse_cm": 144.73,
+          "r2": -8.530203
+        },
+        "zero_shot_ramamangalam_transfer": {
+          "model": "Ramamangalam Model (Zero-Shot Transfer)",
+          "mae_m": 0.157497,
+          "mae_cm": 15.75,
+          "rmse_m": 0.231387,
+          "rmse_cm": 23.14,
+          "r2": 0.756424
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": -1029.89,
+          "rmse_percent": -647.64
+        }
+      }
+    }
+  },
+  "TRINAYAKUDAM": {
+    "station_name": "TRINAYAKUDAM",
+    "station_type": "comparator_full_span",
+    "split_strategy": "standard_multi_year_with_540d_hiatus",
+    "audit": {
+      "station_name": "TRINAYAKUDAM",
+      "district": "KOTTAYAM",
+      "raw_rows": 19031,
+      "deduped_rows": 19031,
+      "raw_latitude": 9.70111111,
+      "raw_longitude": 76.40305556,
+      "coordinate_anomaly_detected": false,
+      "coordinate_anomaly_detail": "Coordinates fall within normal Kerala geographic bounds",
+      "has_2024_telemetry": true,
+      "min_timestamp": "2021-06-06 12:10:00",
+      "max_timestamp": "2025-03-10 14:00:00",
+      "invalid_timestamps": 0,
+      "invalid_water_levels": 0,
+      "min_water_level_m": 0.185,
+      "max_water_level_m": 6.934,
+      "mean_water_level_m": 3.0916006515684935,
+      "std_water_level_m": 2.7911939196811364,
+      "gaps_greater_than_3h": 104,
+      "largest_gap_hours": 12969.0,
+      "largest_gap_days": 540.4
+    },
+    "segments_count": 60,
+    "samples": {
+      "total_hourly": 10442,
+      "train": 5138,
+      "validation": 2412,
+      "test": 2880
+    },
+    "periods": {
+      "train": "2021-06-07 00:00:00 to 2022-07-30 10:00:00",
+      "validation": "2022-08-02 00:00:00 to 2022-11-25 14:00:00",
+      "test": "2024-05-31 12:00:00 to 2024-10-04 08:00:00"
+    },
+    "metrics": {
+      "validation": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.025585,
+          "mae_cm": 2.56,
+          "rmse_m": 0.032689,
+          "rmse_cm": 3.27,
+          "r2": 0.941802
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.01412,
+          "mae_cm": 1.41,
+          "rmse_m": 0.021517,
+          "rmse_cm": 2.15,
+          "r2": 0.974784
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.014951,
+          "mae_cm": 1.5,
+          "rmse_m": 0.023247,
+          "rmse_cm": 2.32,
+          "r2": 0.970567
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 41.56,
+          "rmse_percent": 28.88
+        }
+      },
+      "test": {
+        "persistence": {
+          "model": "Persistence Baseline",
+          "mae_m": 0.028628,
+          "mae_cm": 2.86,
+          "rmse_m": 0.040646,
+          "rmse_cm": 4.06,
+          "r2": 0.884792
+        },
+        "random_forest": {
+          "model": "RandomForestRegressor (Delta)",
+          "mae_m": 0.023119,
+          "mae_cm": 2.31,
+          "rmse_m": 0.036163,
+          "rmse_cm": 3.62,
+          "r2": 0.908803
+        },
+        "ridge_regressor": {
+          "model": "RidgeRegressor (Kinematic Delta)",
+          "mae_m": 0.023142,
+          "mae_cm": 2.31,
+          "rmse_m": 0.038399,
+          "rmse_cm": 3.84,
+          "r2": 0.897176
+        },
+        "zero_shot_ramamangalam_transfer": {
+          "model": "Ramamangalam Model (Zero-Shot Transfer)",
+          "mae_m": 0.026209,
+          "mae_cm": 2.62,
+          "rmse_m": 0.04255,
+          "rmse_cm": 4.26,
+          "r2": 0.873743
+        },
+        "improvement_vs_persistence": {
+          "mae_percent": 19.16,
+          "rmse_percent": 5.53
+        }
+      }
+    }
+  }
+}
