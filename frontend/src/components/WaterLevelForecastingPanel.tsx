@@ -29,9 +29,11 @@ import {
   HistoricalSeriesResponse
 } from '../types';
 
+type StationQueryType = 'RAMAMANGALAM-BRIDGE' | 'PALA' | 'TRINAYAKUDAM' | 'USGS-11164500' | 'MANIYAR-DAM';
+
 export const WaterLevelForecastingPanel: React.FC = () => {
   // Telemetry Station Status State
-  const [stationQuery, setStationQuery] = useState<'RAMAMANGALAM-BRIDGE' | 'USGS-11164500'>('RAMAMANGALAM-BRIDGE');
+  const [stationQuery, setStationQuery] = useState<StationQueryType>('RAMAMANGALAM-BRIDGE');
   const [riverData, setRiverData] = useState<RiverDataResponse | null>(null);
   const [riverLoading, setRiverLoading] = useState<boolean>(true);
   const [riverError, setRiverError] = useState<string | null>(null);
@@ -55,7 +57,13 @@ export const WaterLevelForecastingPanel: React.FC = () => {
   const fetchEvaluationData = async (targetStation: string) => {
     setEvaluationLoading(true);
     try {
-      const cleanName = targetStation === 'USGS-11164500' ? 'USGS 11164500' : 'RAMAMANGALAM BRIDGE';
+      let cleanName = targetStation;
+      if (targetStation === 'USGS-11164500') cleanName = 'USGS 11164500';
+      else if (targetStation === 'RAMAMANGALAM-BRIDGE') cleanName = 'RAMAMANGALAM BRIDGE';
+      else if (targetStation === 'MANIYAR-DAM') cleanName = 'MANIYAR DAM';
+      else if (targetStation === 'PALA') cleanName = 'PALA';
+      else if (targetStation === 'TRINAYAKUDAM') cleanName = 'TRINAYAKUDAM';
+
       const [vsObs, hist] = await Promise.all([
         api.getForecastVsObservation(cleanName, 8).catch(() => null),
         api.getRiverHistory(cleanName, 12).catch(() => null)
@@ -71,7 +79,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
 
   // Fetch river station telemetry on mount, station change, or mode change
   const fetchRiverTelemetry = async (
-    targetStation: 'RAMAMANGALAM-BRIDGE' | 'USGS-11164500' = stationQuery,
+    targetStation: StationQueryType = stationQuery,
     mode: 'auto' | 'historical' = telemetryMode
   ) => {
     setRiverLoading(true);
@@ -225,7 +233,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-cyan-400" />
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                River Telemetry Station Status: {stationQuery === 'RAMAMANGALAM-BRIDGE' ? 'RAMAMANGALAM BRIDGE (Kerala SW)' : 'STANFORD CREEK (USGS NWIS)'}
+                River Telemetry Station Status: {stationQuery.replace('-', ' ')}
               </h2>
             </div>
             <p className="text-[11px] text-slate-500 font-mono mt-0.5">
@@ -234,8 +242,8 @@ export const WaterLevelForecastingPanel: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Station Selector */}
-            <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
+            {/* Multi-Station Selector */}
+            <div className="flex flex-wrap items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px] gap-1">
               <button
                 onClick={() => setStationQuery('RAMAMANGALAM-BRIDGE')}
                 className={`px-2.5 py-1 rounded font-semibold transition-all ${
@@ -244,7 +252,27 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Ramamangalam (Kerala SW)
+                Ramamangalam
+              </button>
+              <button
+                onClick={() => setStationQuery('PALA')}
+                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                  stationQuery === 'PALA'
+                    ? 'bg-indigo-950 text-indigo-300 border border-indigo-800'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Pala (Meenachil)
+              </button>
+              <button
+                onClick={() => setStationQuery('TRINAYAKUDAM')}
+                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                  stationQuery === 'TRINAYAKUDAM'
+                    ? 'bg-purple-950 text-purple-300 border border-purple-800'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Trinayakudam
               </button>
               <button
                 onClick={() => setStationQuery('USGS-11164500')}
@@ -254,7 +282,17 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Stanford Creek (USGS Live)
+                Stanford Creek (USGS)
+              </button>
+              <button
+                onClick={() => setStationQuery('MANIYAR-DAM')}
+                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                  stationQuery === 'MANIYAR-DAM'
+                    ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                    : 'text-slate-400 hover:text-rose-400'
+                }`}
+              >
+                Maniyar Dam (Excluded)
               </button>
             </div>
 
@@ -577,6 +615,23 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       {/* ============================================================== */}
       {/* SECTION 4: GROUND-TRUTH EVALUATION: FORECAST VS ACTUAL         */}
       {/* ============================================================== */}
+      {forecastVsObs?.model_name === 'EXCLUDED_DAM_BARRAGE' && (
+        <div className="bg-slate-900/80 border border-amber-800/80 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-3 mb-3 text-amber-400">
+            <ShieldAlert className="w-5 h-5 shrink-0" />
+            <h3 className="text-sm font-bold uppercase tracking-wider">
+              Dam &amp; Reservoir Station Excluded: {forecastVsObs.station_name}
+            </h3>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed font-mono">
+            {forecastVsObs.disclaimer}
+          </p>
+          <div className="mt-3 text-[11px] text-amber-400/90 bg-amber-950/40 border border-amber-900/60 p-2.5 rounded-lg font-mono">
+            Empirical Benchmark: Kinematic delta modeling yielded negative R² (-8.53) on MANIYAR DAM due to unmonitored crest gate and spillway operations. Modeling is mathematically unsuitable until operational dam telemetry is integrated.
+          </div>
+        </div>
+      )}
+
       {forecastVsObs && forecastVsObs.comparisons && forecastVsObs.comparisons.length > 0 && (
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
@@ -588,7 +643,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                 </h3>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Evaluates the Ridge hydrodynamic momentum model against consecutive ground-truth observations (wl_t+1) recorded at {forecastVsObs.station_name}.
+                Evaluates the calibrated Ridge hydrodynamic delta model against consecutive ground-truth observations (wl_t+1) recorded at {forecastVsObs.station_name}.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -775,7 +830,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
             </p>
           </div>
           <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-800/60 self-start sm:self-auto">
-            Station: RAMAMANGALAM BRIDGE
+            Station: {selectedScenario.station_name}
           </span>
         </div>
 
