@@ -4,8 +4,9 @@
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite%20%2B%20TS-61DAFB.svg)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS-38B2AC.svg)](https://tailwindcss.com/)
 [![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-F7931E.svg)](https://scikit-learn.org/)
-[![Database](https://img.shields.io/badge/DB-SQLite-003B57.svg)](https://sqlite.org/)
-[![Tests](https://img.shields.io/badge/Tests-79%20Passing-brightgreen.svg)](https://pytest.org/)
+[![Database](https://img.shields.io/badge/DB-SQLite%20%2B%20Alembic-003B57.svg)](https://sqlite.org/)
+[![Backend Tests](https://img.shields.io/badge/Pytest-119%20Passing-brightgreen.svg)](https://pytest.org/)
+[![Frontend Tests](https://img.shields.io/badge/Vitest-26%20Passing-brightgreen.svg)](https://vitest.dev/)
 
 **AQUORA AI** is an intelligent aquatic hazard monitoring and river water-level forecasting platform. It evaluates multi-variable environmental indicators (flow rate, water temperature, depth, rainfall, wind velocity) to calculate aquatic hazard scores, warn of hypothermia and hydrodynamic suction risks, and provide actionable safety advisories.
 
@@ -39,15 +40,14 @@ A dedicated endpoint (`GET /api/v1/environmental-data/{id}`) audits every enviro
 - **Consistency:** Risk categories (`low`, `moderate`, `high`, `extreme`) are standardized across backend schemas, frontend cards, and map markers.
 - **Transparency:** The system explicitly states that scores represent **environmental aquatic hazard**, not calibrated human drowning probabilities.
 
-### 4. Ridge-Based River Stage Forecaster (Trained ML Model)
-- **Trained Artifact:** `ramamangalam_water_level_model.joblib` (scikit-learn Ridge regression).
-- **Training Dataset:** 29,864 hourly stage and discharge observations from **Ramamangalam Bridge** (Kerala SW / CWC) on the Muvattupuzha River basin.
-- **Feature Engineering:** Computes 25 kinematic and hydrodynamic momentum features across a 13-hour sliding lag window ($t-12$ to $t$).
-- **Benchmark Performance:**
-  - Test Set Mean Absolute Error (MAE): **10.8 mm (1.08 cm)**.
-  - Naive Persistence Benchmark ($wl_{t+1} = wl_t$): **17.0 mm (1.70 cm)**.
-  - Error Reduction: **36.7% error reduction** over naive persistence baseline.
-- **Ground-Truth Evaluation:** Dedicated endpoint (`GET /api/v1/river-data/forecast-vs-observation/{station}`) compares sequential model forecasts against real subsequent observations ($wl_{t+1}$) with outperformance indicators.
+### 4. Multi-Station Hydrodynamic Stage Forecasters (Trained ML Models)
+- **Calibrated Stations & Serialized Artifacts:**
+  - **Ramamangalam Bridge** (`ramamangalam_water_level_model.joblib`): Muvattupuzha River, MAE = 1.04 cm vs 1.71 cm persistence (+39.1% improvement, $R^2 = 0.9996$).
+  - **Pala** (`pala_water_level_model.joblib`): Meenachil River, MAE = 3.15 cm vs 3.84 cm persistence (+18.0% improvement, $R^2 = 0.9997$).
+  - **Trinayakudam** (`trinayakudam_water_level_model.joblib`): Lowland transition reach, MAE = 3.02 cm vs 3.36 cm persistence (+10.1% improvement, $R^2 = 0.9996$).
+- **Physically Grounded Dam Rejection:** Unmonitored human mechanical sluice/crest gate operations behind dam barrages (`MANIYAR DAM`, $R^2 = -8.53$) invalidate continuous kinematic flow wave modeling. The backend explicitly returns HTTP 400 with a physical explanation, and the frontend displays a dedicated warning banner.
+- **Feature Engineering:** Computes 25 kinematic and hydrodynamic momentum features across a 13-hour sliding lag window ($t-12$ to $t$) without interpolating across multi-hour telemetry gaps.
+- **Ground-Truth Evaluation:** Dedicated endpoint (`GET /api/v1/river-data/forecast-vs-observation/{station}`) compares sequential model forecasts against real held-out observations ($wl_{t+1}$) with outperformance metrics.
 
 ### 5. Automated Hazard Monitoring Service (`HazardMonitoringService`)
 - **Dynamic Threshold Surveillance:**
@@ -57,7 +57,7 @@ A dedicated endpoint (`GET /api/v1/environmental-data/{id}`) audits every enviro
 - **Background Scheduler:** Thread-safe scheduler running a periodic background sweep with configurable cycle (default 60 seconds).
 - **Deduplication:** 60-second in-memory suppression window prevents alert storms for continuous breach conditions.
 - **Safe Test Simulation Mode:** When enabled, dispatches are marked as `TEST_MODE_SIMULATED` to prevent unsolicited external notifications during testing.
-- **Durable Persistence:** Every generated warning and audit trail is persisted in the SQLite database (`AlertModel` and `AlertDeliveryModel`).
+- **Durable Persistence:** Every generated warning and audit trail is persisted in the SQLite database (`AlertModel` and `AlertDeliveryModel`). Schema evolution is managed via Alembic migrations (`dfd0da3e179f_initial_schema_baseline.py`).
 
 ### 6. Live Telemetry & Historical Archives
 - **USGS NWIS Live Stream:** Real-time water-level telemetry integrated from USGS station **11164500 (San Francisquito Creek at Stanford, CA)** via `https://waterservices.usgs.gov/nwis/iv/`. Kept associated with its authentic US geographic coordinates.
@@ -77,10 +77,10 @@ A dedicated endpoint (`GET /api/v1/environmental-data/{id}`) audits every enviro
 
 ## 🛠 Tech Stack
 
-- **Backend:** Python 3.11, FastAPI, Pydantic v2, SQLAlchemy, Uvicorn, scikit-learn, joblib.
-- **Database:** SQLite with dynamic column migration.
-- **Frontend:** React 19 / 18, Vite, TypeScript, Tailwind CSS, Lucide React, Leaflet with Esri World Imagery.
-- **Testing:** Pytest with 79 passing test cases.
+- **Backend:** Python 3.11, FastAPI, Pydantic v2, SQLAlchemy, Alembic, Uvicorn, scikit-learn, joblib.
+- **Database:** SQLite with Alembic schema migration management (`render_as_batch=True`).
+- **Frontend:** React, Vite, TypeScript, Tailwind CSS, Lucide React, Leaflet with Esri World Imagery.
+- **Testing & QA:** 119 Pytest backend tests (API, DB, ML, alert lifecycle) and 26 Vitest frontend component/integration tests.
 
 ---
 
@@ -168,15 +168,21 @@ npm run dev
 ```
 Access the application at `http://localhost:5173`.
 
-### 3. Running Backend Tests & Frontend Production Build
+### 3. Running Test Suites, Migrations & Production Build
 
 ```bash
-# Run backend test suite (79 tests)
+# 1. Database Migrations (Backend)
 cd backend
-.venv\Scripts\pytest.exe tests
+.venv\Scripts\alembic upgrade head
 
-# Run frontend TypeScript validation & production build
+# 2. Run Complete Backend Test Suite (119 tests)
+.venv\Scripts\pytest.exe
+
+# 3. Run Frontend Test Suite (26 tests)
 cd ../frontend
+npm test -- --run
+
+# 4. Run Frontend TypeScript Validation & Production Build
 npm run build
 ```
 
