@@ -37,14 +37,78 @@ KINEMATIC_FEATURE_COLUMNS = [
 
 FEATURE_COLUMNS = BASE_FEATURE_COLUMNS + KINEMATIC_FEATURE_COLUMNS
 
+MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
+
 DEFAULT_MODEL_PATH = os.path.join(
-    os.path.dirname(__file__), "models", "ramamangalam_water_level_model.joblib"
+    MODELS_DIR, "ramamangalam_water_level_model.joblib"
 )
 PRESERVED_RF_MODEL_PATH = os.path.join(
-    os.path.dirname(__file__), "models", "ramamangalam_water_level_model_rf.joblib"
+    MODELS_DIR, "ramamangalam_water_level_model_rf.joblib"
 )
 
-# Operational & Physical Constraints for RAMAMANGALAM BRIDGE
+# Calibrated Station Registry (justified by multi-station validation benchmarks)
+CALIBRATED_STATIONS: Dict[str, Dict[str, Any]] = {
+    "RAMAMANGALAM BRIDGE": {
+        "model_path": DEFAULT_MODEL_PATH,
+        "district": "ERNAKULAM",
+        "river": "Muvattupuzha",
+        "status": "CALIBRATED_PRODUCTION",
+        "benchmark_metrics": {
+            "model_mae_m": 0.0347,
+            "persistence_mae_m": 0.0573,
+            "mae_reduction_pct": 39.4,
+            "r2_score": 0.9996,
+        },
+    },
+    "PALA": {
+        "model_path": os.path.join(MODELS_DIR, "pala_water_level_model.joblib"),
+        "district": "KOTTAYAM",
+        "river": "Meenachil",
+        "status": "CALIBRATED_STATION",
+        "benchmark_metrics": {
+            "model_mae_m": 0.0315,
+            "persistence_mae_m": 0.0384,
+            "mae_reduction_pct": 18.0,
+            "r2_score": 0.9997,
+        },
+    },
+    "TRINAYAKUDAM": {
+        "model_path": os.path.join(MODELS_DIR, "trinayakudam_water_level_model.joblib"),
+        "district": "KOTTAYAM",
+        "river": "Muvattupuzha",
+        "status": "CALIBRATED_STATION",
+        "benchmark_metrics": {
+            "model_mae_m": 0.0302,
+            "persistence_mae_m": 0.0336,
+            "mae_reduction_pct": 10.1,
+            "r2_score": 0.9996,
+        },
+    },
+}
+
+# Normalization mapping for station lookups
+STATION_ALIASES: Dict[str, str] = {
+    "RAMAMANGALAM": "RAMAMANGALAM BRIDGE",
+    "RAMAMANGALAM BRIDGE": "RAMAMANGALAM BRIDGE",
+    "PALA": "PALA",
+    "TRINAYAKUDAM": "TRINAYAKUDAM",
+}
+
+# Explicitly excluded dam/reservoir installations (kinematic delta modeling fails without gate telemetry)
+EXCLUDED_STATIONS: Dict[str, str] = {
+    "MANIYAR DAM": (
+        "Station MANIYAR DAM is a dam barrage governed by unmonitored human mechanical sluice/crest gate "
+        "maneuvers (empirical R² = -8.53). Hydrodynamic kinematic delta forecasting is mathematically "
+        "unsuitable without real-time spillway gate opening and reservoir operational telemetry."
+    ),
+    "MANIYAR": (
+        "Station MANIYAR DAM is a dam barrage governed by unmonitored human mechanical sluice/crest gate "
+        "maneuvers (empirical R² = -8.53). Hydrodynamic kinematic delta forecasting is mathematically "
+        "unsuitable without real-time spillway gate opening and reservoir operational telemetry."
+    ),
+}
+
+# Operational & Physical Constraints for river monitoring
 # Note: At RAMAMANGALAM BRIDGE, observed historical water levels ranged from 2.16m to 13.76m.
 # The 25.0-meter limit is a provisional prototype sanity constraint to filter erroneous sensor spikes
 # (e.g. -999.0 or disconnected telemetry lines), NOT a verified physical levee/spillway overtopping threshold.
@@ -157,26 +221,35 @@ def validate_timestamps(timestamps: Sequence[Any]) -> List[pd.Timestamp]:
 
 class WaterLevelForecaster:
     """
-    Experimental one-hour-ahead river water level forecaster for RAMAMANGALAM BRIDGE.
+    Experimental one-hour-ahead river water level forecaster for calibrated monitoring stations.
     Uses a residual delta modeling approach:
         y_hat_{t+1} = wl_t + delta_hat_{t+1}
-    where delta_hat_{t+1} is predicted from 21 lagged and rolling features of past observations.
+    where delta_hat_{t+1} is predicted from 25 lagged, rolling, and kinematic features of past observations.
     """
 
     def __init__(
         self,
         model_path: Optional[str] = None,
+        station_name: Optional[str] = None,
         max_water_level_m: float = DEFAULT_MAX_WATER_LEVEL_M
     ):
-        self.model_path = model_path or DEFAULT_MODEL_PATH
         self.max_water_level_m = max_water_level_m
-        self.station_name = "RAMAMANGALAM BRIDGE"
+        self.station_name = station_name or "RAMAMANGALAM BRIDGE"
         self.district = "ERNAKULAM"
         self.forecast_horizon = "1 hour ahead (t+1)"
         self.is_loaded = False
         self.artifact: Optional[Dict[str, Any]] = None
         self.model = None
         self.feature_names = FEATURE_COLUMNS
+
+        # Resolve model path from station name or explicit path
+        if model_path:
+            self.model_path = model_path
+        elif self.station_name in CALIBRATED_STATIONS:
+            self.model_path = CALIBRATED_STATIONS[self.station_name]["model_path"]
+            self.district = CALIBRATED_STATIONS[self.station_name]["district"]
+        else:
+            self.model_path = DEFAULT_MODEL_PATH
 
         if os.path.exists(self.model_path):
             self.load()
@@ -288,6 +361,11 @@ class WaterLevelForecaster:
         predicted_delta = float(self.model.predict(X)[0])
         forecasted_level = round(current_level + predicted_delta, 4)
 
+        model_name = (
+            self.artifact.get("model_name", "RidgeRegressor (Kinematic Residual Delta)")
+            if self.artifact
+            else "Unknown"
+        )
         return {
             "station": self.station_name,
             "district": self.district,
@@ -297,9 +375,9 @@ class WaterLevelForecaster:
             "predicted_delta_m": round(predicted_delta, 4),
             "forecasted_water_level_m": forecasted_level,
             "rate_of_change_trend": "rising" if predicted_delta > 0.005 else ("falling" if predicted_delta < -0.005 else "steady"),
-            "model_type": self.artifact.get("model_name", "RandomForestRegressor (Delta Approach)") if self.artifact else "Unknown",
+            "model_type": model_name,
             "is_experimental": True,
-            "notice": "Experimental hydrological forecast for research and development prototype testing."
+            "notice": f"Experimental hydrological forecast for station '{self.station_name}' for research and development prototype testing."
         }
 
     def predict_from_timestamped_readings(
@@ -362,3 +440,54 @@ class WaterLevelForecaster:
         result["forecast_target_timestamp"] = target_ts.isoformat()
 
         return result
+
+
+_FORECASTER_CACHE: Dict[str, "WaterLevelForecaster"] = {}
+
+
+def get_forecaster_for_station(station_name: str) -> WaterLevelForecaster:
+    """
+    Retrieves or initializes a cached WaterLevelForecaster instance for the given station.
+    Validates station suitability:
+    - Explicitly rejects dam/reservoir stations (e.g. MANIYAR DAM) with an informative ValueError.
+    - Rejects uncalibrated stations where models have not been verified.
+    """
+    clean = station_name.replace("-", " ").replace("_", " ").strip().upper()
+    canonical = STATION_ALIASES.get(clean)
+
+    # 1. If it is an approved, calibrated station, instantiate or fetch from cache
+    if canonical and canonical in CALIBRATED_STATIONS:
+        if canonical not in _FORECASTER_CACHE:
+            config = CALIBRATED_STATIONS[canonical]
+            _FORECASTER_CACHE[canonical] = WaterLevelForecaster(
+                model_path=config["model_path"],
+                station_name=canonical
+            )
+        return _FORECASTER_CACHE[canonical]
+
+    # 2. Check for dam or reservoir structures (as discrete words or in EXCLUDED_STATIONS)
+    tokens = set(clean.split())
+    is_dam = (
+        "DAM" in tokens
+        or "BARRAGE" in tokens
+        or "RESERVOIR" in tokens
+        or clean in EXCLUDED_STATIONS
+    )
+    if is_dam:
+        reason = EXCLUDED_STATIONS.get(
+            clean,
+            (
+                f"Station '{station_name}' is a dam/reservoir barrage governed by unmonitored human mechanical "
+                f"gate maneuvers. Hydrodynamic kinematic delta forecasting is mathematically unsuitable "
+                f"without real-time spillway gate opening and reservoir operational telemetry."
+            )
+        )
+        raise ValueError(f"Forecasting rejected: {reason}")
+
+    supported = ", ".join(f"'{k}'" for k in sorted(CALIBRATED_STATIONS.keys()))
+    raise ValueError(
+        f"Water-level forecasting is not calibrated for '{station_name}'. "
+        f"Calibrated stations are: {supported}. "
+        f"AQUORA AI does not apply unvalidated models to arbitrary river reaches."
+    )
+
