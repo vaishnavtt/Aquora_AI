@@ -78,7 +78,82 @@ class TestAPIEndpoints(unittest.TestCase):
         }
         res = self.client.post("/api/v1/forecast/water-level", json=payload)
         self.assertEqual(res.status_code, 400)
-        self.assertIn("exclusively for 'RAMAMANGALAM BRIDGE'", res.json()["detail"])
+        self.assertIn("not calibrated for 'UNKNOWN RIVER'", res.json()["detail"])
+
+    def test_forecast_water_level_dam_station_rejected(self):
+        base_time = datetime(2024, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
+        readings = [
+            {
+                "timestamp": (base_time + timedelta(hours=i)).isoformat(),
+                "water_level_m": 4.0
+            }
+            for i in range(13)
+        ]
+        payload = {
+            "station_name": "MANIYAR DAM",
+            "readings": readings
+        }
+        res = self.client.post("/api/v1/forecast/water-level", json=payload)
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("dam barrage", res.json()["detail"])
+        self.assertIn("gate maneuvers", res.json()["detail"])
+
+    def test_forecast_water_level_pala_success(self):
+        base_time = datetime(2022, 10, 1, 10, 0, 0, tzinfo=timezone.utc)
+        readings = [
+            {
+                "timestamp": (base_time + timedelta(hours=i)).isoformat(),
+                "water_level_m": 4.5 + 0.01 * i
+            }
+            for i in range(13)
+        ]
+        payload = {
+            "station_name": "PALA",
+            "readings": readings
+        }
+        res = self.client.post("/api/v1/forecast/water-level", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["station"], "PALA")
+        self.assertIn("forecasted_water_level_m", data)
+        self.assertGreater(data["forecasted_water_level_m"], 0.0)
+
+    def test_forecast_water_level_trinayakudam_success(self):
+        base_time = datetime(2024, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
+        readings = [
+            {
+                "timestamp": (base_time + timedelta(hours=i)).isoformat(),
+                "water_level_m": 2.5 + 0.01 * i
+            }
+            for i in range(13)
+        ]
+        payload = {
+            "station_name": "TRINAYAKUDAM",
+            "readings": readings
+        }
+        res = self.client.post("/api/v1/forecast/water-level", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["station"], "TRINAYAKUDAM")
+        self.assertIn("forecasted_water_level_m", data)
+        self.assertGreater(data["forecasted_water_level_m"], 0.0)
+
+    def test_forecast_vs_observation_endpoints(self):
+        # 1. Calibrated Station: PALA
+        res_pala = self.client.get("/api/v1/river-data/forecast-vs-observation/PALA?sample_size=12")
+        self.assertEqual(res_pala.status_code, 200)
+        data_pala = res_pala.json()
+        self.assertEqual(data_pala["station_name"], "PALA")
+        self.assertEqual(len(data_pala["comparisons"]), 12)
+        self.assertGreater(data_pala["model_mae_m"], 0.0)
+
+        # 2. Excluded Dam Station: MANIYAR DAM
+        res_dam = self.client.get("/api/v1/river-data/forecast-vs-observation/MANIYAR-DAM")
+        self.assertEqual(res_dam.status_code, 200)
+        data_dam = res_dam.json()
+        self.assertEqual(data_dam["model_name"], "EXCLUDED_DAM_BARRAGE")
+        self.assertEqual(len(data_dam["comparisons"]), 0)
+        self.assertIn("gate maneuvers", data_dam["disclaimer"])
 
     def test_forecast_water_level_irregular_interval_rejected(self):
         base_time = datetime(2024, 6, 1, 10, 0, 0, tzinfo=timezone.utc)

@@ -46,7 +46,7 @@ try:
         HazardMonitoringStatusResponse,
     )
     from app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
-    from app.ml.water_level_forecaster import WaterLevelForecaster
+    from app.ml.water_level_forecaster import WaterLevelForecaster, get_forecaster_for_station
     from app.services.river_data_service import river_data_service
     from app.services.alert_service import alert_service
     from app.services.hazard_monitoring_service import hazard_monitoring_service
@@ -85,7 +85,7 @@ except ImportError:
         HazardMonitoringStatusResponse,
     )
     from backend.app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
-    from backend.app.ml.water_level_forecaster import WaterLevelForecaster
+    from backend.app.ml.water_level_forecaster import WaterLevelForecaster, get_forecaster_for_station
     from backend.app.services.river_data_service import river_data_service
     from backend.app.services.alert_service import alert_service
     from backend.app.services.hazard_monitoring_service import hazard_monitoring_service
@@ -444,21 +444,22 @@ def predict_hazard_risk(
 )
 def forecast_river_water_level(req: WaterLevelForecastRequest):
     """
-    Experimental one-hour-ahead river water level forecasting for RAMAMANGALAM BRIDGE.
+    Experimental one-hour-ahead river water level forecasting for calibrated monitoring stations.
     Requires at least 13 consecutive hourly telemetry readings in chronological order.
     Notice: This is an experimental river stage forecast for prototype research,
     NOT a validated drowning-risk prediction or public flood warning.
     """
-    if req.station_name.strip().upper() != "RAMAMANGALAM BRIDGE":
-        raise HTTPException(
-            status_code=400,
-            detail=f"Water-level forecasting is currently calibrated exclusively for 'RAMAMANGALAM BRIDGE'; received '{req.station_name}'."
-        )
+    try:
+        forecaster = get_forecaster_for_station(req.station_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Forecaster initialization error: {str(e)}")
 
-    if water_level_forecaster is None or not water_level_forecaster.is_loaded:
+    if forecaster is None or not forecaster.is_loaded:
         raise HTTPException(
             status_code=503,
-            detail="Water level forecasting model artifact is not loaded on this server."
+            detail=f"Water level forecasting model artifact for '{req.station_name}' is not loaded on this server."
         )
 
     try:
@@ -466,7 +467,7 @@ def forecast_river_water_level(req: WaterLevelForecastRequest):
             {"timestamp": r.timestamp, "water_level_m": r.water_level_m}
             for r in req.readings
         ]
-        result = water_level_forecaster.predict_from_timestamped_readings(raw_readings)
+        result = forecaster.predict_from_timestamped_readings(raw_readings)
         return WaterLevelForecastResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -515,6 +516,22 @@ def get_dashboard(db: Session = Depends(get_db)):
             data_source="Kerala State Water Resources Department (Kerala SW)",
             freshness="Verified Historical Archive (2021-2025 Active)",
             is_live=bool(os.getenv("NWIC_API_KEY"))
+        ),
+        StationAvailabilitySchema(
+            station_name="PALA (Meenachil River)",
+            station_type="Hourly Stage Hydrology Gauge",
+            telemetry_status="HISTORICAL_ARCHIVE",
+            data_source="Kerala State Water Resources Department (Kerala SW)",
+            freshness="Verified Historical Archive (2021-2022 Closed)",
+            is_live=False
+        ),
+        StationAvailabilitySchema(
+            station_name="TRINAYAKUDAM (Muvattupuzha River)",
+            station_type="Hourly Stage Hydrology Gauge",
+            telemetry_status="HISTORICAL_ARCHIVE",
+            data_source="Kerala State Water Resources Department (Kerala SW)",
+            freshness="Verified Historical Archive (2021-2025 Active)",
+            is_live=False
         ),
         StationAvailabilitySchema(
             station_name="Ashtamudi Lake",

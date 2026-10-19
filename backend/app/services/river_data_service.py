@@ -46,6 +46,52 @@ LATEST_HISTORICAL_RECORD = {
 USGS_DEFAULT_SITE = "11164500"  # San Francisquito Creek at Stanford, CA
 USGS_SOURCE_AGENCY = "U.S. Geological Survey (USGS) National Water Information System"
 
+KERALA_STATIONS_CONFIG: Dict[str, Dict[str, Any]] = {
+    "RAMAMANGALAM BRIDGE": {
+        "canonical": "RAMAMANGALAM BRIDGE",
+        "district": "ERNAKULAM",
+        "river": "Muvattupuzha",
+        "features_file": "ramamangalam_hourly_features.csv",
+        "latest_reading": {
+            "timestamp": "2025-03-10T08:30:00+05:30",
+            "water_level_m": 2.162,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for RAMAMANGALAM BRIDGE (10-Mar-2025 08:30 IST)."
+        },
+    },
+    "PALA": {
+        "canonical": "PALA",
+        "district": "KOTTAYAM",
+        "river": "Meenachil",
+        "features_file": "pala_hourly_features.csv",
+        "latest_reading": {
+            "timestamp": "2022-11-25T11:00:00+05:30",
+            "water_level_m": 4.88,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for PALA (25-Nov-2022 11:00 IST)."
+        },
+    },
+    "TRINAYAKUDAM": {
+        "canonical": "TRINAYAKUDAM",
+        "district": "KOTTAYAM",
+        "river": "Muvattupuzha",
+        "features_file": "trinayakudam_hourly_features.csv",
+        "latest_reading": {
+            "timestamp": "2025-01-20T09:00:00+05:30",
+            "water_level_m": 2.65,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for TRINAYAKUDAM (20-Jan-2025 09:00 IST)."
+        },
+    },
+}
+
+def resolve_kerala_station(station_query: str) -> Optional[str]:
+    clean = station_query.replace("-", " ").replace("_", " ").strip().upper()
+    if "RAMAMANGALAM" in clean:
+        return "RAMAMANGALAM BRIDGE"
+    if "PALA" in clean:
+        return "PALA"
+    if "TRINAYAKUDAM" in clean:
+        return "TRINAYAKUDAM"
+    return None
+
 
 class RiverDataProvider(ABC):
     """Abstract interface for river water level data providers."""
@@ -338,36 +384,70 @@ class RiverDataService:
         self.live_nwic_provider = LiveNWICProvider()
         self.live_usgs_provider = LiveUSGSProvider()
         self.historical_provider = HistoricalRiverDataProvider()
-        self._cached_features_df = None
+        self._cached_features_dfs: Dict[str, Any] = {}
 
-    def _get_ramamangalam_features_df(self):
-        if self._cached_features_df is None:
+    def _get_station_features_df(self, station_canonical: str):
+        if station_canonical not in self._cached_features_dfs:
+            config = KERALA_STATIONS_CONFIG.get(station_canonical)
+            if not config:
+                return None
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-            csv_path = os.path.join(project_root, "data", "processed", "ramamangalam_hourly_features.csv")
+            csv_path = os.path.join(project_root, "data", "processed", config["features_file"])
             if os.path.exists(csv_path):
                 try:
                     import pandas as pd
-                    self._cached_features_df = pd.read_csv(csv_path)
+                    self._cached_features_dfs[station_canonical] = pd.read_csv(csv_path)
                 except Exception as e:
-                    logger.warning("Failed to load historical features CSV: %s", e)
-        return self._cached_features_df
+                    logger.warning("Failed to load historical features CSV for %s: %s", station_canonical, e)
+        return self._cached_features_dfs.get(station_canonical)
+
+    def _get_ramamangalam_features_df(self):
+        return self._get_station_features_df(STATION_CANONICAL)
 
     def get_river_data(self, station_query: str, mode: str = "auto") -> RiverDataResponse:
         clean = station_query.replace("-", " ").replace("_", " ").strip().upper()
         mode_clean = (mode or "auto").strip().lower()
 
         # If user explicitly requested historical mode for Ramamangalam
-        if mode_clean == "historical":
+        if mode_clean == "historical" and ("RAMAMANGALAM" in clean or clean == "HISTORICAL"):
             return self.historical_provider.fetch_station_data(STATION_CANONICAL)
 
         # Route USGS stations / California live streams
         if "USGS" in clean or "STANFORD" in clean or "FRANCISQUITO" in clean or any(ch.isdigit() for ch in clean):
             return self.live_usgs_provider.fetch_station_data(station_query)
 
-        # Route Ramamangalam Bridge / Kerala SW
-        if "RAMAMANGALAM" in clean:
-            # Check live NWIC feed (returns UNAVAILABLE if NWIC_API_KEY absent)
-            return self.live_nwic_provider.fetch_station_data(STATION_CANONICAL)
+        # Route Kerala SW stations
+        kerala_st = resolve_kerala_station(station_query)
+        if kerala_st:
+            if kerala_st == STATION_CANONICAL:
+                # Check live NWIC feed (returns UNAVAILABLE if NWIC_API_KEY absent)
+                return self.live_nwic_provider.fetch_station_data(STATION_CANONICAL)
+
+            # Historical archive record for other calibrated stations (e.g. Pala, Trinayakudam)
+            cfg = KERALA_STATIONS_CONFIG[kerala_st]
+            rec = cfg["latest_reading"]
+            return RiverDataResponse(
+                station_name=cfg["canonical"],
+                district=cfg["district"],
+                status="HISTORICAL",
+                water_level_m=rec["water_level_m"],
+                flow_rate_cms=None,
+                observation_timestamp=rec["timestamp"],
+                is_live=False,
+                is_cached=False,
+                data_source=OFFICIAL_SOURCE_AGENCY,
+                data_freshness=f"Historical Archive Record ({rec['timestamp']})",
+                notice=(
+                    f"HISTORICAL DEMONSTRATION DATA: Observation for '{cfg['canonical']}' is from the official "
+                    f"Kerala SW telemetry archive, not a live streaming feed."
+                ),
+                access_requirements="No credentials required for historical research dataset.",
+                latest_historical_reading=LatestHistoricalReading(
+                    timestamp=rec["timestamp"],
+                    water_level_m=rec["water_level_m"],
+                    description=rec["description"],
+                ),
+            )
 
         # Unsupported station query
         return RiverDataResponse(
@@ -381,15 +461,17 @@ class RiverDataService:
             is_cached=False,
             data_source="Government Telemetry Portal",
             data_freshness="Unsupported Station",
-            notice=f"Telemetry integration calibrated for '{STATION_CANONICAL}' (NWIC) and USGS sites (e.g. 11164500).",
+            notice=f"Telemetry integration calibrated for '{STATION_CANONICAL}', 'PALA', 'TRINAYAKUDAM' (NWIC) and USGS sites (e.g. 11164500).",
             access_requirements=None,
             latest_historical_reading=None,
         )
 
     def get_historical_series(self, station_name: str, limit: int = 48) -> HistoricalSeriesResponse:
         clean = station_name.replace("-", " ").replace("_", " ").strip().upper()
-        if "RAMAMANGALAM" in clean:
-            df = self._get_ramamangalam_features_df()
+        kerala_st = resolve_kerala_station(station_name)
+        if kerala_st:
+            df = self._get_station_features_df(kerala_st)
+            cfg = KERALA_STATIONS_CONFIG[kerala_st]
             if df is not None and not df.empty:
                 tail = df.tail(min(limit, len(df)))
                 readings = [
@@ -402,29 +484,31 @@ class RiverDataService:
                     for _, row in tail.iterrows()
                 ]
                 return HistoricalSeriesResponse(
-                    station_name=STATION_CANONICAL,
-                    district=DISTRICT_CANONICAL,
+                    station_name=cfg["canonical"],
+                    district=cfg["district"],
                     status="AVAILABLE_HISTORICAL",
                     data_source=OFFICIAL_SOURCE_AGENCY,
                     total_records=len(readings),
                     readings=readings,
-                    notice="Authentic historical river stage telemetry from official Kerala SW archive (2021-2025)."
+                    notice=f"Authentic historical river stage telemetry from official Kerala SW archive for {cfg['canonical']}."
                 )
+            # Fallback to single confirmed reading
+            rec = cfg.get("latest_reading", LATEST_HISTORICAL_RECORD)
             return HistoricalSeriesResponse(
-                station_name=STATION_CANONICAL,
-                district=DISTRICT_CANONICAL,
+                station_name=cfg["canonical"],
+                district=cfg["district"],
                 status="AVAILABLE_HISTORICAL",
                 data_source=OFFICIAL_SOURCE_AGENCY,
                 total_records=1,
                 readings=[
                     HistoricalReadingPoint(
-                        timestamp=LATEST_HISTORICAL_RECORD["timestamp"],
-                        water_level_m=LATEST_HISTORICAL_RECORD["water_level_m"],
+                        timestamp=rec["timestamp"],
+                        water_level_m=rec["water_level_m"],
                         flow_rate_cms=None,
                         source=OFFICIAL_SOURCE_AGENCY
                     )
                 ],
-                notice="Confirmed historical observation point from Kerala SW archive."
+                notice=f"Confirmed historical observation point from Kerala SW archive for {cfg['canonical']}."
             )
 
         if "USGS" in clean or "STANFORD" in clean or "FRANCISQUITO" in clean or any(ch.isdigit() for ch in clean):
@@ -459,7 +543,26 @@ class RiverDataService:
 
     def get_forecast_vs_observation(self, station_name: str, sample_size: int = 24) -> ForecastVsObservationResponse:
         clean = station_name.replace("-", " ").replace("_", " ").strip().upper()
-        if "RAMAMANGALAM" not in clean:
+
+        # Explicit rejection for dam barrages
+        if "MANIYAR" in clean or "DAM" in clean or "BARRAGE" in clean or "RESERVOIR" in clean:
+            return ForecastVsObservationResponse(
+                station_name=station_name,
+                model_name="EXCLUDED_DAM_BARRAGE",
+                evaluation_dataset="Kerala SW Maniyar Dam Archive",
+                comparisons=[],
+                model_mae_m=0.0,
+                baseline_persistence_mae_m=0.0,
+                mae_reduction_percent=0.0,
+                disclaimer=(
+                    f"Station '{station_name}' is explicitly excluded from hydrological kinematic delta forecasting. "
+                    f"Dam barrages are governed by unmonitored human mechanical sluice/crest gate maneuvers (empirical R² = -8.53); "
+                    f"delta forecasting is mathematically unsuitable without real-time spillway gate opening and reservoir operational telemetry."
+                )
+            )
+
+        kerala_st = resolve_kerala_station(station_name)
+        if not kerala_st:
             return ForecastVsObservationResponse(
                 station_name=station_name,
                 model_name="N/A",
@@ -468,17 +571,21 @@ class RiverDataService:
                 model_mae_m=0.0,
                 baseline_persistence_mae_m=0.0,
                 mae_reduction_percent=0.0,
-                disclaimer=f"Forecasting model is calibrated exclusively for 'RAMAMANGALAM BRIDGE'; no model exists for '{station_name}'."
+                disclaimer=f"Forecasting model is uncalibrated for '{station_name}'. Calibrated stations are: 'RAMAMANGALAM BRIDGE', 'PALA', 'TRINAYAKUDAM'."
             )
 
-        df = self._get_ramamangalam_features_df()
+        df = self._get_station_features_df(kerala_st)
         if df is None or df.empty:
-            raise RuntimeError("Historical evaluation features dataset is missing.")
+            raise RuntimeError(f"Historical evaluation features dataset is missing for '{kerala_st}'.")
 
-        from app.ml.water_level_forecaster import WaterLevelForecaster
-        forecaster = WaterLevelForecaster()
+        try:
+            from app.ml.water_level_forecaster import get_forecaster_for_station
+        except ImportError:
+            from backend.app.ml.water_level_forecaster import get_forecaster_for_station
+
+        forecaster = get_forecaster_for_station(kerala_st)
         if not forecaster.is_loaded:
-            raise RuntimeError("Ridge forecasting model artifact is not loaded.")
+            raise RuntimeError(f"Forecasting model artifact is not loaded for '{kerala_st}'.")
 
         sample_df = df.tail(min(sample_size, len(df)))
         comparisons = []
@@ -511,17 +618,22 @@ class RiverDataService:
         avg_base_mae = round(sum(baseline_errors) / max(len(baseline_errors), 1), 4)
         reduction = round(((avg_base_mae - avg_model_mae) / avg_base_mae * 100), 2) if avg_base_mae > 0 else 0.0
 
+        model_name = (
+            forecaster.artifact.get("model_name", "RidgeRegressor (Kinematic Residual Delta)")
+            if forecaster.artifact
+            else "RidgeRegressor (Kinematic Residual Delta)"
+        )
+
         return ForecastVsObservationResponse(
-            station_name=STATION_CANONICAL,
-            model_name="RidgeRegressor (Kinematic Residual Delta)",
-            evaluation_dataset="Kerala SW Ramamangalam Telemetry Archive (Out-of-sample Test Sequence)",
+            station_name=kerala_st,
+            model_name=model_name,
+            evaluation_dataset=f"Kerala SW {kerala_st} Telemetry Archive (Out-of-sample Test Sequence)",
             comparisons=comparisons,
             model_mae_m=avg_model_mae,
             baseline_persistence_mae_m=avg_base_mae,
             mae_reduction_percent=reduction,
-            disclaimer="Genuine ground-truth comparison: Ridge delta forecast vs subsequent recorded observation (t+1 hour). Prototype research only."
+            disclaimer=f"Genuine ground-truth comparison: Ridge delta forecast vs subsequent recorded observation (t+1 hour) for {kerala_st}. Prototype research only."
         )
-
 
 
 river_data_service = RiverDataService()

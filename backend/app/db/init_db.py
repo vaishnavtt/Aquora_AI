@@ -196,6 +196,40 @@ def init_database():
                     last_updated=now,
                     is_demonstration_data=False,
                 ),
+                WaterBodyModel(
+                    name="Pala (Kerala SW)",
+                    type="river",
+                    latitude=9.7011,
+                    longitude=76.6822,
+                    current_risk_level="low",
+                    risk_score=20.0,
+                    water_temp_c=27.5,
+                    flow_rate_cms=2.4,
+                    depth_meters=1.85,
+                    elevation_meters=18.0,
+                    basin_region="Meenachil River Basin",
+                    data_source="Kerala State Water Resources Department (Kerala SW)",
+                    description="Official CWC/Kerala SW hydrological monitoring station at Pala, Kottayam District, Kerala (Meenachil River).",
+                    last_updated=now,
+                    is_demonstration_data=False,
+                ),
+                WaterBodyModel(
+                    name="Trinayakudam (Kerala SW)",
+                    type="river",
+                    latitude=9.7011,
+                    longitude=76.4031,
+                    current_risk_level="low",
+                    risk_score=21.0,
+                    water_temp_c=28.0,
+                    flow_rate_cms=3.1,
+                    depth_meters=1.92,
+                    elevation_meters=4.5,
+                    basin_region="Meenachil-Vembanad Basin",
+                    data_source="Kerala State Water Resources Department (Kerala SW)",
+                    description="Official CWC/Kerala SW hydrological monitoring station at Trinayakudam, Kottayam District, Kerala (Lowland transition reach).",
+                    last_updated=now,
+                    is_demonstration_data=False,
+                ),
             ])
             db.add_all(sample_water_bodies)
             db.commit()
@@ -280,6 +314,52 @@ def init_database():
                         basin_region="Muvattupuzha River Basin",
                         data_source="Kerala State Water Resources Department (Kerala SW)",
                         description="Official CWC/Kerala SW hydrological monitoring station at Ramamangalam Bridge, Ernakulam District, Kerala.",
+                        last_updated=now,
+                        is_demonstration_data=False,
+                    )
+                )
+
+            # Ensure Pala exists
+            pala_exists = db.query(WaterBodyModel).filter(WaterBodyModel.name.like("%Pala%")).first()
+            if not pala_exists:
+                db.add(
+                    WaterBodyModel(
+                        name="Pala (Kerala SW)",
+                        type="river",
+                        latitude=9.7011,
+                        longitude=76.6822,
+                        current_risk_level="low",
+                        risk_score=20.0,
+                        water_temp_c=27.5,
+                        flow_rate_cms=2.4,
+                        depth_meters=1.85,
+                        elevation_meters=18.0,
+                        basin_region="Meenachil River Basin",
+                        data_source="Kerala State Water Resources Department (Kerala SW)",
+                        description="Official CWC/Kerala SW hydrological monitoring station at Pala, Kottayam District, Kerala (Meenachil River).",
+                        last_updated=now,
+                        is_demonstration_data=False,
+                    )
+                )
+
+            # Ensure Trinayakudam exists
+            trinayakudam_exists = db.query(WaterBodyModel).filter(WaterBodyModel.name.like("%Trinayakudam%")).first()
+            if not trinayakudam_exists:
+                db.add(
+                    WaterBodyModel(
+                        name="Trinayakudam (Kerala SW)",
+                        type="river",
+                        latitude=9.7011,
+                        longitude=76.4031,
+                        current_risk_level="low",
+                        risk_score=21.0,
+                        water_temp_c=28.0,
+                        flow_rate_cms=3.1,
+                        depth_meters=1.92,
+                        elevation_meters=4.5,
+                        basin_region="Meenachil-Vembanad Basin",
+                        data_source="Kerala State Water Resources Department (Kerala SW)",
+                        description="Official CWC/Kerala SW hydrological monitoring station at Trinayakudam, Kottayam District, Kerala (Lowland transition reach).",
                         last_updated=now,
                         is_demonstration_data=False,
                     )

@@ -20,7 +20,10 @@ from app.ml.water_level_forecaster import (
     PRESERVED_RF_MODEL_PATH,
     DEFAULT_MAX_WATER_LEVEL_M,
     validate_water_levels,
-    validate_timestamps
+    validate_timestamps,
+    get_forecaster_for_station,
+    CALIBRATED_STATIONS,
+    EXCLUDED_STATIONS,
 )
 from app.ml.predictor import risk_predictor, AquaticRiskPredictor
 from app.schemas.prediction import PredictRequest
@@ -309,6 +312,64 @@ class TestWaterLevelForecaster(unittest.TestCase):
         self.assertGreater(res.risk_score, 0.0)
         self.assertIn(res.risk_level, ["low", "moderate", "high", "extreme"])
 
+    # -------------------------------------------------------------
+    # Multi-Station Model Loading & Validation Tests
+    # -------------------------------------------------------------
+
+    def test_get_forecaster_for_calibrated_stations(self):
+        """Verify forecasters load successfully for all calibrated monitoring stations."""
+        for station_key in ["RAMAMANGALAM BRIDGE", "PALA", "TRINAYAKUDAM"]:
+            forecaster = get_forecaster_for_station(station_key)
+            self.assertTrue(forecaster.is_loaded, f"Forecaster for {station_key} must be loaded")
+            self.assertEqual(forecaster.station_name, CALIBRATED_STATIONS[station_key]["model_path"] and station_key)
+            self.assertIsNotNone(forecaster.model)
+
+    def test_dam_station_explicitly_rejected(self):
+        """Verify dam/reservoir stations are explicitly rejected with gate telemetry explanation."""
+        for dam_query in ["MANIYAR DAM", "Maniyar", "Idukki Dam", "Periyar Barrage Reservoir"]:
+            with self.assertRaises(ValueError) as ctx:
+                get_forecaster_for_station(dam_query)
+            err = str(ctx.exception)
+            self.assertIn("Forecasting rejected", err)
+            self.assertTrue(
+                "dam/reservoir barrage" in err or "gate maneuvers" in err or "operational telemetry" in err
+            )
+
+    def test_uncalibrated_station_rejected(self):
+        """Verify uncalibrated stations are rejected with calibrated station guidance."""
+        with self.assertRaises(ValueError) as ctx:
+            get_forecaster_for_station("KAVARATTI LAGOON")
+        err = str(ctx.exception)
+        self.assertIn("not calibrated for 'KAVARATTI LAGOON'", err)
+        self.assertIn("RAMAMANGALAM BRIDGE", err)
+        self.assertIn("PALA", err)
+        self.assertIn("TRINAYAKUDAM", err)
+
+    def test_pala_forecaster_inference(self):
+        """Verify inference execution on Pala calibrated station model."""
+        pala_forecaster = get_forecaster_for_station("PALA")
+        recent_levels = [4.50 + 0.01 * i for i in range(13)]  # 4.50 to 4.62
+        res = pala_forecaster.predict_next_hour(recent_levels)
+        self.assertEqual(res["station"], "PALA")
+        self.assertEqual(res["district"], "KOTTAYAM")
+        self.assertEqual(res["current_water_level_m"], 4.62)
+        self.assertEqual(res["persistence_baseline_m"], 4.62)
+        self.assertTrue(np.isfinite(res["forecasted_water_level_m"]))
+        self.assertIn("PALA", res["notice"])
+
+    def test_trinayakudam_forecaster_inference(self):
+        """Verify inference execution on Trinayakudam calibrated station model."""
+        trin_forecaster = get_forecaster_for_station("TRINAYAKUDAM")
+        recent_levels = [2.30 + 0.01 * i for i in range(13)]  # 2.30 to 2.42
+        res = trin_forecaster.predict_next_hour(recent_levels)
+        self.assertEqual(res["station"], "TRINAYAKUDAM")
+        self.assertEqual(res["district"], "KOTTAYAM")
+        self.assertEqual(res["current_water_level_m"], 2.42)
+        self.assertEqual(res["persistence_baseline_m"], 2.42)
+        self.assertTrue(np.isfinite(res["forecasted_water_level_m"]))
+        self.assertIn("TRINAYAKUDAM", res["notice"])
+
 
 if __name__ == "__main__":
     unittest.main()
+
