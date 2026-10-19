@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime
-from app.db.session import Base
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
+try:
+    from app.db.session import Base
+except ImportError:
+    from backend.app.db.session import Base
 
 class WaterBodyModel(Base):
     __tablename__ = "water_bodies"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(120), nullable=False, index=True)
@@ -20,3 +24,5 @@ class WaterBodyModel(Base):
     data_source = Column(String(120), default="Synthetic Prototype Node") # Originating source or agency
     description = Column(String(300), nullable=True) # Station geographic notes
     last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    description = Column(String(255), nullable=True)
+    is_demonstration_data = Column(Boolean, default=True, nullable=False)

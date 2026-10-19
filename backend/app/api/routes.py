@@ -1,40 +1,94 @@
+"""
+AQUORA AI - RESTful API v1 Routes
+Endpoints for system health telemetry, water body directory exploration,
+hydrodynamic risk prediction inference, executive dashboard metrics,
+river level forecasting, automated hazard monitoring, and outbound alert delivery.
+"""
+
 import os
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
-from app.models.water_body import WaterBodyModel
-from app.models.alert import AlertModel
-from app.schemas.health import HealthResponse
-from app.schemas.water_body import WaterBodySchema
-from app.schemas.prediction import PredictRequest, PredictResponse
-from app.schemas.dashboard import DashboardResponse, DashboardAlertSchema, StationAvailabilitySchema
-from app.schemas.forecast import WaterLevelForecastRequest, WaterLevelForecastResponse
-from app.schemas.river_data import (
-    RiverDataResponse,
-    HistoricalSeriesResponse,
-    ForecastVsObservationResponse,
-)
-from app.schemas.environmental import DimensionAudit, EnvironmentalPipelineAuditResponse
-from app.schemas.monitoring import (
-    HazardEvaluationResult,
-    HazardMonitoringEvaluationRequest,
-    HazardMonitoringStatusResponse,
-)
-from app.schemas.alert import (
-    AlertDispatchRequest,
-    AlertTestRequest,
-    AlertDispatchResponse,
-    AlertDeliverySchema,
-    AlertChannelStatusResponse,
-)
-from app.ml.predictor import risk_predictor
-from app.ml.water_level_forecaster import WaterLevelForecaster
-from app.services.river_data_service import river_data_service
-from app.services.alert_service import alert_service
-from app.services.hazard_monitoring_service import hazard_monitoring_service
+try:
+    from app.core.config import settings
+    from app.db.session import get_db
+    from app.models.water_body import WaterBodyModel
+    from app.models.alert import AlertModel
+    from app.models.alert_delivery import AlertDeliveryModel
+    from app.schemas.common import (
+        RiskLevelEnum,
+        WaterBodyTypeEnum,
+        ErrorResponse,
+    )
+    from app.schemas.health import HealthResponse
+    from app.schemas.water_body import WaterBodySchema
+    from app.schemas.prediction import PredictRequest, PredictResponse
+    from app.schemas.dashboard import DashboardResponse, DashboardAlertSchema, StationAvailabilitySchema
+    from app.schemas.forecast import WaterLevelForecastRequest, WaterLevelForecastResponse
+    from app.schemas.river_data import (
+        RiverDataResponse,
+        HistoricalSeriesResponse,
+        ForecastVsObservationResponse,
+    )
+    from app.schemas.alert import (
+        AlertDispatchRequest,
+        AlertTestRequest,
+        AlertDispatchResponse,
+        AlertDeliverySchema,
+        AlertChannelStatusResponse,
+    )
+    from app.schemas.environmental import EnvironmentalPipelineAuditResponse, DimensionAudit
+    from app.schemas.monitoring import (
+        HazardEvaluationResult,
+        HazardMonitoringEvaluationRequest,
+        HazardMonitoringStatusResponse,
+    )
+    from app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
+    from app.ml.water_level_forecaster import WaterLevelForecaster
+    from app.services.river_data_service import river_data_service
+    from app.services.alert_service import alert_service
+    from app.services.hazard_monitoring_service import hazard_monitoring_service
+except ImportError:
+    from backend.app.core.config import settings
+    from backend.app.db.session import get_db
+    from backend.app.models.water_body import WaterBodyModel
+    from backend.app.models.alert import AlertModel
+    from backend.app.models.alert_delivery import AlertDeliveryModel
+    from backend.app.schemas.common import (
+        RiskLevelEnum,
+        WaterBodyTypeEnum,
+        ErrorResponse,
+    )
+    from backend.app.schemas.health import HealthResponse
+    from backend.app.schemas.water_body import WaterBodySchema
+    from backend.app.schemas.prediction import PredictRequest, PredictResponse
+    from backend.app.schemas.dashboard import DashboardResponse, DashboardAlertSchema, StationAvailabilitySchema
+    from backend.app.schemas.forecast import WaterLevelForecastRequest, WaterLevelForecastResponse
+    from backend.app.schemas.river_data import (
+        RiverDataResponse,
+        HistoricalSeriesResponse,
+        ForecastVsObservationResponse,
+    )
+    from backend.app.schemas.alert import (
+        AlertDispatchRequest,
+        AlertTestRequest,
+        AlertDispatchResponse,
+        AlertDeliverySchema,
+        AlertChannelStatusResponse,
+    )
+    from backend.app.schemas.environmental import EnvironmentalPipelineAuditResponse, DimensionAudit
+    from backend.app.schemas.monitoring import (
+        HazardEvaluationResult,
+        HazardMonitoringEvaluationRequest,
+        HazardMonitoringStatusResponse,
+    )
+    from backend.app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
+    from backend.app.ml.water_level_forecaster import WaterLevelForecaster
+    from backend.app.services.river_data_service import river_data_service
+    from backend.app.services.alert_service import alert_service
+    from backend.app.services.hazard_monitoring_service import hazard_monitoring_service
 
 router = APIRouter()
 
@@ -44,47 +98,77 @@ try:
 except Exception:
     water_level_forecaster = None
 
-@router.get("/health", response_model=HealthResponse, tags=["Health"])
-def get_health(db: Session = Depends(get_db)):
+
+@router.get(
+    "/health",
+    response_model=HealthResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Health"],
+    summary="System Health & Diagnostic Telemetry",
+    description="Validates backend operational state, SQLite database connectivity, and ML pipeline readiness."
+)
+def get_health(
+    db: Session = Depends(get_db),
+    predictor: PredictionService = Depends(get_prediction_service)
+):
     """
     Checks backend connectivity, SQLite status, and ML predictor status.
     """
     db_status = "connected"
+    is_healthy = True
     try:
-        # Simple test query
+        # Diagnostic lightweight query
         db.query(WaterBodyModel).first()
     except Exception as e:
         db_status = f"error: {str(e)}"
+        is_healthy = False
 
     return HealthResponse(
-        status="healthy",
+        status="healthy" if is_healthy else "degraded",
         timestamp=datetime.now(timezone.utc),
-        version="1.0.0",
+        version=settings.VERSION,
         database=db_status,
-        ml_model_loaded=risk_predictor.is_trained
+        ml_model_loaded=predictor.is_trained
     )
 
 
-@router.get("/water-bodies", response_model=List[WaterBodySchema], tags=["Water Bodies"])
+@router.get(
+    "/water-bodies",
+    response_model=List[WaterBodySchema],
+    status_code=status.HTTP_200_OK,
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error for invalid query parameters"}
+    },
+    tags=["Water Bodies"],
+    summary="List Monitored Water Bodies",
+    description="Returns all monitored aquatic zones (lakes, rivers, reservoirs, coasts) with current risk indicators and coordinates."
+)
 def get_water_bodies(
-    risk_level: Optional[str] = Query(None, description="Filter by risk level (low, moderate, high, extreme)"),
-    type: Optional[str] = Query(None, description="Filter by water body type (lake, river, reservoir, coastal)"),
+    risk_level: Optional[RiskLevelEnum] = Query(None, description="Filter by risk level (low, moderate, high, extreme)"),
+    type: Optional[WaterBodyTypeEnum] = Query(None, description="Filter by water body type (lake, river, reservoir, coastal)"),
     db: Session = Depends(get_db)
 ):
     """
     Retrieves all monitored water bodies, optionally filtered by risk level or type.
     """
     query = db.query(WaterBodyModel)
-    if risk_level:
-        query = query.filter(WaterBodyModel.current_risk_level == risk_level.lower())
-    if type:
-        query = query.filter(WaterBodyModel.type == type.lower())
+    if risk_level is not None:
+        query = query.filter(WaterBodyModel.current_risk_level == risk_level.value)
+    if type is not None:
+        query = query.filter(WaterBodyModel.type == type.value)
 
     water_bodies = query.all()
     return water_bodies
 
 
-@router.get("/water-bodies/by-coordinates", response_model=WaterBodySchema, tags=["Water Bodies"])
+@router.get(
+    "/water-bodies/by-coordinates",
+    response_model=WaterBodySchema,
+    status_code=status.HTTP_200_OK,
+    tags=["Water Bodies"],
+    summary="Lookup Nearest Monitored Water Body",
+    description="Queries the database for monitored stations near a geographic point within tolerance."
+)
 def get_water_body_by_coordinates(
     latitude: float = Query(..., description="Latitude coordinate"),
     longitude: float = Query(..., description="Longitude coordinate"),
@@ -110,33 +194,51 @@ def get_water_body_by_coordinates(
         return best_wb
 
     raise HTTPException(
-        status_code=404,
+        status_code=status.HTTP_404_NOT_FOUND,
         detail=(
-            f"No monitored water body found near coordinates ({latitude:.5f}, {longitude:.5f}) within tolerance. "
+            f"No monitored water body found near coordinates ({latitude:.4f}, {longitude:.4f}) "
+            f"within tolerance of {tolerance_deg}° (~{tolerance_deg * 111:.1f} km). "
             f"AQUORA AI does not assign fabricated environmental observations or risk assessments to unsupported locations."
         )
     )
 
 
-@router.get("/water-bodies/{water_body_id}", response_model=WaterBodySchema, tags=["Water Bodies"])
-def get_water_body_by_id(water_body_id: int, db: Session = Depends(get_db)):
+@router.get(
+    "/water-bodies/{water_body_id}",
+    response_model=WaterBodySchema,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Water body not found"},
+        422: {"model": ErrorResponse, "description": "Validation error"}
+    },
+    tags=["Water Bodies"],
+    summary="Get Water Body Details",
+    description="Retrieves comprehensive telemetry, risk parameters, and metadata for a specific water body by its integer ID."
+)
+def get_water_body_by_id(
+    water_body_id: int = Path(..., ge=1, description="Unique integer identifier of the water body"),
+    db: Session = Depends(get_db)
+):
     """
-    Retrieves a single monitored water body record by its database ID.
-    Returns 404 with an explicit data-availability message if the location is unknown.
+    Retrieves a single monitored water body station by ID.
     """
-    wb = db.query(WaterBodyModel).filter(WaterBodyModel.id == water_body_id).first()
-    if not wb:
+    water_body = db.query(WaterBodyModel).filter(WaterBodyModel.id == water_body_id).first()
+    if not water_body:
         raise HTTPException(
-            status_code=404,
-            detail=(
-                f"Water body #{water_body_id} not found in monitored database. "
-                f"Unsupported locations receive an explicit data-availability message without fabricated data."
-            )
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Water body with ID {water_body_id} not found in monitored database."
         )
-    return wb
+    return water_body
 
 
-@router.get("/environmental-data/{water_body_id}", response_model=EnvironmentalPipelineAuditResponse, tags=["Environmental Pipeline"])
+@router.get(
+    "/environmental-data/{water_body_id}",
+    response_model=EnvironmentalPipelineAuditResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Environmental Pipeline"],
+    summary="Environmental Pipeline Audit",
+    description="Audits the availability and provenance of the 6 core environmental dimensions for a monitored water body."
+)
 def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(get_db)):
     """
     Audits the availability, origin, and latency across the 6 core environmental dimensions
@@ -300,17 +402,46 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
 
 
 
-@router.post("/predict", response_model=PredictResponse, tags=["Prediction"])
-def predict_hazard_risk(req: PredictRequest):
+@router.post(
+    "/predict",
+    response_model=PredictResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Referenced water body not found"},
+        422: {"model": ErrorResponse, "description": "Telemetry validation failure"}
+    },
+    tags=["Prediction"],
+    summary="Hydrodynamic Risk Evaluation & Inference",
+    description="Computes a 0-100 hazard risk score based on hydrodynamic and atmospheric indicators. Dispatches to active predictor engine."
+)
+def predict_hazard_risk(
+    req: PredictRequest,
+    db: Session = Depends(get_db),
+    predictor: PredictionService = Depends(get_prediction_service)
+):
     """
     Computes an aquatic hazard assessment based on environmental telemetry inputs.
-    Uses an explainable baseline heuristic engine (baseline-heuristic-v0.1) pending
-    ML model training.
+    Validates referenced water_body_id if provided.
     """
-    return risk_predictor.predict(req)
+    # If water_body_id is provided, verify existence in database
+    if req.water_body_id is not None:
+        wb = db.query(WaterBodyModel).filter(WaterBodyModel.id == req.water_body_id).first()
+        if not wb:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Water body with ID {req.water_body_id} not found."
+            )
+
+    return predictor.predict(req)
 
 
-@router.post("/forecast/water-level", response_model=WaterLevelForecastResponse, tags=["Forecasting"])
+@router.post(
+    "/forecast/water-level",
+    response_model=WaterLevelForecastResponse,
+    tags=["Forecasting"],
+    summary="Forecast River Water Level",
+    description="Experimental one-hour-ahead river water level forecasting for calibrated monitoring stations."
+)
 def forecast_river_water_level(req: WaterLevelForecastRequest):
     """
     Experimental one-hour-ahead river water level forecasting for RAMAMANGALAM BRIDGE.
@@ -343,7 +474,14 @@ def forecast_river_water_level(req: WaterLevelForecastRequest):
         raise HTTPException(status_code=500, detail=f"Forecasting error: {str(e)}")
 
 
-@router.get("/dashboard", response_model=DashboardResponse, tags=["Dashboard"])
+@router.get(
+    "/dashboard",
+    response_model=DashboardResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Dashboard"],
+    summary="Executive Dashboard Telemetry & Alerts",
+    description="Returns aggregate safety statistics across all monitored sites and the latest active advisory alerts."
+)
 def get_dashboard(db: Session = Depends(get_db)):
     """
     Returns aggregated metrics and recent safety alerts across monitored water bodies.
@@ -508,6 +646,9 @@ def stop_monitoring_scheduler():
     return hazard_monitoring_service.get_status()
 
 
+# ==========================================
+# Outbound Alert Delivery Endpoints
+# ==========================================
 
 @router.post("/alerts/dispatch", response_model=AlertDispatchResponse, tags=["Alerts"])
 def dispatch_alert(req: AlertDispatchRequest, db: Session = Depends(get_db)):

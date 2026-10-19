@@ -30,15 +30,15 @@ Checks backend responsiveness, database connection, and ML engine status.
 Returns all monitored aquatic zones (lakes, rivers, reservoirs, coasts) with current risk indicators and coordinates for map rendering.
 
 **Query Parameters:**
-- `risk_level` *(optional, string)*: Filter by `low`, `moderate`, `high`, `extreme`
-- `type` *(optional, string)*: Filter by `lake`, `river`, `reservoir`, `coastal`
+- `risk_level` *(optional, string)*: Filter by `low`, `moderate`, `high`, `extreme` (strict enum validation: invalid values return `422 Unprocessable Entity`)
+- `type` *(optional, string)*: Filter by `lake`, `river`, `reservoir`, `coastal` (strict enum validation: invalid values return `422 Unprocessable Entity`)
 
 **Response Body (`200 OK`):**
 ```json
 [
   {
     "id": 1,
-    "name": "Emerald Bay Reservoir",
+    "name": "Emerald Bay Reservoir (Demonstration Station)",
     "type": "reservoir",
     "latitude": 37.7749,
     "longitude": -122.4194,
@@ -47,11 +47,13 @@ Returns all monitored aquatic zones (lakes, rivers, reservoirs, coasts) with cur
     "water_temp_c": 21.0,
     "flow_rate_cms": 0.8,
     "depth_meters": 5.2,
-    "last_updated": "2026-10-14T18:00:00Z"
+    "last_updated": "2026-10-14T18:00:00Z",
+    "description": "[DEMONSTRATION DATA] Calm sub-alpine lake basin with gentle circulation currents.",
+    "is_demonstration_data": true
   },
   {
     "id": 2,
-    "name": "Cascade Canyon River",
+    "name": "Cascade Canyon River (Demonstration Station)",
     "type": "river",
     "latitude": 37.8044,
     "longitude": -122.2711,
@@ -60,9 +62,25 @@ Returns all monitored aquatic zones (lakes, rivers, reservoirs, coasts) with cur
     "water_temp_c": 12.5,
     "flow_rate_cms": 9.4,
     "depth_meters": 3.8,
-    "last_updated": "2026-10-14T18:00:00Z"
+    "last_updated": "2026-10-14T18:00:00Z",
+    "description": "[DEMONSTRATION DATA] Steep canyon gorge river with surging snowmelt and dangerous undercurrents.",
+    "is_demonstration_data": true
   }
 ]
+```
+
+### `GET /api/v1/water-bodies/{id}`
+Returns details for a single monitored water body by its integer ID.
+
+**Path Parameters:**
+- `id` *(integer, required)*: The unique ID of the water body.
+
+**Response Body (`200 OK`):** Single `WaterBody` object (as above).  
+**Response Body (`404 Not Found`):**
+```json
+{
+  "detail": "Water body with ID 999 not found."
+}
 ```
 
 ---
@@ -114,6 +132,13 @@ Calculates an aquatic risk assessment based on environmental indicators.
   "model_version": "baseline-heuristic-v0.1",
   "is_baseline_model": true,
   "ai_explanation": null
+}
+```
+
+**Error Response (`404 Not Found`):** Returned if `water_body_id` is supplied but does not match any monitored site.
+```json
+{
+  "detail": "Water body with ID 999 not found."
 }
 ```
 

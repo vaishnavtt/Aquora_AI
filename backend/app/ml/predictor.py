@@ -1,28 +1,52 @@
 """
-AQUORA AI - Machine Learning & Heuristic Risk Evaluation Module
+AQUORA AI - Machine Learning & Heuristic Risk Evaluation Service
 Track 1 Ownership: Project Lead (ML & Integration)
 
-This module provides the baseline risk scoring engine before full model training is completed.
-As datasets are curated in data/raw/ and trained via scikit-learn, the trained pipeline
-can be persisted and loaded here directly.
+This module provides:
+1. BaselineHeuristicPredictor: The explainable rule-based baseline engine (v0.1)
+   used prior to ML model training completion.
+2. PredictionService: A modular strategy service wrapper that allows the ML lead
+   to inject/register trained scikit-learn models (or pipelines) dynamically
+   without modifying FastAPI endpoints or the REST API contract.
 """
 
-from typing import Tuple, List, Optional
 import os
-from app.schemas.prediction import PredictRequest, PredictResponse
+import logging
+from typing import List, Optional
 
-class AquaticRiskPredictor:
+try:
+    from app.schemas.prediction import PredictRequest, PredictResponse
+    from app.ml.base import BaseRiskPredictor
+except ImportError:
+    from backend.app.schemas.prediction import PredictRequest, PredictResponse
+    from backend.app.ml.base import BaseRiskPredictor
+
+logger = logging.getLogger(__name__)
+
+class BaselineHeuristicPredictor(BaseRiskPredictor):
+    """
+    Explainable hydrodynamic threshold engine based on hydrological safety parameters.
+    Acts as the operational baseline pending supervised ML model training.
+    """
+
     def __init__(self):
-        # In this initial scaffold, we explicitly track that the model is in baseline state
-        self.version = "baseline-heuristic-v0.1"
-        self.is_trained = False
+        self._version = "baseline-heuristic-v0.1"
+        self._is_trained = False
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @property
+    def is_trained(self) -> bool:
+        return self._is_trained
 
     def predict(self, req: PredictRequest) -> PredictResponse:
         """
         Calculates aquatic hazard score (0 to 100) using hydrodynamic and environmental thresholds.
         NOTE: This is an explainable baseline heuristic pending scikit-learn model training.
         """
-        score = 10.0 # base ambient risk
+        score = 10.0  # base ambient risk
         hazards: List[str] = []
         recommendations: List[str] = []
 
@@ -116,7 +140,7 @@ class AquaticRiskPredictor:
     def _generate_ai_explanation(
         self, req: PredictRequest, score: float, level: str, hazards: List[str]
     ) -> str:
-        """Calls Gemini API if GEMINI_API_KEY is available, or returns a structured summary."""
+        """Calls Gemini API if GEMINI_API_KEY is configured, or returns a structured summary."""
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key or api_key == "your_gemini_api_key_here":
             return (
@@ -137,8 +161,60 @@ class AquaticRiskPredictor:
             )
             response = model.generate_content(prompt)
             return response.text.strip()
-        except Exception as e:
+        except Exception:
             return f"AI Advisory: {level.capitalize()} hazard score ({score}/100). Caution is recommended due to {', '.join(hazards[:2])}."
 
-# Singleton instance
-risk_predictor = AquaticRiskPredictor()
+
+# Backward compatibility alias
+AquaticRiskPredictor = BaselineHeuristicPredictor
+
+
+class PredictionService:
+    """
+    Service manager responsible for dispatching prediction requests to the active predictor.
+    By default, activates BaselineHeuristicPredictor.
+    
+    The ML Lead can seamlessly swap in a trained pipeline via:
+        prediction_service.register_predictor(trained_predictor_instance)
+    without rewriting any API routes or endpoint controllers.
+    """
+
+    def __init__(self, default_predictor: Optional[BaseRiskPredictor] = None):
+        self._default_predictor = default_predictor or BaselineHeuristicPredictor()
+        self._active_predictor: BaseRiskPredictor = self._default_predictor
+
+    @property
+    def version(self) -> str:
+        return self._active_predictor.version
+
+    @property
+    def is_trained(self) -> bool:
+        return self._active_predictor.is_trained
+
+    def register_predictor(self, predictor: BaseRiskPredictor) -> None:
+        """
+        Registers a new predictor instance (e.g. trained scikit-learn model).
+        """
+        if not isinstance(predictor, BaseRiskPredictor):
+            raise TypeError("Predictor must inherit from BaseRiskPredictor")
+        logger.info(f"Registering predictor: {predictor.version} (is_trained={predictor.is_trained})")
+        self._active_predictor = predictor
+
+    def reset_to_baseline(self) -> None:
+        """Restores the baseline heuristic predictor."""
+        self._active_predictor = self._default_predictor
+
+    def predict(self, req: PredictRequest) -> PredictResponse:
+        """Dispatches request to the active predictor."""
+        return self._active_predictor.predict(req)
+
+
+# Global singleton instance
+prediction_service = PredictionService()
+
+# Backward-compatible alias for existing imports
+risk_predictor = prediction_service
+
+def get_prediction_service() -> PredictionService:
+    """FastAPI dependency for accessing the active prediction service."""
+    return prediction_service

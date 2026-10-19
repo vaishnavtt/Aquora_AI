@@ -30,6 +30,11 @@ venv/
 ENV/
 env/
 
+# Testing & Quality
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Jupyter & Data science
 .ipynb_checkpoints
 *.sqlite3

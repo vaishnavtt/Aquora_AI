@@ -33,8 +33,9 @@ class Settings(BaseModel):
     # Outbound Alert & Notification Dispatch Settings
     # Safe test mode: when True, simulates delivery without contacting external network
     ALERT_TEST_MODE: bool = os.getenv("ALERT_TEST_MODE", "false").lower() in ("true", "1", "yes")
-    ALERT_WEBHOOK_URL: str | None = os.getenv("ALERT_WEBHOOK_URL", None)
-    ALERT_WEBHOOK_AUTH_TOKEN: str | None = os.getenv("ALERT_WEBHOOK_AUTH_TOKEN", None)
+    ALERT_WEBHOOK_URL: str | None = os.getenv("ALERT_WEBHOOK_URL") or os.getenv("WEBHOOK_ALERT_URL", None)
+    ALERT_WEBHOOK_AUTH_TOKEN: str | None = os.getenv("ALERT_WEBHOOK_AUTH_TOKEN") or os.getenv("WEBHOOK_ALERT_AUTH_TOKEN", None)
+
     SMTP_HOST: str | None = os.getenv("SMTP_HOST", None)
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME: str | None = os.getenv("SMTP_USERNAME", None)

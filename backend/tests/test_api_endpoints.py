@@ -14,6 +14,8 @@ class TestAPIEndpoints(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        from app.db.init_db import init_database
+        init_database()
         cls.client = TestClient(app)
 
     def test_health_endpoint(self):

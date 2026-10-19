@@ -1,1 +1,3 @@
-# AQUORA AI Tests Package
+"""
+AQUORA AI - Backend Automated Test Suite
+"""
