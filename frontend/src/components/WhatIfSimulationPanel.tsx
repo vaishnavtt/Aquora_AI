@@ -36,6 +36,7 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [prediction, setPrediction] = useState<PredictResponse | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Sync when selected station changes
   useEffect(() => {
@@ -50,30 +51,39 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
     }
   }, [selectedStation]);
 
-  const runSimulation = async () => {
+  const runSimulation = async (abortSignal?: AbortSignal) => {
     setLoading(true);
+    setErrorMsg(null);
     try {
-      const res = await api.predictRisk(params);
+      const res = await api.predictRisk(params, abortSignal);
       setPrediction(res);
-    } catch {
-      // Fallback handled in api.predictRisk
+      setErrorMsg(null);
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      setErrorMsg(err.message || 'Risk prediction evaluation failed');
     } finally {
       setLoading(false);
     }
   };
 
-  // Run automatically on mount or when key sliders change
+  // Run automatically on mount or when key sliders change with AbortController for race condition protection
   useEffect(() => {
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      runSimulation();
+      runSimulation(controller.signal);
     }, 250);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [
     params.rainfall_last_24h_mm,
     params.depth_meters,
     params.flow_rate_cms,
     params.water_temp_c,
     params.wind_speed_kmh,
+    params.water_body_id,
+    params.include_ai_explanation,
   ]);
 
   // Preset scenarios
@@ -306,6 +316,55 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
               <span>&gt;20°C (Temperate)</span>
             </div>
           </div>
+
+          {/* Wind Speed & Wave Action */}
+          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-300 flex items-center gap-1.5">
+                <Wind className="w-4 h-4 text-sky-400" />
+                Wind Speed &amp; Surface Wave Action
+              </span>
+              <span className="font-mono text-sky-400 text-sm font-bold">
+                {params.wind_speed_kmh.toFixed(1)} km/h
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0.0"
+              max="80.0"
+              step="1.0"
+              value={params.wind_speed_kmh}
+              onChange={(e) =>
+                setParams({ ...params, wind_speed_kmh: parseFloat(e.target.value) })
+              }
+              className="w-full accent-sky-500 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>0 km/h (Calm)</span>
+              <span>25 km/h (Chop)</span>
+              <span>&gt;45 km/h (Gale / Capsizing)</span>
+            </div>
+          </div>
+
+          {/* AI Explanation & Inference Options */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+              <div>
+                <span className="text-xs font-semibold text-slate-200 block">Include Generative AI Advisory</span>
+                <span className="text-[10px] text-slate-400">Calls Gemini endpoint hook when configured in backend .env</span>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={params.include_ai_explanation || false}
+                onChange={(e) => setParams({ ...params, include_ai_explanation: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+            </label>
+          </div>
         </div>
 
         {/* Prediction Results & Delta (5 cols) */}
@@ -316,10 +375,35 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
                 <Cpu className="w-4 h-4 text-cyan-400" />
                 Simulated Output
               </span>
-              <span className="text-[10px] font-mono text-cyan-400">
-                baseline-heuristic-v0.1
-              </span>
+              <div className="flex items-center gap-2">
+                {loading && (
+                  <span className="text-[10px] font-mono text-cyan-400 animate-pulse flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                    Evaluating...
+                  </span>
+                )}
+                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800">
+                  {prediction?.model_version || 'baseline-heuristic-v0.1'}
+                </span>
+              </div>
             </div>
+
+            {/* Error Banner if inference fails */}
+            {errorMsg && (
+              <div className="my-3 p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-rose-200 text-xs flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-semibold text-rose-300">Inference Service Unavailable</div>
+                  <p className="text-[11px] text-rose-200/90 leading-tight">{errorMsg}</p>
+                  <button
+                    onClick={() => runSimulation()}
+                    className="mt-1 px-2.5 py-1 bg-rose-900/80 hover:bg-rose-800 text-rose-100 rounded text-[10px] font-bold transition-colors"
+                  >
+                    Retry Inference
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Score Comparison Display */}
             <div className="my-4 text-center space-y-2">
@@ -328,7 +412,7 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
               </div>
               <div className="flex items-center justify-center gap-3">
                 <div className="text-4xl font-black text-white font-mono">
-                  {prediction ? prediction.risk_score.toFixed(1) : '—'}
+                  {prediction ? prediction.risk_score.toFixed(1) : (loading ? '...' : '—')}
                 </div>
                 <div
                   className={`text-xs font-bold px-2 py-0.5 rounded-full font-mono flex items-center ${
@@ -360,6 +444,19 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
               )}
             </div>
 
+            {/* Generative AI Explanation if returned */}
+            {prediction?.ai_explanation && (
+              <div className="my-3 p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/60 text-xs text-cyan-200 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-cyan-300">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>AI Safety Advisory Summary</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                  {prediction.ai_explanation}
+                </p>
+              </div>
+            )}
+
             {/* Simulated Hazards Breakdown */}
             <div className="space-y-3 text-xs">
               <div>
@@ -367,15 +464,19 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
                   Predicted Danger Factors:
                 </h4>
                 <div className="space-y-1">
-                  {prediction?.primary_hazards.map((hz, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2 rounded bg-slate-900 border border-slate-800 text-slate-200 text-[11px] flex items-center gap-2"
-                    >
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>{hz}</span>
-                    </div>
-                  ))}
+                  {prediction?.primary_hazards && prediction.primary_hazards.length > 0 ? (
+                    prediction.primary_hazards.map((hz, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2 rounded bg-slate-900 border border-slate-800 text-slate-200 text-[11px] flex items-center gap-2"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>{hz}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2 text-slate-500 text-[11px] italic">No active hazard factors detected.</div>
+                  )}
                 </div>
               </div>
 
@@ -384,20 +485,24 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
                   Safety Directives:
                 </h4>
                 <div className="space-y-1 text-[11px] text-slate-300">
-                  {prediction?.safety_recommendations.map((rec, idx) => (
-                    <div key={idx} className="flex items-start gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                      <span>{rec}</span>
-                    </div>
-                  ))}
+                  {prediction?.safety_recommendations && prediction.safety_recommendations.length > 0 ? (
+                    prediction.safety_recommendations.map((rec, idx) => (
+                      <div key={idx} className="flex items-start gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{rec}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-1 text-slate-500 text-[11px] italic">Standard shoreline guidelines apply.</div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-800/80 text-[10px] text-slate-500 font-mono flex items-center justify-between">
-            <span>Confidence: 85% (Heuristic Model)</span>
-            <span>Zero Fabrication Notice</span>
+            <span>Confidence: {prediction ? `${(prediction.confidence * 100).toFixed(0)}%` : '85%'}</span>
+            <span>Zero Fabrication Guarantee</span>
           </div>
         </div>
       </div>

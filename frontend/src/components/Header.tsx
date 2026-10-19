@@ -36,8 +36,12 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-950 text-cyan-300 border border-cyan-700/50 uppercase tracking-wider">
                 MVP v1.0
               </span>
-              <span className="hidden sm:inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/50 uppercase tracking-wider">
-                DEMO DATA
+              <span className={`hidden sm:inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider border ${
+                isBackendOnline
+                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800/50'
+                  : 'bg-amber-950/80 text-amber-300 border-amber-800/50'
+              }`}>
+                {isBackendOnline ? 'LIVE API' : 'DEMO DATA'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">

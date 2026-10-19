@@ -32,30 +32,33 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 }) => {
   const [pipelineAudit, setPipelineAudit] = useState<EnvironmentalPipelineAuditResponse | null>(null);
   const [auditLoading, setAuditLoading] = useState<boolean>(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [showAudit, setShowAudit] = useState<boolean>(false);
+
+  const fetchAudit = (stationId: number) => {
+    setAuditLoading(true);
+    setAuditError(null);
+    api.getEnvironmentalPipelineAudit(stationId)
+      .then((data) => {
+        setPipelineAudit(data);
+        setAuditError(null);
+      })
+      .catch((err: any) => {
+        setPipelineAudit(null);
+        setAuditError(err.message || 'Pipeline audit service unreachable');
+      })
+      .finally(() => {
+        setAuditLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!station) {
       setPipelineAudit(null);
+      setAuditError(null);
       return;
     }
-    // Fetch pipeline audit whenever selected station changes
-    let active = true;
-    setAuditLoading(true);
-    api.getEnvironmentalPipelineAudit(station.id)
-      .then((data) => {
-        if (active) setPipelineAudit(data);
-      })
-      .catch(() => {
-        if (active) setPipelineAudit(null);
-      })
-      .finally(() => {
-        if (active) setAuditLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
+    fetchAudit(station.id);
   }, [station?.id]);
 
   if (!station) {
@@ -314,7 +317,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400 mt-1 leading-snug">
-                        Value: {pipelineAudit.dimensions.water_level?.value ?? station.depth_meters} m &bull; Source: {pipelineAudit.dimensions.water_level?.source || 'Telemetry Node'}
+                        Value: {pipelineAudit.dimensions.water_level?.status === 'UNAVAILABLE' ? 'Unavailable' : `${pipelineAudit.dimensions.water_level?.value ?? station.depth_meters} m`} &bull; Source: {pipelineAudit.dimensions.water_level?.source || 'Telemetry Node'}
                       </p>
                     </div>
 
@@ -376,6 +379,16 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                     <span>{pipelineAudit.ethical_data_notice}</span>
                   </div>
                 </>
+              ) : auditError ? (
+                <div className="p-3 bg-rose-950/40 border border-rose-800/60 rounded-xl text-rose-300 text-[11px] flex items-center justify-between">
+                  <span>{auditError}</span>
+                  <button
+                    onClick={() => station && fetchAudit(station.id)}
+                    className="px-2 py-0.5 bg-rose-900/60 text-rose-200 rounded text-[10px] hover:bg-rose-900"
+                  >
+                    Retry
+                  </button>
+                </div>
               ) : (
                 <div className="text-slate-500 italic text-[11px] py-1 text-center">Pipeline audit unavailable.</div>
               )}

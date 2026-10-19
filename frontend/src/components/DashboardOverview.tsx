@@ -69,11 +69,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const [evaluationResults, setEvaluationResults] = useState<HazardEvaluationResult[] | null>(null);
   const [evaluating, setEvaluating] = useState<boolean>(false);
   const [togglingScheduler, setTogglingScheduler] = useState<boolean>(false);
+  const [monitoringError, setMonitoringError] = useState<string | null>(null);
 
   // Dispatch Form State
   const [selectedStationName, setSelectedStationName] = useState<string>(
     waterBodies[0]?.name || 'Cascade Canyon River'
   );
+
+  // Synchronize selected station name when water bodies finish loading from backend
+  useEffect(() => {
+    if (waterBodies && waterBodies.length > 0) {
+      if (!waterBodies.some((w) => w.name === selectedStationName)) {
+        setSelectedStationName(waterBodies[0].name);
+      }
+    }
+  }, [waterBodies, selectedStationName]);
+
   const [severity, setSeverity] = useState<string>('high');
   const [channel, setChannel] = useState<'webhook' | 'email'>('webhook');
   const [recipient, setRecipient] = useState<string>('');
@@ -121,13 +132,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     try {
       const status = await api.getHazardMonitoringStatus();
       setMonitoringStatus(status);
-    } catch {
-      // Non-fatal
+      setMonitoringError(null);
+    } catch (err: any) {
+      setMonitoringError(err.message || 'Monitoring status service unreachable');
     }
   };
 
   const handleToggleScheduler = async () => {
     setTogglingScheduler(true);
+    setMonitoringError(null);
     try {
       if (monitoringStatus?.is_scheduler_running) {
         const res = await api.stopHazardMonitoring();
@@ -136,8 +149,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         const res = await api.startHazardMonitoring(60);
         setMonitoringStatus(res);
       }
-    } catch {
-      // Non-fatal
+    } catch (err: any) {
+      setMonitoringError(err.message || 'Failed to toggle monitoring scheduler');
     } finally {
       setTogglingScheduler(false);
     }
@@ -145,15 +158,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   const handleTriggerSweep = async () => {
     setEvaluating(true);
+    setMonitoringError(null);
     try {
       const res = await api.evaluateHazardMonitoring({ safe_simulation_only: true });
       setEvaluationResults(res);
       // Refresh status and alert logs
-      fetchMonitoringStatus();
-      const updatedLogs = await api.getAlertDeliveries(10);
-      setDeliveries(updatedLogs);
-    } catch {
-      // Non-fatal
+      await Promise.all([
+        fetchMonitoringStatus(),
+        api.getAlertDeliveries(10).then(setDeliveries).catch(() => {}),
+      ]);
+    } catch (err: any) {
+      setMonitoringError(err.message || 'Hazard evaluation sweep failed');
     } finally {
       setEvaluating(false);
     }
@@ -968,6 +983,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <span className="text-[10px] text-slate-400 mt-1 block">Multi-variable heuristic hazard trigger</span>
           </div>
         </div>
+
+        {/* Monitoring Error Banner */}
+        {monitoringError && (
+          <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
+            <span><strong>Monitoring Error:</strong> {monitoringError}</span>
+            <button
+              onClick={() => {
+                fetchMonitoringStatus();
+                setMonitoringError(null);
+              }}
+              className="text-[10px] text-rose-200 underline hover:text-white"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Control Buttons */}
         <div className="flex flex-wrap items-center gap-3 pt-1">
