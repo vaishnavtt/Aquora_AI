@@ -77,14 +77,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-full lg:w-64 bg-slate-900/60 backdrop-blur-md border-r border-slate-800/80 flex flex-col justify-between p-4 shrink-0">
-      <div className="space-y-6">
+    <aside className="w-full lg:w-64 bg-slate-900/60 backdrop-blur-md border-b lg:border-b-0 lg:border-r border-slate-800/80 flex flex-col justify-between p-3 sm:p-4 shrink-0">
+      <div className="space-y-4 lg:space-y-6">
         {/* Navigation Section */}
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 block mb-2 font-mono">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1 sm:px-3 block mb-2 font-mono">
             Navigation Console
           </span>
-          <nav className="space-y-1.5">
+          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-visible gap-1.5 pb-2 lg:pb-0 scrollbar-thin">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -92,13 +92,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between group ${
+                  className={`shrink-0 min-w-[150px] sm:min-w-[180px] lg:min-w-0 lg:w-full text-left px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between group ${
                     isActive
                       ? 'bg-gradient-to-r from-cyan-950/80 to-blue-950/60 text-cyan-300 border border-cyan-700/60 shadow-sm shadow-cyan-950/50'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center space-x-3 min-w-0">
+                  <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
                     <Icon
                       className={`w-4 h-4 shrink-0 transition-colors ${
                         isActive ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'
@@ -106,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                     <div className="truncate">
                       <div className="truncate leading-tight">{item.label}</div>
-                      <div className="text-[10px] font-normal text-slate-500 truncate mt-0.5">
+                      <div className="text-[10px] font-normal text-slate-500 truncate mt-0.5 hidden sm:block">
                         {item.desc}
                       </div>
                     </div>
@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   {item.badge && (
                     <span
-                      className={`px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider shrink-0 ml-1.5 ${
+                      className={`hidden sm:inline-flex px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider shrink-0 ml-1.5 ${
                         item.badgeColor === 'rose'
                           ? 'bg-rose-950 text-rose-300 border border-rose-800/50'
                           : 'bg-cyan-950 text-cyan-300 border border-cyan-800/50'
@@ -129,8 +129,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
-        {/* Team Collaboration Tracks */}
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-2.5 text-[11px]">
+        {/* Team Collaboration Tracks - Hidden on small mobile to maximize workspace */}
+        <div className="hidden lg:block p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-2.5 text-[11px]">
           <div className="flex items-center justify-between text-slate-300 font-semibold">
             <span className="flex items-center gap-1.5 text-xs text-white">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Team Tracks
@@ -154,8 +154,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Ethics & Synthetic Data Notice */}
-      <div className="pt-4 border-t border-slate-800/80 space-y-2">
+      {/* Ethics & Synthetic Data Notice - Hidden on mobile viewports */}
+      <div className="hidden lg:block pt-4 border-t border-slate-800/80 space-y-2">
         <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-900/40 text-[10px] text-amber-300 space-y-1">
           <div className="flex items-center gap-1.5 font-bold text-amber-200">
             <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />

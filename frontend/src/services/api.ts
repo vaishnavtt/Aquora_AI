@@ -152,14 +152,57 @@ export const DEMO_RISK_CHANGES: RiskChangeEvent[] = [
   }
 ];
 
+export function formatApiError(errData: any, defaultMsg: string): string {
+  if (!errData) return defaultMsg;
+  if (typeof errData.detail === 'string') return errData.detail;
+  if (Array.isArray(errData.detail)) {
+    return errData.detail
+      .map((d: any) => {
+        const field = Array.isArray(d.loc) ? d.loc.filter((l: any) => l !== 'body').join('.') : '';
+        return field ? `${field}: ${d.msg}` : d.msg;
+      })
+      .join('; ');
+  }
+  if (errData.message && typeof errData.message === 'string') return errData.message;
+  return defaultMsg;
+}
+
+export const DEMO_DASHBOARD: DashboardResponse = {
+  total_monitored_sites: DEMO_WATER_BODIES.length,
+  high_risk_sites_count: DEMO_WATER_BODIES.filter(w => w.current_risk_level === 'high' || w.current_risk_level === 'extreme').length,
+  safe_sites_count: DEMO_WATER_BODIES.filter(w => w.current_risk_level === 'low').length,
+  moderate_risk_sites_count: DEMO_WATER_BODIES.filter(w => w.current_risk_level === 'moderate').length,
+  system_status: 'operational (demo fallback)',
+  last_sync: new Date().toISOString(),
+  recent_alerts: [
+    {
+      id: 101,
+      water_body_id: 2,
+      water_body_name: 'Cascade Canyon River (DEMO)',
+      severity: 'high',
+      message: 'DEMO ALERT: Flow velocity elevated to 9.4 m³/s after precipitation event.',
+      timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString()
+    },
+    {
+      id: 102,
+      water_body_id: 6,
+      water_body_name: 'Blackwood Gorge (DEMO)',
+      severity: 'extreme',
+      message: 'DEMO ALERT: Sub-10°C water and violent current. Total access warning.',
+      timestamp: new Date(Date.now() - 1000 * 60 * 40).toISOString()
+    }
+  ]
+};
+
 export const api = {
-  async getHealth(): Promise<HealthResponse> {
+  async getHealth(signal?: AbortSignal): Promise<HealthResponse> {
     try {
-      const res = await fetch(`${API_BASE_URL}/health`);
-      if (!res.ok) throw new Error(`Health check failed: ${res.statusText}`);
+      const res = await fetch(`${API_BASE_URL}/health`, { signal });
+      if (!res.ok) throw new Error(`Health check failed: ${res.statusText} (${res.status})`);
       return await res.json();
-    } catch (err) {
-      // Fallback synthetic health
+    } catch (err: any) {
+      if (err.name === 'AbortError') throw err;
+      // Fallback synthetic health state
       return {
         status: 'degraded',
         timestamp: new Date().toISOString(),
@@ -170,134 +213,43 @@ export const api = {
     }
   },
 
-  async getWaterBodies(params?: { risk_level?: string; type?: string }): Promise<WaterBody[]> {
-    try {
-      const query = new URLSearchParams();
-      if (params?.risk_level) query.append('risk_level', params.risk_level);
-      if (params?.type) query.append('type', params.type);
+  async getWaterBodies(params?: { risk_level?: string; type?: string }, signal?: AbortSignal): Promise<WaterBody[]> {
+    const query = new URLSearchParams();
+    if (params?.risk_level) query.append('risk_level', params.risk_level);
+    if (params?.type) query.append('type', params.type);
 
-      const url = `${API_BASE_URL}/water-bodies${query.toString() ? `?${query.toString()}` : ''}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Failed to fetch water bodies: ${res.statusText}`);
-      const data = await res.json();
-      return Array.isArray(data) && data.length > 0 ? data : DEMO_WATER_BODIES;
-    } catch {
-      // Return synthetic demo stations if backend is unreachable
-      let result = DEMO_WATER_BODIES;
-      if (params?.risk_level) {
-        result = result.filter(wb => wb.current_risk_level === params.risk_level);
-      }
-      if (params?.type) {
-        result = result.filter(wb => wb.type === params.type);
-      }
-      return result;
+    const url = `${API_BASE_URL}/water-bodies${query.toString() ? `?${query.toString()}` : ''}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch water bodies: ${res.statusText} (${res.status})`));
     }
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   },
 
-  async predictRisk(payload: PredictRequest): Promise<PredictResponse> {
-    try {
-      const res = await fetch(`${API_BASE_URL}/predict`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.detail ? JSON.stringify(errorData.detail) : `Prediction failed: ${res.statusText}`);
-      }
-      return await res.json();
-    } catch (e) {
-      // Client-side deterministic calculation matching the baseline heuristic for offline demo
-      let score = 10.0;
-      const hazards: string[] = [];
-      const recs: string[] = [];
-
-      if (payload.flow_rate_cms >= 12.0) {
-        score += 35.0;
-        hazards.push('Violent Hydrodynamic Current (>12 m³/s)');
-        recs.push('DEMO HEURISTIC: Total water entry restriction recommended.');
-      } else if (payload.flow_rate_cms >= 6.0) {
-        score += 24.0;
-        hazards.push('Rapid Current / High Flow (>6 m³/s)');
-        recs.push('DEMO HEURISTIC: Non-motorized watercraft and swimming strongly discouraged.');
-      }
-
-      if (payload.water_temp_c < 10.0) {
-        score += 25.0;
-        hazards.push('Severe Hypothermia & Cold Shock (<10°C)');
-        recs.push('DEMO HEURISTIC: Rapid cold incapacitation risk within minutes of immersion.');
-      } else if (payload.water_temp_c < 15.0) {
-        score += 15.0;
-        hazards.push('Cold Shock Potential (<15°C)');
-      }
-
-      if (payload.rainfall_last_24h_mm >= 50.0) {
-        score += 20.0;
-        hazards.push('Heavy Runoff / Flash Flood Warning (>50mm)');
-      } else if (payload.rainfall_last_24h_mm >= 25.0) {
-        score += 10.0;
-        hazards.push('Runoff & Elevated Turbidity');
-      }
-
-      if (payload.wind_speed_kmh >= 45.0) {
-        score += 15.0;
-        hazards.push('High Gale Winds (>45 km/h)');
-      }
-
-      const risk_score = Math.min(100.0, Math.max(5.0, score));
-      let risk_level: 'low' | 'moderate' | 'high' | 'extreme' = 'low';
-      if (risk_score >= 80.0) risk_level = 'extreme';
-      else if (risk_score >= 60.0) risk_level = 'high';
-      else if (risk_score >= 30.0) risk_level = 'moderate';
-
-      return {
-        risk_score,
-        risk_level,
-        confidence: 0.85,
-        primary_hazards: hazards.length > 0 ? hazards : ['Nominal baseline conditions (DEMO)'],
-        safety_recommendations: recs.length > 0 ? recs : ['Standard shoreline safety guidelines apply (DEMO).'],
-        model_version: 'baseline-heuristic-v0.1',
-        is_baseline_model: true,
-        ai_explanation: payload.include_ai_explanation
-          ? `DEMO SIMULATION: The computed danger score is ${risk_score}/100 (${risk_level.toUpperCase()}). Flow rate (${payload.flow_rate_cms} m³/s) and water temperature (${payload.water_temp_c}°C) are key contributing factors.`
-          : null
-      };
+  async predictRisk(payload: PredictRequest, signal?: AbortSignal): Promise<PredictResponse> {
+    const res = await fetch(`${API_BASE_URL}/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal,
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const msg = formatApiError(errorData, `Prediction failed: ${res.statusText} (${res.status})`);
+      throw new Error(msg);
     }
+    return await res.json();
   },
 
-  async getDashboard(): Promise<DashboardResponse> {
-    try {
-      const res = await fetch(`${API_BASE_URL}/dashboard`);
-      if (!res.ok) throw new Error(`Failed to fetch dashboard: ${res.statusText}`);
-      return await res.json();
-    } catch {
-      return {
-        total_monitored_sites: DEMO_WATER_BODIES.length,
-        high_risk_sites_count: DEMO_WATER_BODIES.filter(w => w.current_risk_level === 'high' || w.current_risk_level === 'extreme').length,
-        safe_sites_count: DEMO_WATER_BODIES.filter(w => w.current_risk_level === 'low').length,
-        moderate_risk_sites_count: DEMO_WATER_BODIES.filter(w => w.current_risk_level === 'moderate').length,
-        system_status: 'operational (demo telemetry)',
-        last_sync: new Date().toISOString(),
-        recent_alerts: [
-          {
-            id: 101,
-            water_body_id: 2,
-            water_body_name: 'Cascade Canyon River (DEMO)',
-            severity: 'high',
-            message: 'DEMO ALERT: Flow velocity elevated to 9.4 m³/s after precipitation event.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString()
-          },
-          {
-            id: 102,
-            water_body_id: 6,
-            water_body_name: 'Blackwood Gorge (DEMO)',
-            severity: 'extreme',
-            message: 'DEMO ALERT: Sub-10°C water and violent current. Total access warning.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 40).toISOString()
-          }
-        ]
-      };
+  async getDashboard(signal?: AbortSignal): Promise<DashboardResponse> {
+    const res = await fetch(`${API_BASE_URL}/dashboard`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch dashboard: ${res.statusText} (${res.status})`));
     }
+    return await res.json();
   },
 
   getRecentRiskChanges(): RiskChangeEvent[] {

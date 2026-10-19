@@ -294,8 +294,8 @@ export function App() {
             <Waves className="w-4 h-4 text-cyan-400" />
             <span className="font-semibold text-slate-400">AQUORA AI Platform</span>
             <span>&bull;</span>
-            <span className="text-amber-400/90 font-mono text-[11px]">
-              DEMO SYNTHETIC ENVIRONMENT
+            <span className={`font-mono text-[11px] ${health?.status === 'healthy' ? 'text-emerald-400' : 'text-amber-400/90'}`}>
+              {health?.status === 'healthy' ? 'LIVE BACKEND CONNECTED' : 'DEMO SYNTHETIC ENVIRONMENT'}
             </span>
           </div>
           <div className="text-[11px] font-mono text-slate-500">
