@@ -1,4 +1,4 @@
-// API Contract Data Types matching docs/api-contract.md
+﻿// API Contract Data Types matching docs/api-contract.md
 
 export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
 export type WaterBodyType = 'lake' | 'river' | 'reservoir' | 'coastal';
@@ -27,6 +27,8 @@ export interface WaterBody {
   data_source?: string | null;
   last_updated: string;
   description?: string;
+  /** True when this record is synthetic or unvalidated demonstration data */
+  is_demonstration_data?: boolean;
 }
 
 
@@ -331,6 +333,6 @@ export interface HazardMonitoringStatusResponse {
 export function formatCoordinates(lat: number, lng: number, digits: number = 4): string {
   const latDir = lat >= 0 ? 'N' : 'S';
   const lngDir = lng >= 0 ? 'E' : 'W';
-  return `${Math.abs(lat).toFixed(digits)}°${latDir}, ${Math.abs(lng).toFixed(digits)}°${lngDir}`;
+  return `${Math.abs(lat).toFixed(digits)}Â°${latDir}, ${Math.abs(lng).toFixed(digits)}Â°${lngDir}`;
 }
 

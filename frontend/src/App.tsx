@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Header } from './components/Header';
 import { Sidebar, NavTab } from './components/Sidebar';
 import { SummaryCards } from './components/SummaryCards';
@@ -9,6 +9,7 @@ import { RiskTrendChart } from './components/RiskTrendChart';
 import { WaterLevelForecastingPanel } from './components/WaterLevelForecastingPanel';
 import { DashboardOverview } from './components/DashboardOverview';
 import { LoadingSkeleton, EmptyState, ErrorBanner } from './components/States';
+import { BottomSheet } from './components/layout/BottomSheet';
 import { api, DEMO_WATER_BODIES, DEMO_RISK_CHANGES } from './services/api';
 import { HealthResponse, WaterBody, RiskChangeEvent, DashboardResponse, formatCoordinates } from './types';
 import { Waves, Droplets, Compass, ShieldAlert, Sliders, ExternalLink } from 'lucide-react';
@@ -23,6 +24,7 @@ export function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUsingDemoData, setIsUsingDemoData] = useState(true);
 
   // Load backend data on boot
   const loadData = async () => {
@@ -39,6 +41,7 @@ export function App() {
       if (stationsData && stationsData.length > 0) {
         setWaterBodies(stationsData);
         setSelectedStation(stationsData[0]);
+        setIsUsingDemoData(stationsData.every((wb) => wb.is_demonstration_data === true));
       }
       setRiskChanges(api.getRecentRiskChanges());
     } catch (err: any) {
@@ -111,9 +114,21 @@ export function App() {
                     waterBodies={waterBodies}
                     riskChanges={riskChanges}
                     onSelectStation={setSelectedStation}
+                    isUsingDemoData={isUsingDemoData}
                   />
 
                   {/* Geospatial Map + Location Details Split */}
+                  {/* Mobile bottom sheet for station details */}
+                  <BottomSheet
+                    isOpen={!!selectedStation}
+                    onClose={() => setSelectedStation(null)}
+                    title={selectedStation?.name}
+                  >
+                    <LocationDetailsPanel
+                      station={selectedStation}
+                      onSendToSimulator={handleSendToSimulator}
+                    />
+                  </BottomSheet>
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8">
                       <MapSection
@@ -122,7 +137,7 @@ export function App() {
                         onSelectStation={setSelectedStation}
                       />
                     </div>
-                    <div className="lg:col-span-4">
+                    <div className="hidden lg:block lg:col-span-4">
                       <LocationDetailsPanel
                         station={selectedStation}
                         onSendToSimulator={handleSendToSimulator}
@@ -156,19 +171,32 @@ export function App() {
 
               {/* TAB 3: GEOSPATIAL MAP */}
               {activeTab === 'map' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  <div className="lg:col-span-8">
-                    <MapSection
-                      waterBodies={filteredWaterBodies}
-                      selectedStation={selectedStation}
-                      onSelectStation={setSelectedStation}
-                    />
-                  </div>
-                  <div className="lg:col-span-4">
+                <div className="space-y-0">
+                  {/* Mobile bottom sheet for station details */}
+                  <BottomSheet
+                    isOpen={!!selectedStation}
+                    onClose={() => setSelectedStation(null)}
+                    title={selectedStation?.name}
+                  >
                     <LocationDetailsPanel
                       station={selectedStation}
                       onSendToSimulator={handleSendToSimulator}
                     />
+                  </BottomSheet>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div className="lg:col-span-8">
+                      <MapSection
+                        waterBodies={filteredWaterBodies}
+                        selectedStation={selectedStation}
+                        onSelectStation={setSelectedStation}
+                      />
+                    </div>
+                    <div className="hidden lg:block lg:col-span-4">
+                      <LocationDetailsPanel
+                        station={selectedStation}
+                        onSendToSimulator={handleSendToSimulator}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -189,6 +217,7 @@ export function App() {
                     waterBodies={waterBodies}
                     riskChanges={riskChanges}
                     onSelectStation={setSelectedStation}
+                    isUsingDemoData={isUsingDemoData}
                   />
                 </div>
               )}
@@ -244,11 +273,11 @@ export function App() {
                         <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-800/80 my-3 text-xs">
                           <div>
                             <span className="text-[10px] text-slate-500 block">Temp</span>
-                            <span className="font-mono text-slate-200">{wb.water_temp_c.toFixed(1)}°C</span>
+                            <span className="font-mono text-slate-200">{wb.water_temp_c.toFixed(1)}Â°C</span>
                           </div>
                           <div>
                             <span className="text-[10px] text-slate-500 block">Flow</span>
-                            <span className="font-mono text-slate-200">{wb.flow_rate_cms.toFixed(1)} m³/s</span>
+                            <span className="font-mono text-slate-200">{wb.flow_rate_cms.toFixed(1)} mÂ³/s</span>
                           </div>
                           <div>
                             <span className="text-[10px] text-slate-500 block">Depth</span>
