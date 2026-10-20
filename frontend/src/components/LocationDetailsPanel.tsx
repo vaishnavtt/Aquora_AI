@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Thermometer,
   Waves,
@@ -19,6 +19,7 @@ import {
   Info,
 } from 'lucide-react';
 import { WaterBody, RiskLevel, EnvironmentalPipelineAuditResponse, formatCoordinates } from '../types';
+import { DemoBadge } from './common/DemoBadge';
 import { api } from '../services/api';
 
 interface LocationDetailsPanelProps {
@@ -80,13 +81,13 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
     contributingFactors.push({
       name: 'Violent Current / High Discharge',
       severity: 'high',
-      note: `${station.flow_rate_cms.toFixed(1)} m³/s exceeds safe recreational thresholds (>6 m³/s).`,
+      note: `${station.flow_rate_cms.toFixed(1)} mÂ³/s exceeds safe recreational thresholds (>6 mÂ³/s).`,
     });
   } else if (station.flow_rate_cms >= 2.5) {
     contributingFactors.push({
       name: 'Moderate River Flow Velocity',
       severity: 'moderate',
-      note: `${station.flow_rate_cms.toFixed(1)} m³/s poses swimming fatigue risks.`,
+      note: `${station.flow_rate_cms.toFixed(1)} mÂ³/s poses swimming fatigue risks.`,
     });
   } else {
     contributingFactors.push({
@@ -100,19 +101,19 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
     contributingFactors.push({
       name: 'Severe Hypothermia & Cold Shock',
       severity: 'high',
-      note: `${station.water_temp_c.toFixed(1)}°C triggers gasping reflex within 60 seconds of immersion.`,
+      note: `${station.water_temp_c.toFixed(1)}Â°C triggers gasping reflex within 60 seconds of immersion.`,
     });
   } else if (station.water_temp_c < 17.0) {
     contributingFactors.push({
       name: 'Cold Water Advisory',
       severity: 'moderate',
-      note: `${station.water_temp_c.toFixed(1)}°C is brisk; thermal protection recommended.`,
+      note: `${station.water_temp_c.toFixed(1)}Â°C is brisk; thermal protection recommended.`,
     });
   } else {
     contributingFactors.push({
       name: 'Temperate Water Range',
       severity: 'low',
-      note: `${station.water_temp_c.toFixed(1)}°C within comfortable recreation boundaries.`,
+      note: `${station.water_temp_c.toFixed(1)}Â°C within comfortable recreation boundaries.`,
     });
   }
 
@@ -141,6 +142,9 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               <span className="text-[10px] font-mono uppercase text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/50">
                 {station.type}
               </span>
+              {station.is_demonstration_data && (
+                <DemoBadge className="mt-0.5" tooltip="This water body record is synthetic or unvalidated demonstration data." />
+              )}
               {station.basin_region && (
                 <span className="text-[9px] font-mono text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
                   {station.basin_region}
@@ -216,7 +220,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               <span>Water Temp</span>
             </div>
             <span className="text-sm font-bold font-mono text-white">
-              {station.water_temp_c.toFixed(1)}°C
+              {station.water_temp_c.toFixed(1)}Â°C
             </span>
           </div>
 
@@ -226,7 +230,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               <span>Discharge Flow</span>
             </div>
             <span className="text-sm font-bold font-mono text-white">
-              {station.flow_rate_cms.toFixed(1)} m³/s
+              {station.flow_rate_cms.toFixed(1)} mÂ³/s
             </span>
           </div>
 

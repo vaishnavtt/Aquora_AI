@@ -12,17 +12,21 @@ import {
   Compass,
 } from 'lucide-react';
 import { WaterBody, RiskChangeEvent } from '../types';
+import { DemoBadge } from './common/DemoBadge';
 
 interface SummaryCardsProps {
   waterBodies: WaterBody[];
   riskChanges: RiskChangeEvent[];
   onSelectStation: (wb: WaterBody) => void;
+  /** Pass true when the displayed water bodies are synthetic/fallback demo data */
+  isUsingDemoData?: boolean;
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({
   waterBodies,
   riskChanges,
   onSelectStation,
+  isUsingDemoData = false,
 }) => {
   const total = waterBodies.length;
   const highRisk = waterBodies.filter(
@@ -48,11 +52,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
             <span className="text-3xl font-extrabold text-white tracking-tight">{total}</span>
             <span className="text-xs text-slate-400 font-mono">Zones Monitored</span>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/60 pt-2 font-mono">
-            <span>SYNTHETIC DEMO</span>
-            <span className="text-amber-400 flex items-center gap-1.5">
+          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
+            {isUsingDemoData ? (
+              <DemoBadge />
+            ) : (
+              <span className="font-mono text-slate-500">Live Backend</span>
+            )}
+            <span className="text-amber-400 flex items-center gap-1.5 text-[10px]">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              Demo / Historical Nodes
+              {isUsingDemoData ? 'Demo / Historical Nodes' : 'API Connected'}
             </span>
           </div>
         </div>
@@ -74,9 +82,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-rose-300/80 border-t border-rose-950 pt-2">
             <span>Rapid current / hypothermia</span>
-            <span className="font-semibold uppercase text-[10px] bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800/50">
-              Active Warnings
-            </span>
+            <div className="flex items-center gap-1.5">
+              {isUsingDemoData && <DemoBadge />}
+              <span className="font-semibold uppercase text-[10px] bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800/50">
+                Active Warnings
+              </span>
+            </div>
           </div>
         </div>
 
@@ -97,7 +108,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-amber-300/80 border-t border-amber-950 pt-2">
             <span>Elevated flow or chop</span>
-            <span className="font-mono text-[10px]">Supervised swim only</span>
+            <div className="flex items-center gap-1.5">
+              {isUsingDemoData && <DemoBadge />}
+              <span className="font-mono text-[10px]">Supervised swim only</span>
+            </div>
           </div>
         </div>
 
@@ -118,9 +132,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-emerald-300/80 border-t border-emerald-950 pt-2">
             <span>Flow &lt;2 m³/s | Temp &gt;18°C</span>
-            <span className="font-semibold uppercase text-[10px] bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800/50">
-              Clear
-            </span>
+            <div className="flex items-center gap-1.5">
+              {isUsingDemoData && <DemoBadge />}
+              <span className="font-semibold uppercase text-[10px] bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800/50">
+                Clear
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -131,8 +148,9 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
           <div className="flex items-center space-x-2">
             <TrendingUp className="w-4 h-4 text-cyan-400" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Recent Hazard Level Changes (DEMO Telemetry)
+              Recent Hazard Level Changes
             </h3>
+            {isUsingDemoData && <DemoBadge tooltip="Risk change events are synthetic demonstration data." />}
           </div>
           <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
             Real-Time State Transitions
