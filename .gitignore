@@ -60,3 +60,6 @@ pnpm-debug.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+*.tsbuildinfo
+backend/aquora.db
