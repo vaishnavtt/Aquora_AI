@@ -127,7 +127,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
     switch (status) {
       case 'LIVE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-700/80 shadow-sm shadow-emerald-950">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-emerald-950 text-emerald-400 border border-emerald-700/80 shadow-sm shadow-emerald-950">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 -ml-3" />
             LIVE TELEMETRY
@@ -135,14 +135,14 @@ export const WaterLevelForecastingPanel: React.FC = () => {
         );
       case 'CACHED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-cyan-950 text-cyan-300 border border-cyan-700/80">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-cyan-950 text-cyan-300 border border-cyan-700/80">
             <Database className="w-3 h-3 text-cyan-400" />
             CACHED TELEMETRY
           </span>
         );
       case 'HISTORICAL':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-950 text-amber-300 border border-amber-700/80">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-amber-950 text-amber-300 border border-amber-700/80">
             <Calendar className="w-3 h-3 text-amber-400" />
             HISTORICAL ARCHIVE
           </span>
@@ -150,7 +150,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       case 'UNAVAILABLE':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-900 text-rose-300 border border-rose-800/80">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-slate-900 text-rose-300 border border-rose-800/80">
             <ShieldAlert className="w-3 h-3 text-rose-400" />
             LIVE FEED UNAVAILABLE
           </span>
@@ -167,14 +167,14 @@ export const WaterLevelForecastingPanel: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-800">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold  bg-cyan-950 text-cyan-400 border border-cyan-800">
                 Hydrodynamic Forecasting Engine
               </span>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-950 text-purple-400 border border-purple-800 flex items-center gap-1">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold  bg-purple-950 text-purple-400 border border-purple-800 flex items-center gap-1">
                 <MapPin className="w-2.5 h-2.5" />
                 Station: RAMAMANGALAM BRIDGE
               </span>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold  bg-slate-800 text-slate-300 border border-slate-700">
                 District: ERNAKULAM, KERALA
               </span>
             </div>
@@ -232,8 +232,8 @@ export const WaterLevelForecastingPanel: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-cyan-400" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                River Telemetry Station Status: {stationQuery.replace('-', ' ')}
+              <h2 className="text-sm font-bold text-white ">
+                Station Status: {stationQuery.replace('-', ' ')}
               </h2>
             </div>
             <p className="text-[11px] text-slate-500 font-mono mt-0.5">
@@ -454,7 +454,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 font-mono">
+            <span className="text-[10px] font-bold  text-amber-400 font-mono">
               Historical Telemetry Demonstration Sequences (Kerala SW 2024 Records)
             </span>
             <p className="text-[11px] text-slate-500 mt-0.5">
@@ -502,8 +502,8 @@ export const WaterLevelForecastingPanel: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                1-Hour-Ahead Stage Forecast Output ({forecastResult.forecast_horizon})
+              <h2 className="text-sm font-bold text-white ">
+                1-Hour Water Level Forecast ({forecastResult.forecast_horizon})
               </h2>
             </div>
             <div className="flex items-center gap-2">
@@ -619,7 +619,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
         <div className="bg-slate-900/80 border border-amber-800/80 rounded-2xl p-6 shadow-lg">
           <div className="flex items-center gap-3 mb-3 text-amber-400">
             <ShieldAlert className="w-5 h-5 shrink-0" />
-            <h3 className="text-sm font-bold uppercase tracking-wider">
+            <h3 className="text-sm font-bold ">
               Dam &amp; Reservoir Station Excluded: {forecastVsObs.station_name}
             </h3>
           </div>
@@ -638,8 +638,8 @@ export const WaterLevelForecastingPanel: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <Activity className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Ground-Truth Model Evaluation: Forecast vs. Actual Observation
+                <h3 className="text-sm font-bold text-white ">
+                  Model Accuracy: Forecast vs. Actual Observation
                 </h3>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -647,13 +647,13 @@ export const WaterLevelForecastingPanel: React.FC = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-800">
+              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-emerald-950 text-emerald-300 border border-emerald-800">
                 Model MAE: {(forecastVsObs.model_mae_m * 1000).toFixed(1)} mm
               </span>
-              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-slate-800 text-slate-300 border border-slate-700">
                 Persistence MAE: {(forecastVsObs.baseline_persistence_mae_m * 1000).toFixed(1)} mm
               </span>
-              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-950 text-cyan-300 border border-cyan-800">
+              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-cyan-950 text-cyan-300 border border-cyan-800">
                 Error Reduction: {forecastVsObs.mae_reduction_percent.toFixed(1)}%
               </span>
             </div>
@@ -662,7 +662,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
               <thead>
-                <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-slate-800 text-[10px] text-slate-400 ">
                   <th className="py-2.5 px-3">Target Time</th>
                   <th className="py-2.5 px-3">Actual (wl_t+1)</th>
                   <th className="py-2.5 px-3">Ridge Forecast (t+1)</th>
@@ -739,8 +739,8 @@ export const WaterLevelForecastingPanel: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <Database className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Historical Water Level &amp; Discharge Trend Archive
+                  <h3 className="text-sm font-bold text-white ">
+                    Water Level &amp; Flow History
                   </h3>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -763,7 +763,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
                 <thead>
-                  <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-wider">
+                  <tr className="border-b border-slate-800 text-[10px] text-slate-400 ">
                     <th className="py-2 px-3">Timestamp</th>
                     <th className="py-2 px-3">Water Level (m)</th>
                     <th className="py-2 px-3">Discharge (m³/s)</th>
@@ -821,9 +821,9 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-xs font-bold text-white  flex items-center gap-2">
               <Clock className="w-4 h-4 text-cyan-400" />
-              Consecutive Hourly Telemetry Input Sequence ({readings.length} Observations)
+              Hourly Observation Sequence ({readings.length} Observations)
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
               These 13 readings compute 25 lagged, rolling, and kinematic features ($t-12$ to $t$).

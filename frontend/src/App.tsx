@@ -9,6 +9,7 @@ import { RiskTrendChart } from './components/RiskTrendChart';
 import { WaterLevelForecastingPanel } from './components/WaterLevelForecastingPanel';
 import { DashboardOverview } from './components/DashboardOverview';
 import { LoadingSkeleton, EmptyState, ErrorBanner } from './components/States';
+import { BottomSheet } from './components/layout/BottomSheet';
 import { api, DEMO_WATER_BODIES, DEMO_RISK_CHANGES } from './services/api';
 import { HealthResponse, WaterBody, RiskChangeEvent, DashboardResponse, formatCoordinates } from './types';
 import { Waves, Droplets, Compass, ShieldAlert, Sliders, ExternalLink } from 'lucide-react';
@@ -23,6 +24,7 @@ export function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUsingDemoData, setIsUsingDemoData] = useState(true);
 
   // Load backend data on boot
   const loadData = async () => {
@@ -39,6 +41,7 @@ export function App() {
       if (stationsData && stationsData.length > 0) {
         setWaterBodies(stationsData);
         setSelectedStation(stationsData[0]);
+        setIsUsingDemoData(stationsData.every((wb) => wb.is_demonstration_data === true));
       }
       setRiskChanges(api.getRecentRiskChanges());
     } catch (err: any) {
@@ -111,9 +114,21 @@ export function App() {
                     waterBodies={waterBodies}
                     riskChanges={riskChanges}
                     onSelectStation={setSelectedStation}
+                    isUsingDemoData={isUsingDemoData}
                   />
 
                   {/* Geospatial Map + Location Details Split */}
+                  {/* Mobile bottom sheet for station details */}
+                  <BottomSheet
+                    isOpen={!!selectedStation}
+                    onClose={() => setSelectedStation(null)}
+                    title={selectedStation?.name}
+                  >
+                    <LocationDetailsPanel
+                      station={selectedStation}
+                      onSendToSimulator={handleSendToSimulator}
+                    />
+                  </BottomSheet>
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8">
                       <MapSection
@@ -122,7 +137,7 @@ export function App() {
                         onSelectStation={setSelectedStation}
                       />
                     </div>
-                    <div className="lg:col-span-4">
+                    <div className="hidden lg:block lg:col-span-4">
                       <LocationDetailsPanel
                         station={selectedStation}
                         onSendToSimulator={handleSendToSimulator}
@@ -156,19 +171,32 @@ export function App() {
 
               {/* TAB 3: GEOSPATIAL MAP */}
               {activeTab === 'map' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  <div className="lg:col-span-8">
-                    <MapSection
-                      waterBodies={filteredWaterBodies}
-                      selectedStation={selectedStation}
-                      onSelectStation={setSelectedStation}
-                    />
-                  </div>
-                  <div className="lg:col-span-4">
+                <div className="space-y-0">
+                  {/* Mobile bottom sheet for station details */}
+                  <BottomSheet
+                    isOpen={!!selectedStation}
+                    onClose={() => setSelectedStation(null)}
+                    title={selectedStation?.name}
+                  >
                     <LocationDetailsPanel
                       station={selectedStation}
                       onSendToSimulator={handleSendToSimulator}
                     />
+                  </BottomSheet>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div className="lg:col-span-8">
+                      <MapSection
+                        waterBodies={filteredWaterBodies}
+                        selectedStation={selectedStation}
+                        onSelectStation={setSelectedStation}
+                      />
+                    </div>
+                    <div className="hidden lg:block lg:col-span-4">
+                      <LocationDetailsPanel
+                        station={selectedStation}
+                        onSendToSimulator={handleSendToSimulator}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -189,6 +217,7 @@ export function App() {
                     waterBodies={waterBodies}
                     riskChanges={riskChanges}
                     onSelectStation={setSelectedStation}
+                    isUsingDemoData={isUsingDemoData}
                   />
                 </div>
               )}
@@ -200,10 +229,10 @@ export function App() {
                     <div>
                       <h2 className="text-lg font-bold text-white flex items-center gap-2">
                         <Droplets className="w-5 h-5 text-cyan-400" />
-                        Monitored Aquatic Stations Directory
+                        All monitored locations
                       </h2>
                       <p className="text-xs text-slate-400">
-                        Inspecting telemetry parameters across lakes, rivers, reservoirs and coastal zones.
+                        Full directory of water bodies currently in the monitoring system.
                       </p>
                     </div>
                   </div>
@@ -267,7 +296,7 @@ export function App() {
                             }}
                             className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs"
                           >
-                            Simulate &rarr;
+                            Simulate ?
                           </button>
                         </div>
                       </div>
@@ -292,14 +321,14 @@ export function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <Waves className="w-4 h-4 text-cyan-400" />
-            <span className="font-semibold text-slate-400">AQUORA AI Platform</span>
+            <span className="font-semibold text-slate-400">AQUORA</span>
             <span>&bull;</span>
             <span className={`font-mono text-[11px] ${health?.status === 'healthy' ? 'text-emerald-400' : 'text-amber-400/90'}`}>
-              {health?.status === 'healthy' ? 'LIVE BACKEND CONNECTED' : 'DEMO SYNTHETIC ENVIRONMENT'}
+              {health?.status === 'healthy' ? 'Live backend connected' : 'Running in demo mode'}
             </span>
           </div>
           <div className="text-[11px] font-mono text-slate-500">
-            Track 1: ML &amp; Integration | Track 2: Frontend &amp; Maps | Track 3: Backend &amp; DB
+            Hackathon prototype · Not an official warning system · v1.0
           </div>
         </div>
       </footer>

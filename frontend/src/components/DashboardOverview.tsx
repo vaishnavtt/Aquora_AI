@@ -267,7 +267,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="flex items-center space-x-2">
             <ShieldAlert className="w-5 h-5 text-cyan-400" />
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              Authority Surveillance & Emergency Dispatch Dashboard
+              Authority Actions & Notifications
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/60 uppercase">
                 AUTHORITY CONSOLE
               </span>
@@ -291,7 +291,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm hover:border-slate-700 transition-all">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">
+          <div className="flex items-center justify-between text-slate-400 text-xs font-medium  mb-2">
             <span>Monitored Sites</span>
             <MapPin className="w-4 h-4 text-cyan-400" />
           </div>
@@ -300,7 +300,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-emerald-900/40 shadow-sm hover:border-emerald-800/60 transition-all">
-          <div className="flex items-center justify-between text-emerald-400 text-xs font-medium uppercase tracking-wider mb-2">
+          <div className="flex items-center justify-between text-emerald-400 text-xs font-medium  mb-2">
             <span>Safe Zones</span>
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
           </div>
@@ -309,7 +309,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-amber-900/40 shadow-sm hover:border-amber-800/60 transition-all">
-          <div className="flex items-center justify-between text-amber-400 text-xs font-medium uppercase tracking-wider mb-2">
+          <div className="flex items-center justify-between text-amber-400 text-xs font-medium  mb-2">
             <span>Moderate Caution</span>
             <AlertTriangle className="w-4 h-4 text-amber-400" />
           </div>
@@ -318,7 +318,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-rose-900/40 shadow-sm hover:border-rose-800/60 transition-all">
-          <div className="flex items-center justify-between text-rose-400 text-xs font-medium uppercase tracking-wider mb-2">
+          <div className="flex items-center justify-between text-rose-400 text-xs font-medium  mb-2">
             <span>High / Critical Risk</span>
             <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
@@ -336,8 +336,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Database className="w-5 h-5 text-amber-400" />
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                Hydrological Telemetry Archive &amp; Stage Trends
+              <h3 className="text-sm font-bold text-white  flex items-center gap-2">
+                River Level Trends &amp; Records
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/60 font-semibold uppercase">
                   {selectedHistoryStation === 'RAMAMANGALAM-BRIDGE' ? 'KERALA SW ARCHIVE' : 'USGS NWIS TELEMETRY'}
                 </span>
@@ -508,9 +508,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="pt-4 border-t border-slate-800 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5 font-mono">
+                <h4 className="text-xs font-bold  text-cyan-300 flex items-center gap-1.5 font-mono">
                   <Sparkles className="w-4 h-4 text-cyan-400" />
-                  ML Forecast vs. Ground-Truth Observation Evaluation
+                  Forecast vs. Observed Levels
                 </h4>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Ridge kinematic delta model evaluated against actual subsequent stage recorded at $t+1$ hour.
@@ -585,7 +585,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Send className="w-4 h-4 text-cyan-400" />
-                Emergency Notification Dispatch Console
+                Send Safety Notice
               </h3>
               <p className="text-[11px] text-slate-400">
                 Trigger verified outbound notifications to emergency services via Webhook or SMTP Email.
@@ -792,7 +792,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               }`}
             >
               <div className="flex items-center justify-between font-bold">
-                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <span className="flex items-center gap-1.5  text-[11px]">
                   {lastDispatchResult.status === 'DELIVERED' || lastDispatchResult.status === 'ACCEPTED' ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   ) : lastDispatchResult.status === 'TEST_MODE_SIMULATED' ? (
@@ -834,7 +834,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Server className="w-4 h-4 text-cyan-400" />
-                Outbound Dispatch Audit Log
+                Notification History
               </h3>
               <span className="text-[10px] font-mono text-slate-400">
                 SQLite Durable Record
@@ -929,8 +929,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Gauge className="w-5 h-5 text-amber-400" />
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Automated Hazard Monitoring Engine &amp; Dynamic Threshold Sweep
+              <h3 className="text-sm font-bold text-white ">
+                Automated Threshold Monitoring
               </h3>
             </div>
             <p className="text-xs text-slate-400 mt-1">
@@ -940,7 +940,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${
+              className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold  border ${
                 monitoringStatus?.is_scheduler_running
                   ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -948,7 +948,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             >
               {monitoringStatus?.is_scheduler_running ? '● Scheduler Active' : '○ Scheduler Idle'}
             </span>
-            <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-950 text-cyan-300 border border-cyan-800">
+            <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-cyan-950 text-cyan-300 border border-cyan-800">
               Safe Mode: {monitoringStatus?.safe_simulation_enforced ? 'ENABLED' : 'DISABLED'}
             </span>
             <span className="px-2.5 py-1 rounded text-[10px] font-mono text-slate-300 bg-slate-950 border border-slate-800">
@@ -1037,7 +1037,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         {/* Evaluation Results Table (if run) */}
         {evaluationResults && evaluationResults.length > 0 && (
           <div className="pt-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2 font-mono">
+            <span className="text-[11px] font-bold  text-slate-300 block mb-2 font-mono">
               Latest Evaluation Sweep Results ({evaluationResults.length} Stations Evaluated)
             </span>
             <div className="overflow-x-auto">
@@ -1154,7 +1154,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <Layers className="w-5 h-5 text-cyan-400" />
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  Telemetry Station &amp; Data-Source Availability Matrix
+                  Station Data Availability
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Verifiable status of operational telemetry streams, historical archives, and synthetic baselines.
@@ -1224,7 +1224,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
             <Droplets className="w-4 h-4 text-cyan-400" />
-            Monitored Aquatic Stations Directory
+            All Monitored Locations
           </h3>
           <span className="text-xs text-slate-400">Telemetry nodes</span>
         </div>
