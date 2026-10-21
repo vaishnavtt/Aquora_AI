@@ -15,9 +15,11 @@ import {
   Globe,
   Satellite,
   X,
+  Map as MapIcon,
 } from 'lucide-react';
 import { WaterBody, RiskLevel, formatCoordinates } from '../types';
 import { api } from '../services/api';
+import { GoogleMapComponent } from './map/GoogleMapComponent';
 
 interface MapSectionProps {
   waterBodies: WaterBody[];
@@ -26,13 +28,23 @@ interface MapSectionProps {
 }
 
 type MapLayerType = 'osm' | 'dark' | 'satellite' | 'simulation';
+type MapEngine = 'leaflet' | 'google';
 
 export const MapSection: React.FC<MapSectionProps> = ({
   waterBodies,
   selectedStation,
   onSelectStation,
 }) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const isGoogleMapsConfigured =
+    Boolean(googleMapsKey) &&
+    googleMapsKey !== 'your_google_maps_api_key_here' &&
+    !googleMapsKey.toLowerCase().includes('placeholder');
+
+  const [mapEngine, setMapEngine] = useState<MapEngine>(
+    isGoogleMapsConfigured ? 'google' : 'leaflet'
+  );
+const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -46,15 +58,12 @@ export const MapSection: React.FC<MapSectionProps> = ({
   // Check for authorized satellite map provider credentials
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
   const isMapboxConfigured = Boolean(mapboxToken) && mapboxToken !== 'your_mapbox_token_here';
-  const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const isGoogleMapsConfigured =
-    Boolean(googleMapsKey) &&
-    googleMapsKey !== 'your_google_maps_api_key_here' &&
-    !googleMapsKey.includes('placeholder');
 
-  const filteredStations = waterBodies.filter(
-    (wb) => filterType === 'all' || wb.type === filterType
-  );
+  const filteredStations = waterBodies.filter((wb) => {
+    if (filterType === 'all') return true;
+    if (filterType === 'lake') return wb.type === 'lake' || wb.type === 'pond';
+    return wb.type === filterType;
+  });
 
   // Helper for risk marker styling
   const getMarkerBadge = (level: RiskLevel) => {
@@ -104,11 +113,11 @@ export const MapSection: React.FC<MapSectionProps> = ({
     if (!mapInstanceRef.current) {
       const initialCenter: [number, number] = selectedStation
         ? [selectedStation.latitude, selectedStation.longitude]
-        : [37.78, -122.35];
+        : [10.15, 76.50]; // Default to Kerala aquatic region
 
       const map = L.map(mapContainerRef.current, {
         center: initialCenter,
-        zoom: 11,
+        zoom: selectedStation ? 11 : 8,
         zoomControl: false,
         attributionControl: true,
       });
@@ -316,6 +325,32 @@ export const MapSection: React.FC<MapSectionProps> = ({
           </div>
         </div>
 
+        {/* Map Engine Selector */}
+        <div className="flex items-center rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
+          <button
+            onClick={() => setMapEngine('leaflet')}
+            className={`px-2.5 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+              mapEngine === 'leaflet'
+                ? 'bg-cyan-950 text-cyan-300 font-bold border border-cyan-800/80 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Globe className="w-3 h-3 text-cyan-400" />
+            Leaflet (Zero-Key)
+          </button>
+          <button
+            onClick={() => setMapEngine('google')}
+            className={`px-2.5 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+              mapEngine === 'google'
+                ? 'bg-amber-950 text-amber-300 font-bold border border-amber-800/80 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <MapIcon className="w-3 h-3 text-amber-400" />
+            Google Maps
+          </button>
+        </div>
+
         {/* Filter & Layer Controls */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Map Layer Switcher */}
@@ -359,11 +394,13 @@ export const MapSection: React.FC<MapSectionProps> = ({
             onChange={(e) => setFilterType(e.target.value)}
             className="bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-cyan-500"
           >
-            <option value="all">All Aquatic Types</option>
-            <option value="lake">Lakes</option>
-            <option value="river">Rivers</option>
-            <option value="reservoir">Reservoirs</option>
-            <option value="coastal">Coastal</option>
+            <option value="all">All Aquatic Types ({waterBodies.length})</option>
+            <option value="river">Rivers & Riverbanks</option>
+            <option value="quarry">Abandoned Quarries</option>
+            <option value="waterfall">Waterfalls & Cascades</option>
+            <option value="lake">Ponds & Lakes</option>
+            <option value="reservoir">Reservoirs & Dams</option>
+            <option value="canal">Canals & Waterways</option>
           </select>
 
           <button
@@ -409,8 +446,16 @@ export const MapSection: React.FC<MapSectionProps> = ({
         </div>
       )}
 
-      {/* Map Viewport Area */}
-      <div className="relative w-full h-[460px] bg-slate-950 overflow-hidden select-none">
+      {mapEngine === 'google' ? (
+        <div className="w-full h-full min-h-[480px] p-2 bg-slate-950">
+          <GoogleMapComponent
+            waterBodies={waterBodies}
+            selectedStation={selectedStation}
+            onSelectStation={onSelectStation}
+          />
+        </div>
+      ) : (
+        <div className="relative w-full h-[460px] bg-slate-950 overflow-hidden select-none">
         {/* Real Leaflet Map Container */}
         {activeLayer !== 'simulation' ? (
           <div ref={mapContainerRef} className="w-full h-full z-0" />
@@ -526,6 +571,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
           </div>
         </div>
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 };

@@ -1,3 +1,9 @@
+﻿/**
+ * @deprecated This component is a legacy Google Maps scaffold and is no longer used in routing.
+ * The active map implementation is in src/components/map/GoogleMapComponent.tsx, which replaced
+ * the previous Leaflet-based MapSection and this older Google Maps scaffold.
+ * This file is retained for reference only and should not be imported anywhere.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { WaterBody } from '../types';
 import { MapPin, Layers, Navigation, ExternalLink, Info } from 'lucide-react';
@@ -133,7 +139,7 @@ export const MapView: React.FC<MapViewProps> = ({ waterBodies, onSelectWaterBody
               })}
 
               <div className="absolute bottom-4 left-4 text-[11px] font-mono text-slate-500 bg-slate-900/80 px-2.5 py-1 rounded border border-slate-800">
-                Lat: 37.7749° N | Lng: -122.4194° W | Region: Bay Aquatics
+                Lat: 37.7749Â° N | Lng: -122.4194Â° W | Region: Bay Aquatics
               </div>
             </div>
           </div>
@@ -177,13 +183,13 @@ export const MapView: React.FC<MapViewProps> = ({ waterBodies, onSelectWaterBody
                   <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/60">
                     <span className="text-[10px] text-slate-500 block">Water Temp</span>
                     <span className="text-sm font-bold text-white font-mono">
-                      {activeStation.water_temp_c.toFixed(1)}°C
+                      {activeStation.water_temp_c.toFixed(1)}Â°C
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/60">
                     <span className="text-[10px] text-slate-500 block">Flow Velocity</span>
                     <span className="text-sm font-bold text-white font-mono">
-                      {activeStation.flow_rate_cms.toFixed(1)} m³/s
+                      {activeStation.flow_rate_cms.toFixed(1)} mÂ³/s
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/60">

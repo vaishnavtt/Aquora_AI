@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TrendingUp, Clock, Calendar, Sparkles, Droplets, CloudRain } from 'lucide-react';
 import { WaterBody, TrendDataPoint } from '../types';
 import { api } from '../services/api';
+import { DemoBadge } from './common/DemoBadge';
 
 interface RiskTrendChartProps {
   station: WaterBody | null;
@@ -65,14 +66,14 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
             <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              Hydrodynamic Risk Trajectory &amp; 12h Projection
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/40 font-semibold uppercase">
-                DEMO TREND
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+              Risk Score — Past 24h &amp; 12h Forecast
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/40 font-semibold uppercase">
+                Demo data
               </span>
             </h3>
             <p className="text-[11px] text-slate-400">
-              Multi-point hazard tracking across precipitation pulses and diurnal current shifts.
+              Estimated risk over time based on rainfall, flow speed and water temperature.
             </p>
           </div>
         </div>
@@ -206,7 +207,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                 fontWeight="bold"
                 fontFamily="monospace"
               >
-                LIVE CURRENT
+                Now
               </text>
             </g>
           )}

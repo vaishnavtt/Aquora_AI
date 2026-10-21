@@ -45,11 +45,21 @@ try:
         HazardMonitoringEvaluationRequest,
         HazardMonitoringStatusResponse,
     )
+    from app.schemas.drowning_risk import (
+        DrowningRiskAssessmentResponse,
+        DrowningRiskAssessRequest,
+        WhatIfSimulationRequest,
+        WhatIfSimulationResponse,
+        ModelStatusResponse,
+    )
     from app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
     from app.ml.water_level_forecaster import WaterLevelForecaster, get_forecaster_for_station
+    from app.schemas.weather import LiveWeatherResponse
+    from app.services.weather_service import weather_service, get_weather_service
     from app.services.river_data_service import river_data_service
     from app.services.alert_service import alert_service
     from app.services.hazard_monitoring_service import hazard_monitoring_service
+    from app.services.drowning_risk_service import drowning_risk_service, get_drowning_risk_service
 except ImportError:
     from backend.app.core.config import settings
     from backend.app.db.session import get_db
@@ -84,11 +94,21 @@ except ImportError:
         HazardMonitoringEvaluationRequest,
         HazardMonitoringStatusResponse,
     )
+    from backend.app.schemas.drowning_risk import (
+        DrowningRiskAssessmentResponse,
+        DrowningRiskAssessRequest,
+        WhatIfSimulationRequest,
+        WhatIfSimulationResponse,
+        ModelStatusResponse,
+    )
     from backend.app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
     from backend.app.ml.water_level_forecaster import WaterLevelForecaster, get_forecaster_for_station
+    from backend.app.schemas.weather import LiveWeatherResponse
+    from backend.app.services.weather_service import weather_service, get_weather_service
     from backend.app.services.river_data_service import river_data_service
     from backend.app.services.alert_service import alert_service
     from backend.app.services.hazard_monitoring_service import hazard_monitoring_service
+    from backend.app.services.drowning_risk_service import drowning_risk_service, get_drowning_risk_service
 
 router = APIRouter()
 
@@ -708,3 +728,151 @@ def get_alert_channel_status():
     Returns the configuration and readiness status of outbound alert channels.
     """
     return alert_service.get_channel_status()
+
+
+# ==========================================
+# Core Drowning-Risk Assessment & Simulation Endpoints
+# ==========================================
+
+@router.post(
+    "/drowning-risk/assess",
+    response_model=DrowningRiskAssessmentResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Drowning Risk"],
+    summary="Evaluate Two-Layer Drowning Risk Assessment",
+    description=(
+        "Evaluates drowning risk using the two-layer assessment engine:\n"
+        "- Layer A: Environmental Aquatic Hazard (Calibrated Scikit-Learn ML inference on Kerala water levels, rainfall, discharge)\n"
+        "- Layer B: Contextual Risk (Water-body type vulnerability, depth, temperature, and human exposure factors)"
+    )
+)
+def assess_drowning_risk_endpoint(
+    req: DrowningRiskAssessRequest,
+    db: Session = Depends(get_db)
+):
+    water_body = None
+    if req.water_body_id:
+        water_body = db.query(WaterBodyModel).filter(WaterBodyModel.id == req.water_body_id).first()
+        if not water_body:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Water body with ID {req.water_body_id} not found"
+            )
+    return drowning_risk_service.assess_drowning_risk(water_body=water_body, req=req)
+
+
+@router.get(
+    "/drowning-risk/water-bodies",
+    response_model=List[DrowningRiskAssessmentResponse],
+    status_code=status.HTTP_200_OK,
+    tags=["Drowning Risk"],
+    summary="List Water Bodies with Two-Layer Drowning Risk Assessments",
+    description="Returns integrated two-layer risk assessments for all monitored Kerala water bodies."
+)
+def list_drowning_risk_water_bodies(
+    type: Optional[str] = Query(None, description="Filter by water body type (river, quarry, waterfall, lake, reservoir, canal)"),
+    risk_category: Optional[str] = Query(None, description="Filter by risk category (LOW, MODERATE, HIGH, VERY HIGH)"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(WaterBodyModel)
+    if type:
+        query = query.filter(WaterBodyModel.type == type.lower())
+
+    water_bodies = query.all()
+    results = []
+    for wb in water_bodies:
+        assessment = drowning_risk_service.assess_drowning_risk(water_body=wb)
+        if risk_category and assessment.risk_category.upper() != risk_category.upper():
+            continue
+        results.append(assessment)
+    return results
+
+
+@router.get(
+    "/drowning-risk/water-body/{water_body_id}",
+    response_model=DrowningRiskAssessmentResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Drowning Risk"],
+    summary="Get Two-Layer Assessment for Specific Water Body",
+    description="Returns the detailed two-layer drowning risk evaluation for the specified water body ID."
+)
+def get_drowning_risk_for_water_body(
+    water_body_id: int = Path(..., description="ID of the water body to assess"),
+    db: Session = Depends(get_db)
+):
+    water_body = db.query(WaterBodyModel).filter(WaterBodyModel.id == water_body_id).first()
+    if not water_body:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Water body with ID {water_body_id} not found"
+        )
+    return drowning_risk_service.assess_drowning_risk(water_body=water_body)
+
+
+@router.post(
+    "/drowning-risk/simulate",
+    response_model=WhatIfSimulationResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Drowning Risk"],
+    summary="Interactive What-If Scenario Simulator",
+    description=(
+        "Recalculates environmental hazard and contextual risk when hypothetical inputs change "
+        "(rainfall increment, river stage surge, discharge volume) without fabricating real measurements."
+    )
+)
+def simulate_what_if_scenario(
+    req: WhatIfSimulationRequest,
+    db: Session = Depends(get_db)
+):
+    return drowning_risk_service.simulate_what_if(req, db=db)
+
+
+@router.get(
+    "/drowning-risk/model-status",
+    response_model=ModelStatusResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Drowning Risk"],
+    summary="Dataset Audit & ML Benchmark Model Status",
+    description="Returns the audit status of the five target datasets, supervised ML benchmark metrics, and data integrity notices."
+)
+def get_drowning_risk_model_status():
+    return drowning_risk_service.get_model_status()
+
+
+# ==========================================
+# Live Meteorological & Forecast Endpoints
+# ==========================================
+
+@router.get(
+    "/weather/live",
+    response_model=LiveWeatherResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Weather"],
+    summary="Get Live Weather & Precipitation Forecast",
+    description="Retrieves live temperature, precipitation, wind speed, elevation, and 48-hour forward precipitation forecast from Open-Meteo."
+)
+def get_live_weather(
+    latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
+    longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
+    water_body_name: Optional[str] = Query(None, description="Optional name of the aquatic location"),
+):
+    return weather_service.get_weather_for_coordinates(
+        lat=latitude,
+        lon=longitude,
+        water_body_name=water_body_name,
+    )
+
+
+@router.get(
+    "/weather/water-body/{water_body_id}",
+    response_model=LiveWeatherResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Weather"],
+    summary="Get Live Weather for Specific Water Body",
+    description="Retrieves live weather and precipitation forecast for the coordinates of a monitored water body ID."
+)
+def get_weather_for_water_body_endpoint(
+    water_body_id: int = Path(..., description="ID of monitored water body"),
+    db: Session = Depends(get_db)
+):
+    return weather_service.get_weather_for_water_body(water_body_id=water_body_id, db=db)

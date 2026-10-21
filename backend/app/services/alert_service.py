@@ -288,6 +288,116 @@ class EmailAlertProvider:
             )
 
 
+class SMSAlertProvider:
+    """
+    Dispatches emergency water safety notices via Twilio REST API SMS gateway.
+    Features safe test mode, auth verification, and upstream status reporting.
+    """
+
+    def __init__(
+        self,
+        account_sid: Optional[str] = None,
+        auth_token: Optional[str] = None,
+        from_number: Optional[str] = None,
+        default_to: Optional[str] = None,
+        timeout: float = 6.0,
+    ):
+        self.account_sid = account_sid or settings.TWILIO_ACCOUNT_SID
+        self.auth_token = auth_token or settings.TWILIO_AUTH_TOKEN
+        self.from_number = from_number or settings.TWILIO_FROM_NUMBER
+        self.default_to = default_to or settings.ALERT_TO_PHONE
+        self.timeout = timeout
+
+    def send(self, req: AlertDispatchRequest, is_test_mode: bool) -> Tuple[str, bool, str, str]:
+        """
+        Returns: (status, confirmed_by_provider, provider_message, target_phone)
+        """
+        target_phone = (req.recipient or self.default_to or "").strip()
+
+        if is_test_mode:
+            resolved_phone = target_phone or "+919876543210"
+            return (
+                "TEST_MODE_SIMULATED",
+                False,
+                f"Safe Test Mode: SMS dispatch formatted for '{resolved_phone}'. Simulated without external transmission.",
+                resolved_phone,
+            )
+
+        if not self.account_sid or not self.auth_token or self.account_sid.startswith("your_") or not self.from_number:
+            return (
+                "UNCONFIGURED",
+                False,
+                "Twilio SMS unconfigured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER in backend environment or use test mode.",
+                target_phone or "None",
+            )
+
+        if not target_phone:
+            return (
+                "UNCONFIGURED",
+                False,
+                "No recipient phone number specified. Set ALERT_TO_PHONE in environment or pass recipient phone in request.",
+                "None",
+            )
+
+        # Build payload
+        prefix = "[TEST] " if req.test_mode else "🚨 "
+        body_text = f"{prefix}AQUORA ALERT [{req.severity.upper()}]: {req.water_body_name}. {req.message}"
+        if len(body_text) > 160:
+            body_text = body_text[:157] + "..."
+
+        url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Messages.json"
+        data = urllib.parse.urlencode({
+            "From": self.from_number,
+            "To": target_phone,
+            "Body": body_text,
+        }).encode("utf-8")
+
+        import base64
+        auth_header = base64.b64encode(f"{self.account_sid}:{self.auth_token}".encode("utf-8")).decode("utf-8")
+        headers = {
+            "Authorization": f"Basic {auth_header}",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "AQUORA-Alert-Dispatcher/1.0",
+        }
+
+        try:
+            http_req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+            with urllib.request.urlopen(http_req, timeout=self.timeout) as resp:
+                status_code = resp.status
+                if 200 <= status_code < 300:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    msg_sid = resp_data.get("sid", "unknown")
+                    return (
+                        "DELIVERED",
+                        True,
+                        f"Twilio SMS accepted message (SID: {msg_sid}) for {target_phone}",
+                        target_phone,
+                    )
+                else:
+                    return (
+                        "FAILED",
+                        False,
+                        f"Twilio SMS rejected with HTTP status: {status_code}",
+                        target_phone,
+                    )
+        except urllib.error.HTTPError as exc:
+            err_body = exc.read().decode("utf-8", errors="ignore")[:150]
+            return (
+                "FAILED",
+                False,
+                f"Twilio SMS rejected: HTTP {exc.code} {exc.reason} - {err_body}",
+                target_phone,
+            )
+        except Exception as exc:
+            logger.warning("SMS dispatch failed to %s: %s", target_phone, exc)
+            return (
+                "FAILED",
+                False,
+                f"SMS transmission error: {type(exc).__name__} ({str(exc)})",
+                target_phone,
+            )
+
+
 class AlertService:
     """
     Orchestrates outbound alert delivery with delivery status tracking,
@@ -297,6 +407,7 @@ class AlertService:
     def __init__(self, dedup_window_seconds: float = DEFAULT_DEDUP_WINDOW_SECONDS):
         self.webhook_provider = WebhookAlertProvider()
         self.email_provider = EmailAlertProvider()
+        self.sms_provider = SMSAlertProvider()
         self.dedup_window_seconds = dedup_window_seconds
         # In-memory deduplication cache: { dedup_hash: last_dispatched_timestamp }
         self._dedup_cache: Dict[str, float] = {}
@@ -308,11 +419,19 @@ class AlertService:
     def get_channel_status(self) -> AlertChannelStatusResponse:
         webhook_ok = bool(settings.ALERT_WEBHOOK_URL and not settings.ALERT_WEBHOOK_URL.startswith("your_"))
         email_ok = bool(settings.SMTP_HOST and not settings.SMTP_HOST.startswith("smtp.example"))
+        sms_ok = bool(
+            settings.TWILIO_ACCOUNT_SID
+            and settings.TWILIO_AUTH_TOKEN
+            and not settings.TWILIO_ACCOUNT_SID.startswith("your_")
+            and settings.TWILIO_FROM_NUMBER
+        )
         return AlertChannelStatusResponse(
             webhook_configured=webhook_ok,
             email_configured=email_ok,
+            sms_configured=sms_ok,
             default_webhook_url=settings.ALERT_WEBHOOK_URL if webhook_ok else None,
             default_email_recipient=settings.ALERT_TO_EMAIL if email_ok else None,
+            default_sms_recipient=settings.ALERT_TO_PHONE if sms_ok else None,
             test_mode_enforced=settings.ALERT_TEST_MODE,
             dedup_window_seconds=self.dedup_window_seconds,
             notice=(
@@ -350,6 +469,8 @@ class AlertService:
 
         if channel_clean == "email":
             status, confirmed, prov_msg, recipient = self.email_provider.send(req, is_test)
+        elif channel_clean == "sms":
+            status, confirmed, prov_msg, recipient = self.sms_provider.send(req, is_test)
         else:
             channel_clean = "webhook"
             status, confirmed, prov_msg, recipient = self.webhook_provider.send(req, is_test)

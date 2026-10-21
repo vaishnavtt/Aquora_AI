@@ -43,6 +43,17 @@ class Settings(BaseModel):
     ALERT_FROM_EMAIL: str = os.getenv("ALERT_FROM_EMAIL", "alerts@aquora.local")
     ALERT_TO_EMAIL: str | None = os.getenv("ALERT_TO_EMAIL", None)
 
+    # SMS Outbound Alert Settings (Twilio / Generic SMS Gateway)
+    TWILIO_ACCOUNT_SID: str | None = os.getenv("TWILIO_ACCOUNT_SID", None)
+    TWILIO_AUTH_TOKEN: str | None = os.getenv("TWILIO_AUTH_TOKEN", None)
+    TWILIO_FROM_NUMBER: str | None = os.getenv("TWILIO_FROM_NUMBER", None)
+    ALERT_TO_PHONE: str | None = os.getenv("ALERT_TO_PHONE", None)
+
+    # Open-Meteo Live Meteorological & Elevation API
+    OPEN_METEO_API_ENABLED: bool = os.getenv("OPEN_METEO_API_ENABLED", "true").lower() in ("true", "1", "yes")
+    OPEN_METEO_TIMEOUT_SECONDS: float = float(os.getenv("OPEN_METEO_TIMEOUT_SECONDS", "4.0"))
+    OPEN_METEO_CACHE_TTL_SECONDS: float = float(os.getenv("OPEN_METEO_CACHE_TTL_SECONDS", "900.0"))
+
     # Official River Telemetry API Configuration
     NWIC_API_KEY: str | None = os.getenv("NWIC_API_KEY", None)
     NWIC_API_BASE_URL: str = os.getenv("NWIC_API_BASE_URL", "https://nwdp.gov.in/api/v1")
