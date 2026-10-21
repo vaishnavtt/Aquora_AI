@@ -8,6 +8,7 @@ import {
   ShieldAlert,
   Info,
   Waves,
+  Sparkles,
 } from 'lucide-react';
 
 export type NavTab = 'overview' | 'drowning-risk' | 'authority' | 'map' | 'simulator' | 'trends' | 'stations' | 'forecasting' | 'data-audit';

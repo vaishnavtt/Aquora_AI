@@ -16,7 +16,8 @@ import {
   Sparkles,
   Zap,
   ShieldAlert,
-  ShieldCheck
+  ShieldCheck,
+} from 'lucide-react';
 import { WaterBody, WhatIfSimulationRequest, WhatIfSimulationResponse, RiskCategory } from '../types';
 import { api } from '../services/api';
 import { DemoBadge } from './common/DemoBadge';

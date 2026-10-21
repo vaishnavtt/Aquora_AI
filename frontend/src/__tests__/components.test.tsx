@@ -56,9 +56,9 @@ describe('AQUORA AI UI Component Integration Suite', () => {
         root!.render(<EmptyState searchTerm="Atlantis" onReset={handleReset} />);
       });
 
-      expect(container?.textContent).toContain('No Monitored Stations Found');
+      expect(container?.textContent).toContain('No locations found');
       expect(container?.textContent).toContain('Atlantis');
-      expect(container?.textContent).toContain('Reset Filter Criteria');
+      expect(container?.textContent).toContain('Clear search');
     });
 
     it('renders LoadingSkeleton during active async fetches', () => {

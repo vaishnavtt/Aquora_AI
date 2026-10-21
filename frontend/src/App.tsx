@@ -180,7 +180,6 @@ export function App() {
                         />
                       )}
                     </div>
-                    </div>
                   </div>
 
                   {/* 24h History & 12h Forecast Trend Chart */}

@@ -58,11 +58,6 @@ const mapContainerRef = useRef<HTMLDivElement>(null);
   // Check for authorized satellite map provider credentials
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
   const isMapboxConfigured = Boolean(mapboxToken) && mapboxToken !== 'your_mapbox_token_here';
-  const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const isGoogleMapsConfigured =
-    Boolean(googleMapsKey) &&
-    googleMapsKey !== 'your_google_maps_api_key_here' &&
-    !googleMapsKey.includes('placeholder');
 
   const filteredStations = waterBodies.filter((wb) => {
     if (filterType === 'all') return true;
@@ -460,8 +455,7 @@ const mapContainerRef = useRef<HTMLDivElement>(null);
           />
         </div>
       ) : (
-{/* Map Viewport Area */}
-      <div className="relative w-full h-[460px] bg-slate-950 overflow-hidden select-none">
+        <div className="relative w-full h-[460px] bg-slate-950 overflow-hidden select-none">
         {/* Real Leaflet Map Container */}
         {activeLayer !== 'simulation' ? (
           <div ref={mapContainerRef} className="w-full h-full z-0" />
@@ -576,7 +570,8 @@ const mapContainerRef = useRef<HTMLDivElement>(null);
             </span>
           </div>
         </div>
-      </div>      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 };
