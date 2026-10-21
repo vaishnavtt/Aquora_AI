@@ -10,7 +10,7 @@ import {
   Waves,
 } from 'lucide-react';
 
-export type NavTab = 'overview' | 'authority' | 'map' | 'simulator' | 'trends' | 'stations' | 'forecasting';
+export type NavTab = 'overview' | 'drowning-risk' | 'authority' | 'map' | 'simulator' | 'trends' | 'stations' | 'forecasting' | 'data-audit';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -29,6 +29,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Overview',
       icon: LayoutDashboard,
       desc: 'Summary & live hazard feed',
+    },
+    {
+      id: 'drowning-risk' as NavTab,
+      label: 'AI Drowning Risk',
+      icon: ShieldAlert,
+      badge: 'Two-Layer AI',
+      badgeColor: 'rose',
+      desc: 'Kerala Hydrodynamic Engine',
     },
     {
       id: 'authority' as NavTab,
@@ -70,6 +78,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: 'Kerala',
       badgeColor: 'cyan',
       desc: 'Ramamangalam Bridge — 1h ahead',
+    },
+    {
+      id: 'data-audit' as NavTab,
+      label: 'Datasets & ML Audit',
+      icon: Sparkles,
+      badge: '5 Files',
+      badgeColor: 'cyan',
+      desc: 'Raw Data & Model Benchmark',
     },
   ];
 

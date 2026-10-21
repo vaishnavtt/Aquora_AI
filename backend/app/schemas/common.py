@@ -13,6 +13,10 @@ class WaterBodyTypeEnum(str, Enum):
     RIVER = "river"
     RESERVOIR = "reservoir"
     COASTAL = "coastal"
+    QUARRY = "quarry"
+    WATERFALL = "waterfall"
+    CANAL = "canal"
+    POND = "pond"
 
 class ErrorDetailItem(BaseModel):
     loc: List[Union[str, int]] = Field(..., description="Location of the validation error")

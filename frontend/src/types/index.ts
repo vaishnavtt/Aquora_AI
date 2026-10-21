@@ -1,7 +1,8 @@
 ﻿// API Contract Data Types matching docs/api-contract.md
 
 export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
-export type WaterBodyType = 'lake' | 'river' | 'reservoir' | 'coastal';
+export type RiskCategory = 'LOW' | 'MODERATE' | 'HIGH' | 'VERY HIGH';
+export type WaterBodyType = 'lake' | 'river' | 'reservoir' | 'coastal' | 'quarry' | 'waterfall' | 'canal' | 'pond';
 
 export interface HealthResponse {
   status: string;
@@ -172,14 +173,14 @@ export interface AlertDispatchRequest {
   water_body_name: string;
   severity: string;
   message: string;
-  channel: 'webhook' | 'email';
+  channel: 'webhook' | 'email' | 'sms';
   recipient?: string | null;
   test_mode?: boolean;
   force?: boolean;
 }
 
 export interface AlertTestRequest {
-  channel: 'webhook' | 'email';
+  channel: 'webhook' | 'email' | 'sms';
   recipient?: string | null;
   water_body_name?: string;
   safe_simulation_only?: boolean;
@@ -217,9 +218,12 @@ export interface AlertDelivery {
 export interface AlertChannelStatus {
   webhook_configured: boolean;
   email_configured: boolean;
+  sms_configured?: boolean;
   default_webhook_url?: string | null;
   default_email_recipient?: string | null;
+  default_sms_recipient?: string | null;
   test_mode_enforced: boolean;
+  dedup_window_seconds?: number;
   notice: string;
 }
 
@@ -334,5 +338,152 @@ export function formatCoordinates(lat: number, lng: number, digits: number = 4):
   const latDir = lat >= 0 ? 'N' : 'S';
   const lngDir = lng >= 0 ? 'E' : 'W';
   return `${Math.abs(lat).toFixed(digits)}Â°${latDir}, ${Math.abs(lng).toFixed(digits)}Â°${lngDir}`;
+}
+
+// Two-Layer Drowning Risk Assessment Types
+export interface LayerAEnvironmentalHazard {
+  hazard_score: number;
+  hazard_level: string;
+  ml_hazard_probability?: number | null;
+  ml_model_name: string;
+  is_model_calibrated: boolean;
+  water_level_m?: number | null;
+  water_level_delta_1h_m?: number | null;
+  water_level_delta_3h_m?: number | null;
+  rainfall_1h_mm?: number | null;
+  rainfall_24h_mm?: number | null;
+  estimated_discharge_cms?: number | null;
+  is_monsoon_season: boolean;
+  top_contributing_factors: string[];
+}
+
+export interface LayerBContextualRisk {
+  vulnerability_score: number;
+  water_body_type: string;
+  water_body_type_label: string;
+  site_vulnerability_profile: string;
+  exposure_risk_level: string;
+  access_characteristics: string;
+  bathymetry_hazard_notes: string;
+  historical_mortality_context: string;
+}
+
+export interface DrowningRiskAssessment {
+  water_body_id?: number | null;
+  water_body_name: string;
+  water_body_type: WaterBodyType;
+  latitude: number;
+  longitude: number;
+  district?: string | null;
+  basin?: string | null;
+  risk_category: RiskCategory;
+  risk_score: number;
+  assessment_method: string;
+  is_learned_drowning_probability: boolean;
+  scientific_disclaimer: string;
+  layer_a_environmental_hazard: LayerAEnvironmentalHazard;
+  layer_b_contextual_risk: LayerBContextualRisk;
+  primary_hazards: string[];
+  safety_recommendations: string[];
+  data_freshness_status: string;
+  observation_timestamp?: string | null;
+  missing_variables: string[];
+}
+
+export interface WhatIfSimulationRequest {
+  water_body_id?: number | null;
+  water_body_type?: string;
+  simulated_rainfall_increment_mm: number;
+  simulated_stage_delta_m: number;
+  simulated_discharge_increment_cms: number;
+  simulated_water_temp_c?: number | null;
+  simulated_exposure_scenario?: string;
+}
+
+export interface WhatIfSimulationResponse {
+  is_hypothetical_simulation: boolean;
+  simulation_notes: string;
+  baseline_assessment: DrowningRiskAssessment;
+  simulated_assessment: DrowningRiskAssessment;
+  delta_risk_score: number;
+  delta_risk_category: string;
+  newly_triggered_hazards: string[];
+}
+
+export interface DatasetAuditItem {
+  filename: string;
+  purpose: string;
+  status: string;
+  size_bytes: number;
+  row_count: number;
+  column_count: number;
+  date_range?: (string | null)[] | null;
+  station_count: number;
+  usable_for_training: boolean;
+  rejection_reason?: string | null;
+  contribution_to_aquora: string;
+}
+
+export interface ModelStatusResponse {
+  model_version: string;
+  champion_model_name: string;
+  training_dataset_records: number;
+  validation_records: number;
+  out_of_time_test_records: number;
+  metrics_summary: Record<string, any>;
+  all_models_benchmarks: any[];
+  feature_importances: Record<string, number>;
+  datasets_audit: DatasetAuditItem[];
+  incident_data_investigation_summary: string;
+  ethical_compliance_notice: string;
+  leak_free_antecedent_benchmark?: {
+    methodology: string;
+    features_used: string[];
+    uncalibrated_test_metrics: Record<string, any>;
+    calibrated_test_metrics: Record<string, any>;
+  } | null;
+  spatial_generalization_benchmark?: {
+    methodology: string;
+    station_evaluations: Array<{
+      station: string;
+      sample_count: number;
+      positive_rate: number;
+      accuracy: number;
+      f1_score: number;
+      roc_auc: number;
+      pr_auc: number;
+      brier_score: number;
+    }>;
+  } | null;
+  scientific_integrity_declaration?: {
+    model_classification: string;
+    target_nature: string;
+    drowning_incident_status: string;
+  } | null;
+}
+
+export interface LiveHourlyPrecipitation {
+  time: string;
+  precipitation_mm: number;
+  temperature_c?: number | null;
+}
+
+export interface LiveWeatherResponse {
+  water_body_id?: number | null;
+  water_body_name?: string | null;
+  latitude: number;
+  longitude: number;
+  current_temperature_c: number;
+  current_precipitation_mm_h: number;
+  weather_condition: string;
+  wind_speed_kmh: number;
+  accumulated_24h_rainfall_mm: number;
+  forecast_24h_rainfall_mm: number;
+  elevation_m?: number | null;
+  hourly_forecast: LiveHourlyPrecipitation[];
+  is_live_data: boolean;
+  data_source: string;
+  fetched_at: string;
+  disclaimer: string;
 }
 

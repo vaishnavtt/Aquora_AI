@@ -1,0 +1,408 @@
+{
+  "champion_model": "HistGradientBoosting Classifier",
+  "calibrated_test_metrics": {
+    "model": "HistGradientBoosting Classifier (Calibrated)",
+    "split": "Out-of-Time Test (Calibrated)",
+    "sample_count": 8038,
+    "positive_rate": 0.0265,
+    "accuracy": 0.9876,
+    "precision": 0.952,
+    "recall": 0.5587,
+    "f1_score": 0.7041,
+    "roc_auc": 0.9903,
+    "pr_auc": 0.852,
+    "brier_score": 0.0106,
+    "confusion_matrix": [
+      [
+        7819,
+        6
+      ],
+      [
+        94,
+        119
+      ]
+    ]
+  },
+  "all_models_evaluation": [
+    {
+      "validation": {
+        "model": "Dummy Baseline (Most Frequent)",
+        "split": "Validation",
+        "sample_count": 6028,
+        "positive_rate": 0.0496,
+        "accuracy": 0.9504,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "roc_auc": 0.5,
+        "pr_auc": 0.0496,
+        "brier_score": 0.0496,
+        "confusion_matrix": [
+          [
+            5729,
+            0
+          ],
+          [
+            299,
+            0
+          ]
+        ]
+      },
+      "test": {
+        "model": "Dummy Baseline (Most Frequent)",
+        "split": "Out-of-Time Test",
+        "sample_count": 8038,
+        "positive_rate": 0.0265,
+        "accuracy": 0.9735,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "roc_auc": 0.5,
+        "pr_auc": 0.0265,
+        "brier_score": 0.0265,
+        "confusion_matrix": [
+          [
+            7825,
+            0
+          ],
+          [
+            213,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "validation": {
+        "model": "Logistic Regression (L2 Regularized)",
+        "split": "Validation",
+        "sample_count": 6028,
+        "positive_rate": 0.0496,
+        "accuracy": 0.9197,
+        "precision": 0.3596,
+        "recall": 0.7926,
+        "f1_score": 0.4948,
+        "roc_auc": 0.9496,
+        "pr_auc": 0.6286,
+        "brier_score": 0.0641,
+        "confusion_matrix": [
+          [
+            5307,
+            422
+          ],
+          [
+            62,
+            237
+          ]
+        ]
+      },
+      "test": {
+        "model": "Logistic Regression (L2 Regularized)",
+        "split": "Out-of-Time Test",
+        "sample_count": 8038,
+        "positive_rate": 0.0265,
+        "accuracy": 0.8834,
+        "precision": 0.1358,
+        "recall": 0.6338,
+        "f1_score": 0.2237,
+        "roc_auc": 0.8388,
+        "pr_auc": 0.2108,
+        "brier_score": 0.1005,
+        "confusion_matrix": [
+          [
+            6966,
+            859
+          ],
+          [
+            78,
+            135
+          ]
+        ]
+      }
+    },
+    {
+      "validation": {
+        "model": "Random Forest Classifier",
+        "split": "Validation",
+        "sample_count": 6028,
+        "positive_rate": 0.0496,
+        "accuracy": 0.9695,
+        "precision": 0.6638,
+        "recall": 0.7793,
+        "f1_score": 0.7169,
+        "roc_auc": 0.9882,
+        "pr_auc": 0.8508,
+        "brier_score": 0.0224,
+        "confusion_matrix": [
+          [
+            5611,
+            118
+          ],
+          [
+            66,
+            233
+          ]
+        ]
+      },
+      "test": {
+        "model": "Random Forest Classifier",
+        "split": "Out-of-Time Test",
+        "sample_count": 8038,
+        "positive_rate": 0.0265,
+        "accuracy": 0.9555,
+        "precision": 0.2992,
+        "recall": 0.507,
+        "f1_score": 0.3763,
+        "roc_auc": 0.956,
+        "pr_auc": 0.4753,
+        "brier_score": 0.0304,
+        "confusion_matrix": [
+          [
+            7572,
+            253
+          ],
+          [
+            105,
+            108
+          ]
+        ]
+      }
+    },
+    {
+      "validation": {
+        "model": "HistGradientBoosting Classifier",
+        "split": "Validation",
+        "sample_count": 6028,
+        "positive_rate": 0.0496,
+        "accuracy": 0.9978,
+        "precision": 0.9767,
+        "recall": 0.9799,
+        "f1_score": 0.9783,
+        "roc_auc": 1.0,
+        "pr_auc": 0.9991,
+        "brier_score": 0.0014,
+        "confusion_matrix": [
+          [
+            5722,
+            7
+          ],
+          [
+            6,
+            293
+          ]
+        ]
+      },
+      "test": {
+        "model": "HistGradientBoosting Classifier",
+        "split": "Out-of-Time Test",
+        "sample_count": 8038,
+        "positive_rate": 0.0265,
+        "accuracy": 0.9989,
+        "precision": 1.0,
+        "recall": 0.9577,
+        "f1_score": 0.9784,
+        "roc_auc": 1.0,
+        "pr_auc": 0.9992,
+        "brier_score": 0.0009,
+        "confusion_matrix": [
+          [
+            7825,
+            0
+          ],
+          [
+            9,
+            204
+          ]
+        ]
+      }
+    }
+  ],
+  "feature_columns": [
+    "water_level_m",
+    "wl_lag_1h",
+    "wl_lag_3h",
+    "wl_lag_6h",
+    "wl_lag_12h",
+    "wl_delta_1h",
+    "wl_delta_3h",
+    "wl_delta_6h",
+    "wl_delta_12h",
+    "wl_accel_1h",
+    "wl_roll_mean_6h",
+    "wl_roll_std_6h",
+    "rainfall_1h_mm",
+    "rainfall_3h_mm",
+    "rainfall_6h_mm",
+    "rainfall_12h_mm",
+    "rainfall_24h_mm",
+    "rainfall_48h_mm",
+    "estimated_discharge_cms",
+    "elevation_m",
+    "is_monsoon_season"
+  ],
+  "feature_importances": {
+    "water_level_m": 0.0142,
+    "wl_lag_1h": -0.0007,
+    "wl_lag_3h": 0.0001,
+    "wl_lag_6h": -0.0008,
+    "wl_lag_12h": -0.0006,
+    "wl_delta_1h": 0.0064,
+    "wl_delta_3h": 0.0617,
+    "wl_delta_6h": 0.0003,
+    "wl_delta_12h": 0.0,
+    "wl_accel_1h": -0.0001,
+    "wl_roll_mean_6h": 0.0,
+    "wl_roll_std_6h": -0.0001,
+    "rainfall_1h_mm": 0.0,
+    "rainfall_3h_mm": 0.0,
+    "rainfall_6h_mm": 0.0,
+    "rainfall_12h_mm": 0.0,
+    "rainfall_24h_mm": 0.0331,
+    "rainfall_48h_mm": 0.0001,
+    "estimated_discharge_cms": 0.0013,
+    "elevation_m": 0.0123,
+    "is_monsoon_season": 0.0004
+  },
+  "dataset_split": {
+    "train_samples": 26120,
+    "val_samples": 6028,
+    "test_samples": 8038,
+    "total_samples": 40186,
+    "train_date_range": [
+      "2021-05-31 21:00:00",
+      "2022-07-17 11:00:00"
+    ],
+    "val_date_range": [
+      "2022-07-17 11:00:00",
+      "2022-09-10 11:00:00"
+    ],
+    "test_date_range": [
+      "2022-09-10 11:00:00",
+      "2024-06-21 01:00:00"
+    ]
+  },
+  "leak_free_antecedent_benchmark": {
+    "methodology": "Predicts the physical environmental hazard target strictly using antecedent information (water level lags 1h-12h, rainfall lags 1h-48h, discharge proxy, elevation, monsoon season) without including simultaneous target formula columns (water_level_m, wl_delta_1h, wl_delta_3h). This isolates true predictive skill from algebraic target reproduction.",
+    "features_used": [
+      "wl_lag_1h",
+      "wl_lag_3h",
+      "wl_lag_6h",
+      "wl_lag_12h",
+      "rainfall_1h_mm",
+      "rainfall_3h_mm",
+      "rainfall_6h_mm",
+      "rainfall_12h_mm",
+      "rainfall_24h_mm",
+      "rainfall_48h_mm",
+      "estimated_discharge_cms",
+      "elevation_m",
+      "is_monsoon_season"
+    ],
+    "uncalibrated_test_metrics": {
+      "model": "HistGradientBoosting (Leak-Free Antecedent)",
+      "split": "Out-of-Time Test (No Simultaneous Target Features)",
+      "sample_count": 8038,
+      "positive_rate": 0.0265,
+      "accuracy": 0.9667,
+      "precision": 0.28,
+      "recall": 0.1643,
+      "f1_score": 0.2071,
+      "roc_auc": 0.8907,
+      "pr_auc": 0.2322,
+      "brier_score": 0.0253,
+      "confusion_matrix": [
+        [
+          7735,
+          90
+        ],
+        [
+          178,
+          35
+        ]
+      ]
+    },
+    "calibrated_test_metrics": {
+      "model": "HistGradientBoosting (Leak-Free Calibrated)",
+      "split": "Out-of-Time Test (No Simultaneous Target Features, Calibrated)",
+      "sample_count": 8038,
+      "positive_rate": 0.0265,
+      "accuracy": 0.9725,
+      "precision": 0.3667,
+      "recall": 0.0516,
+      "f1_score": 0.0905,
+      "roc_auc": 0.844,
+      "pr_auc": 0.2444,
+      "brier_score": 0.0235,
+      "confusion_matrix": [
+        [
+          7806,
+          19
+        ],
+        [
+          202,
+          11
+        ]
+      ]
+    }
+  },
+  "spatial_generalization_benchmark": {
+    "methodology": "Leave-one-station-out cross-validation across all 5 monitored Kerala telemetry stations to evaluate spatial transferability.",
+    "station_evaluations": [
+      {
+        "station": "BANGLAMKADAVU",
+        "sample_count": 9513,
+        "positive_rate": 0.1657,
+        "accuracy": 0.5249,
+        "f1_score": 0.4056,
+        "roc_auc": 0.8063,
+        "pr_auc": 0.3716,
+        "brier_score": 0.4267
+      },
+      {
+        "station": "PALA",
+        "sample_count": 9051,
+        "positive_rate": 0.1246,
+        "accuracy": 0.719,
+        "f1_score": 0.3862,
+        "roc_auc": 0.7983,
+        "pr_auc": 0.4712,
+        "brier_score": 0.1998
+      },
+      {
+        "station": "RAMAMANGALAM BRIDGE",
+        "sample_count": 8967,
+        "positive_rate": 0.1062,
+        "accuracy": 0.4537,
+        "f1_score": 0.2795,
+        "roc_auc": 0.716,
+        "pr_auc": 0.3054,
+        "brier_score": 0.3367
+      },
+      {
+        "station": "VELLUR",
+        "sample_count": 9183,
+        "positive_rate": 0.1106,
+        "accuracy": 0.448,
+        "f1_score": 0.2858,
+        "roc_auc": 0.6186,
+        "pr_auc": 0.198,
+        "brier_score": 0.5201
+      },
+      {
+        "station": "TRINAYAKUDAM",
+        "sample_count": 3472,
+        "positive_rate": 0.0916,
+        "accuracy": 0.924,
+        "f1_score": 0.2903,
+        "roc_auc": 0.6169,
+        "pr_auc": 0.2641,
+        "brier_score": 0.076
+      }
+    ]
+  },
+  "scientific_integrity_declaration": {
+    "model_classification": "Layer A Environmental Aquatic Hazard Estimator",
+    "target_nature": "Physical hydraulic threshold based on surge deltas, high stage, and intense rainfall.",
+    "drowning_incident_status": "Not a supervised drowning fatality predictor. Public micro-level incident coordinates and exact timestamps are not maintained in government databases. Combined risk is a provisional multi-layer assessment."
+  }
+}

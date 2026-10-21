@@ -8,11 +8,13 @@ import { WhatIfSimulationPanel } from './components/WhatIfSimulationPanel';
 import { RiskTrendChart } from './components/RiskTrendChart';
 import { WaterLevelForecastingPanel } from './components/WaterLevelForecastingPanel';
 import { DashboardOverview } from './components/DashboardOverview';
+import { DrowningRiskAssessmentCard } from './components/DrowningRiskAssessmentCard';
+import { DatasetModelStatusPanel } from './components/DatasetModelStatusPanel';
 import { LoadingSkeleton, EmptyState, ErrorBanner } from './components/States';
 import { BottomSheet } from './components/layout/BottomSheet';
 import { api, DEMO_WATER_BODIES, DEMO_RISK_CHANGES } from './services/api';
 import { HealthResponse, WaterBody, RiskChangeEvent, DashboardResponse, formatCoordinates } from './types';
-import { Waves, Droplets, Compass, ShieldAlert, Sliders, ExternalLink } from 'lucide-react';
+import { Waves, Droplets, Compass, ShieldAlert, Sliders, ExternalLink, Layers, Sparkles } from 'lucide-react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
@@ -21,6 +23,7 @@ export function App() {
   const [waterBodies, setWaterBodies] = useState<WaterBody[]>(DEMO_WATER_BODIES);
   const [riskChanges, setRiskChanges] = useState<RiskChangeEvent[]>(DEMO_RISK_CHANGES);
   const [selectedStation, setSelectedStation] = useState<WaterBody | null>(DEMO_WATER_BODIES[1]); // Default to Cascade Canyon River
+  const [sidePanelMode, setSidePanelMode] = useState<'drowning-risk' | 'telemetry'>('drowning-risk');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,11 +140,46 @@ export function App() {
                         onSelectStation={setSelectedStation}
                       />
                     </div>
-                    <div className="hidden lg:block lg:col-span-4">
-                      <LocationDetailsPanel
-                        station={selectedStation}
-                        onSendToSimulator={handleSendToSimulator}
-                      />
+                    <div className="hidden lg:block lg:col-span-4 space-y-3">
+                      {/* Side Panel Toggle */}
+                      <div className="flex rounded-xl bg-slate-900/90 border border-slate-800 p-1 text-xs">
+                        <button
+                          onClick={() => setSidePanelMode('drowning-risk')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                            sidePanelMode === 'drowning-risk'
+                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          AI Drowning Risk
+                        </button>
+                        <button
+                          onClick={() => setSidePanelMode('telemetry')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                            sidePanelMode === 'telemetry'
+                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <Droplets className="w-3.5 h-3.5" />
+                          Telemetry & Audit
+                        </button>
+                      </div>
+
+                      {sidePanelMode === 'drowning-risk' ? (
+                        <DrowningRiskAssessmentCard
+                          station={selectedStation}
+                          onSendToSimulator={handleSendToSimulator}
+                          onOpenModelStatus={() => setActiveTab('data-audit')}
+                        />
+                      ) : (
+                        <LocationDetailsPanel
+                          station={selectedStation}
+                          onSendToSimulator={handleSendToSimulator}
+                        />
+                      )}
+                    </div>
                     </div>
                   </div>
 
@@ -150,6 +188,115 @@ export function App() {
 
                   {/* What-If Simulation Panel */}
                   <WhatIfSimulationPanel selectedStation={selectedStation} />
+                </div>
+              )}
+
+              {/* TAB: DROWNING RISK ASSESSMENT (TWO-LAYER AI ENGINE) */}
+              {activeTab === 'drowning-risk' && (
+                <div className="space-y-6">
+                  {/* Top Intro Banner */}
+                  <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/60 font-bold uppercase">
+                          Core Feature
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/60 font-semibold">
+                          Kerala Drowning Prevention
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-black text-white mt-2 flex items-center gap-2">
+                        <ShieldAlert className="w-5 h-5 text-rose-400" />
+                        AI-Powered Drowning-Risk Prediction Engine
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                        Combines <strong>Layer A (Calibrated Environmental Hazard)</strong> from 2021â€“2025 Kerala hydrological telemetry with <strong>Layer B (Contextual Vulnerability Profiles)</strong> spanning quarries, waterfalls, rivers, reservoirs, and canals based on official Kerala mortality records.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setActiveTab('simulator')}
+                        className="px-3.5 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                      >
+                        <Sliders className="w-4 h-4" />
+                        What-If Simulator &rarr;
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('data-audit')}
+                        className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                      >
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
+                        Audit Report
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Split: Interactive Map + Drowning Risk Card */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div className="lg:col-span-7">
+                      <MapSection
+                        waterBodies={filteredWaterBodies}
+                        selectedStation={selectedStation}
+                        onSelectStation={setSelectedStation}
+                      />
+                    </div>
+                    <div className="lg:col-span-5">
+                      <DrowningRiskAssessmentCard
+                        station={selectedStation}
+                        onSendToSimulator={handleSendToSimulator}
+                        onOpenModelStatus={() => setActiveTab('data-audit')}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Full Directory of Monitored Water Bodies */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-cyan-400" />
+                      Select Water Body Across 6 Aquatic Environments
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {filteredWaterBodies.map((wb) => {
+                        const isSelected = selectedStation?.id === wb.id;
+                        return (
+                          <div
+                            key={wb.id}
+                            onClick={() => setSelectedStation(wb)}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-cyan-950/40 border-cyan-500 shadow-md shadow-cyan-500/10'
+                                : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                                {wb.type}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                  wb.current_risk_level === 'low'
+                                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
+                                    : wb.current_risk_level === 'moderate'
+                                    ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
+                                    : 'bg-rose-950 text-rose-300 border border-rose-800/60'
+                                }`}
+                              >
+                                {wb.current_risk_level}
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-white mt-2 truncate">
+                              {wb.name.replace(' (DEMO Station)', '')}
+                            </h4>
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2 font-mono">
+                              <span>Flow: {wb.flow_rate_cms.toFixed(1)} mÂ³/s</span>
+                              <span>Depth: {wb.depth_meters.toFixed(1)} m</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -173,16 +320,20 @@ export function App() {
               {activeTab === 'map' && (
                 <div className="space-y-0">
                   {/* Mobile bottom sheet for station details */}
-                  <BottomSheet
-                    isOpen={!!selectedStation}
-                    onClose={() => setSelectedStation(null)}
-                    title={selectedStation?.name}
-                  >
-                    <LocationDetailsPanel
-                      station={selectedStation}
-                      onSendToSimulator={handleSendToSimulator}
-                    />
-                  </BottomSheet>
+                  <div className="lg:hidden">
+                    <BottomSheet
+                      isOpen={!!selectedStation}
+                      onClose={() => setSelectedStation(null)}
+                      title={selectedStation?.name}
+                    >
+                      <DrowningRiskAssessmentCard
+                        station={selectedStation}
+                        onSendToSimulator={handleSendToSimulator}
+                        onOpenModelStatus={() => setActiveTab('data-audit')}
+                      />
+                    </BottomSheet>
+                  </div>
+
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8">
                       <MapSection
@@ -192,16 +343,17 @@ export function App() {
                       />
                     </div>
                     <div className="hidden lg:block lg:col-span-4">
-                      <LocationDetailsPanel
+                      <DrowningRiskAssessmentCard
                         station={selectedStation}
                         onSendToSimulator={handleSendToSimulator}
+                        onOpenModelStatus={() => setActiveTab('data-audit')}
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* TAB 3: WHAT-IF SIMULATOR */}
+              {/* TAB 4: WHAT-IF SIMULATOR */}
               {activeTab === 'simulator' && (
                 <div className="space-y-6">
                   <WhatIfSimulationPanel selectedStation={selectedStation} />
@@ -209,7 +361,7 @@ export function App() {
                 </div>
               )}
 
-              {/* TAB 4: RISK TREND ANALYTICS */}
+              {/* TAB 5: RISK TREND ANALYTICS */}
               {activeTab === 'trends' && (
                 <div className="space-y-6">
                   <RiskTrendChart station={selectedStation} />
@@ -222,7 +374,7 @@ export function App() {
                 </div>
               )}
 
-              {/* TAB 5: TELEMETRY STATIONS DIRECTORY */}
+              {/* TAB 6: TELEMETRY STATIONS DIRECTORY */}
               {activeTab === 'stations' && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -305,10 +457,17 @@ export function App() {
                 </div>
               )}
 
-              {/* TAB 6: EXPERIMENTAL WATER LEVEL FORECASTING */}
+              {/* TAB 7: EXPERIMENTAL WATER LEVEL FORECASTING */}
               {activeTab === 'forecasting' && (
                 <div className="space-y-6">
                   <WaterLevelForecastingPanel />
+                </div>
+              )}
+
+              {/* TAB 8: DATASET AUDIT & ML PERFORMANCE */}
+              {activeTab === 'data-audit' && (
+                <div className="space-y-6">
+                  <DatasetModelStatusPanel />
                 </div>
               )}
             </>
@@ -328,7 +487,7 @@ export function App() {
             </span>
           </div>
           <div className="text-[11px] font-mono text-slate-500">
-            Hackathon prototype · Not an official warning system · v1.0
+            Hackathon prototype  &bull;  Not an official warning system  &bull;  v1.0
           </div>
         </div>
       </footer>
