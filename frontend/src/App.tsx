@@ -445,9 +445,9 @@ export function App() {
                               e.stopPropagation();
                               handleSendToSimulator(wb);
                             }}
-                            className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs"
+                            className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs flex items-center gap-1"
                           >
-                            Simulate ?
+                            Simulate &rarr;
                           </button>
                         </div>
                       </div>
