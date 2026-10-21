@@ -15,6 +15,6 @@ if __name__ == "__main__":
     port = int(os.getenv("BACKEND_PORT", "8000"))
     reload = os.getenv("ENVIRONMENT", "development") == "development"
     
-    print(f"🌊 Starting AQUORA AI Backend Server at http://{host}:{port}")
-    print(f"📖 Swagger Docs available at http://{host}:{port}/docs")
+    print(f"Starting AQUORA AI Backend Server at http://{host}:{port}")
+    print(f"Swagger Docs available at http://{host}:{port}/docs")
     uvicorn.run("app.main:app", host=host, port=port, reload=reload)

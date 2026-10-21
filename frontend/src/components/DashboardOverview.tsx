@@ -28,7 +28,8 @@ import {
   Database,
   Calendar,
   Sparkles,
-  Waves
+  Waves,
+  Smartphone
 } from 'lucide-react';
 import {
   DashboardResponse,
@@ -86,7 +87,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   }, [waterBodies, selectedStationName]);
 
   const [severity, setSeverity] = useState<string>('high');
-  const [channel, setChannel] = useState<'webhook' | 'email'>('webhook');
+  const [channel, setChannel] = useState<'webhook' | 'email' | 'sms'>('webhook');
   const [recipient, setRecipient] = useState<string>('');
   const [message, setMessage] = useState<string>(
     'Advisory: Flash surge elevated flow velocity past 9.0 m³/s. Immediate water egress advised for non-emergency personnel.'
@@ -598,7 +599,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           {/* Channel Status Banner */}
           <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1.5 font-medium text-slate-300">
                 <Radio className="w-3.5 h-3.5 text-cyan-400" />
                 Webhook: {channelStatus?.webhook_configured ? (
@@ -611,6 +612,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <span className="flex items-center gap-1.5 font-medium text-slate-300">
                 <Mail className="w-3.5 h-3.5 text-blue-400" />
                 SMTP Email: {channelStatus?.email_configured ? (
+                  <span className="text-emerald-400 font-bold">Configured</span>
+                ) : (
+                  <span className="text-amber-400 font-mono">Unconfigured</span>
+                )}
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className="flex items-center gap-1.5 font-medium text-slate-300">
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                SMS (Twilio): {channelStatus?.sms_configured ? (
                   <span className="text-emerald-400 font-bold">Configured</span>
                 ) : (
                   <span className="text-amber-400 font-mono">Unconfigured</span>
@@ -671,28 +681,39 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                   Delivery Channel
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setChannel('webhook')}
-                    className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                    className={`py-1.5 px-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1 transition-colors ${
                       channel === 'webhook'
                         ? 'bg-cyan-950 text-cyan-300 border-cyan-700'
                         : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    <Radio className="w-3.5 h-3.5" /> Webhook
+                    <Radio className="w-3.5 h-3.5 shrink-0" /> Webhook
                   </button>
                   <button
                     type="button"
                     onClick={() => setChannel('email')}
-                    className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                    className={`py-1.5 px-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1 transition-colors ${
                       channel === 'email'
                         ? 'bg-cyan-950 text-cyan-300 border-cyan-700'
                         : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    <Mail className="w-3.5 h-3.5" /> SMTP Email
+                    <Mail className="w-3.5 h-3.5 shrink-0" /> Email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChannel('sms')}
+                    className={`py-1.5 px-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1 transition-colors ${
+                      channel === 'sms'
+                        ? 'bg-cyan-950 text-cyan-300 border-cyan-700'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <Smartphone className="w-3.5 h-3.5 shrink-0" /> SMS
                   </button>
                 </div>
               </div>
@@ -704,7 +725,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 </label>
                 <input
                   type="text"
-                  placeholder={channel === 'webhook' ? 'https://webhook.site/...' : 'patrol@safety.gov'}
+                  placeholder={
+                    channel === 'webhook'
+                      ? 'https://webhook.site/...'
+                      : channel === 'email'
+                      ? 'patrol@safety.gov'
+                      : '+919876543210'
+                  }
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"

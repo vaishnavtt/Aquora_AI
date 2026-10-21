@@ -79,23 +79,23 @@ describe('AQUORA AI UI Component Integration Suite', () => {
         root!.render(<WhatIfSimulationPanel selectedStation={station} />);
       });
 
-      expect(container?.textContent).toContain('What-If Environmental Simulation Lab');
-      expect(container?.textContent).toContain('Rainfall Accumulation');
-      expect(container?.textContent).toContain('Water Temperature');
-      expect(container?.textContent).toContain('Wind Speed & Surface Wave Action');
-      expect(container?.textContent).toContain('Include Generative AI Advisory');
+      expect(container?.textContent).toContain('Interactive What-If Scenario Simulator');
+      expect(container?.textContent).toContain('Additional 24h Rainfall');
+      expect(container?.textContent).toContain('Water Level Stage Delta');
+      expect(container?.textContent).toContain('Additional River Discharge');
+      expect(container?.textContent).toContain('Exposure & Access Condition');
     });
 
-    it('displays dynamic model version, confidence badges, and zero fabrication notice', () => {
+    it('displays dynamic model version, scenario banner, and scientific disclaimer notice', () => {
       const station = DEMO_WATER_BODIES[0];
 
       act(() => {
         root!.render(<WhatIfSimulationPanel selectedStation={station} />);
       });
 
-      expect(container?.textContent).toContain('Simulated Output');
-      expect(container?.textContent).toContain('Confidence:');
-      expect(container?.textContent).toContain('Zero Fabrication Guarantee');
+      expect(container?.textContent).toContain('HYPOTHETICAL LAB');
+      expect(container?.textContent).toContain('Adjust Scenario Variables');
+      expect(container?.textContent).toContain('Hypothetical scenarios are strictly distinct from verified telemetry observations');
     });
   });
 });

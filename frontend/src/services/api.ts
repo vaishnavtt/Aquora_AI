@@ -17,10 +17,15 @@ import {
   AlertChannelStatus,
   EnvironmentalPipelineAuditResponse,
   HistoricalSeriesResponse,
-  ForecastVsObservationResponse,
   HazardEvaluationResult,
   HazardMonitoringEvaluationRequest,
   HazardMonitoringStatusResponse,
+  DrowningRiskAssessment,
+  WhatIfSimulationRequest,
+  WhatIfSimulationResponse,
+  ModelStatusResponse,
+  ForecastVsObservationResponse,
+  LiveWeatherResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -476,6 +481,90 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || `Failed to stop hazard monitoring scheduler`);
+    }
+    return await res.json();
+  },
+
+  async getDrowningRiskWaterBodies(params?: { type?: string; risk_category?: string }, signal?: AbortSignal): Promise<DrowningRiskAssessment[]> {
+    const query = new URLSearchParams();
+    if (params?.type && params.type !== 'all') query.append('type', params.type);
+    if (params?.risk_category && params.risk_category !== 'ALL') query.append('risk_category', params.risk_category);
+
+    const url = `${API_BASE_URL}/drowning-risk/water-bodies${query.toString() ? `?${query.toString()}` : ''}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch drowning risk water bodies: ${res.statusText} (${res.status})`));
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  },
+
+  async getDrowningRiskForWaterBody(id: number, signal?: AbortSignal): Promise<DrowningRiskAssessment> {
+    const res = await fetch(`${API_BASE_URL}/drowning-risk/water-body/${id}`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch water body risk: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async assessDrowningRisk(payload: any, signal?: AbortSignal): Promise<DrowningRiskAssessment> {
+    const res = await fetch(`${API_BASE_URL}/drowning-risk/assess`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Drowning risk assessment failed: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async simulateWhatIf(payload: WhatIfSimulationRequest, signal?: AbortSignal): Promise<WhatIfSimulationResponse> {
+    const res = await fetch(`${API_BASE_URL}/drowning-risk/simulate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `What-If simulation failed: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async getDrowningRiskModelStatus(signal?: AbortSignal): Promise<ModelStatusResponse> {
+    const res = await fetch(`${API_BASE_URL}/drowning-risk/model-status`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch model status: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async getLiveWeather(lat: number, lon: number, name?: string, signal?: AbortSignal): Promise<LiveWeatherResponse> {
+    const params = new URLSearchParams({
+      latitude: lat.toString(),
+      longitude: lon.toString(),
+    });
+    if (name) params.append('water_body_name', name);
+    const res = await fetch(`${API_BASE_URL}/weather/live?${params.toString()}`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Weather fetch failed: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async getWeatherForWaterBody(id: number, signal?: AbortSignal): Promise<LiveWeatherResponse> {
+    const res = await fetch(`${API_BASE_URL}/weather/water-body/${id}`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Weather fetch for water body failed: ${res.statusText} (${res.status})`));
     }
     return await res.json();
   },

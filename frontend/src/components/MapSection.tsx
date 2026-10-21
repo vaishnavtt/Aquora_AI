@@ -52,9 +52,11 @@ export const MapSection: React.FC<MapSectionProps> = ({
     googleMapsKey !== 'your_google_maps_api_key_here' &&
     !googleMapsKey.includes('placeholder');
 
-  const filteredStations = waterBodies.filter(
-    (wb) => filterType === 'all' || wb.type === filterType
-  );
+  const filteredStations = waterBodies.filter((wb) => {
+    if (filterType === 'all') return true;
+    if (filterType === 'lake') return wb.type === 'lake' || wb.type === 'pond';
+    return wb.type === filterType;
+  });
 
   // Helper for risk marker styling
   const getMarkerBadge = (level: RiskLevel) => {
@@ -104,11 +106,11 @@ export const MapSection: React.FC<MapSectionProps> = ({
     if (!mapInstanceRef.current) {
       const initialCenter: [number, number] = selectedStation
         ? [selectedStation.latitude, selectedStation.longitude]
-        : [37.78, -122.35];
+        : [10.15, 76.50]; // Default to Kerala aquatic region
 
       const map = L.map(mapContainerRef.current, {
         center: initialCenter,
-        zoom: 11,
+        zoom: selectedStation ? 11 : 8,
         zoomControl: false,
         attributionControl: true,
       });
@@ -359,11 +361,13 @@ export const MapSection: React.FC<MapSectionProps> = ({
             onChange={(e) => setFilterType(e.target.value)}
             className="bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-cyan-500"
           >
-            <option value="all">All Aquatic Types</option>
-            <option value="lake">Lakes</option>
-            <option value="river">Rivers</option>
-            <option value="reservoir">Reservoirs</option>
-            <option value="coastal">Coastal</option>
+            <option value="all">All Aquatic Types ({waterBodies.length})</option>
+            <option value="river">Rivers & Riverbanks</option>
+            <option value="quarry">Abandoned Quarries</option>
+            <option value="waterfall">Waterfalls & Cascades</option>
+            <option value="lake">Ponds & Lakes</option>
+            <option value="reservoir">Reservoirs & Dams</option>
+            <option value="canal">Canals & Waterways</option>
           </select>
 
           <button
