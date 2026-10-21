@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { TrendingUp, Clock, Calendar, Sparkles, Droplets, CloudRain } from 'lucide-react';
 import { WaterBody, TrendDataPoint } from '../types';
 import { api } from '../services/api';
@@ -67,13 +67,13 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
           </div>
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-              Hydrodynamic Risk Trajectory &amp; 12h Projection
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/40 font-semibold uppercase">
-                DEMO TREND
+              Risk Score � Past 24h &amp; 12h Forecast
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/40 font-semibold uppercase">
+                Demo data
               </span>
             </h3>
             <p className="text-[11px] text-slate-400">
-              Multi-point hazard tracking across precipitation pulses and diurnal current shifts.
+              Estimated risk over time based on rainfall, flow speed and water temperature.
             </p>
           </div>
         </div>
@@ -207,7 +207,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                 fontWeight="bold"
                 fontFamily="monospace"
               >
-                LIVE CURRENT
+                Now
               </text>
             </g>
           )}
@@ -283,7 +283,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
               <strong className="text-white">{activePoint.riskScore}</strong> / 100
             </span>
             <span className="text-slate-400">
-              Flow: <strong className="text-slate-200">{activePoint.flowRate} mÂ³/s</strong>
+              Flow: <strong className="text-slate-200">{activePoint.flowRate} m³/s</strong>
             </span>
             <span className="text-slate-400">
               Rain: <strong className="text-slate-200">{activePoint.rainfall} mm</strong>

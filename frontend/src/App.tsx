@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from './components/Header';
 import { Sidebar, NavTab } from './components/Sidebar';
 import { SummaryCards } from './components/SummaryCards';
@@ -229,10 +229,10 @@ export function App() {
                     <div>
                       <h2 className="text-lg font-bold text-white flex items-center gap-2">
                         <Droplets className="w-5 h-5 text-cyan-400" />
-                        Monitored Aquatic Stations Directory
+                        All monitored locations
                       </h2>
                       <p className="text-xs text-slate-400">
-                        Inspecting telemetry parameters across lakes, rivers, reservoirs and coastal zones.
+                        Full directory of water bodies currently in the monitoring system.
                       </p>
                     </div>
                   </div>
@@ -273,11 +273,11 @@ export function App() {
                         <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-800/80 my-3 text-xs">
                           <div>
                             <span className="text-[10px] text-slate-500 block">Temp</span>
-                            <span className="font-mono text-slate-200">{wb.water_temp_c.toFixed(1)}Â°C</span>
+                            <span className="font-mono text-slate-200">{wb.water_temp_c.toFixed(1)}°C</span>
                           </div>
                           <div>
                             <span className="text-[10px] text-slate-500 block">Flow</span>
-                            <span className="font-mono text-slate-200">{wb.flow_rate_cms.toFixed(1)} mÂ³/s</span>
+                            <span className="font-mono text-slate-200">{wb.flow_rate_cms.toFixed(1)} m³/s</span>
                           </div>
                           <div>
                             <span className="text-[10px] text-slate-500 block">Depth</span>
@@ -296,7 +296,7 @@ export function App() {
                             }}
                             className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs"
                           >
-                            Simulate &rarr;
+                            Simulate ?
                           </button>
                         </div>
                       </div>
@@ -321,14 +321,14 @@ export function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <Waves className="w-4 h-4 text-cyan-400" />
-            <span className="font-semibold text-slate-400">AQUORA AI Platform</span>
+            <span className="font-semibold text-slate-400">AQUORA</span>
             <span>&bull;</span>
             <span className={`font-mono text-[11px] ${health?.status === 'healthy' ? 'text-emerald-400' : 'text-amber-400/90'}`}>
-              {health?.status === 'healthy' ? 'LIVE BACKEND CONNECTED' : 'DEMO SYNTHETIC ENVIRONMENT'}
+              {health?.status === 'healthy' ? 'Live backend connected' : 'Running in demo mode'}
             </span>
           </div>
           <div className="text-[11px] font-mono text-slate-500">
-            Track 1: ML &amp; Integration | Track 2: Frontend &amp; Maps | Track 3: Backend &amp; DB
+            Hackathon prototype � Not an official warning system � v1.0
           </div>
         </div>
       </footer>
