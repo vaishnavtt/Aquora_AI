@@ -1,64 +1,67 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
-  /* AQUORA AI UI Design System Color Palette */
-  --color-primary: #0B4F6C;
-  --color-teal: #14B8A6;
-  --color-background: #F6F8FA;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #64748B;
-
-  /* Risk Status Colors (Strictly paired with text + icons) */
-  --color-risk-low: #16A34A;
-  --color-risk-medium: #F59E0B;
-  --color-risk-high: #DC2626;
-  --color-risk-unknown: #94A3B8;
+  /* AQUORA Operations Desk Color Palette */
+  --color-ops-bg: #F3F5F1;
+  --color-ops-primary: #FFFFFF;
+  --color-ops-secondary: #E8EFEC;
+  --color-ops-selected: #DCEBE7;
+  --color-ops-text: #203235;
+  --color-ops-muted: #667678;
+  --color-ops-faint: #82908F;
+  --color-ops-divider: #D2DDDA;
+  --color-ops-teal: #197F80;
+  --color-ops-deepteal: #125B61;
+  --color-ops-safe: #3F8F64;
+  --color-ops-advisory: #B98225;
+  --color-ops-high: #C8644D;
+  --color-ops-extreme: #A83E45;
+  --color-ops-warm: #B99962;
 }
 
 @layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #020617;
-    color: #f1f5f9;
+    background-color: #F3F5F1;
+    color: #203235;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
-/* Rounded card utility with subtle borders and shadow */
-.aquora-card {
+/* Operational desk panel styling */
+.ops-panel {
   background-color: #FFFFFF;
-  border-radius: 1rem; /* 16px */
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  border: 1px solid #D2DDDA;
+  border-radius: 6px;
 }
 
-.aquora-card-interactive {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+.ops-panel-sub {
+  background-color: #E8EFEC;
+  border: 1px solid #D2DDDA;
+  border-radius: 4px;
 }
 
-.aquora-card-interactive:hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  border-color: #CBD5E1;
-}
-
-/* Subtle modern scrollbar */
+/* Subtle operational scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #E8EFEC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
+  background: #BAC8C5;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #82908F;
 }
