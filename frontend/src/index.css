@@ -5,28 +5,33 @@
   --font-mono: 'IBM Plex Mono', monospace;
 
   /* AQUORA Operations Desk Color Palette */
-  --color-ops-bg: #F3F5F1;
-  --color-ops-primary: #FFFFFF;
-  --color-ops-secondary: #E8EFEC;
-  --color-ops-selected: #DCEBE7;
-  --color-ops-text: #203235;
-  --color-ops-muted: #667678;
-  --color-ops-faint: #82908F;
-  --color-ops-divider: #D2DDDA;
-  --color-ops-teal: #197F80;
-  --color-ops-deepteal: #125B61;
-  --color-ops-safe: #3F8F64;
-  --color-ops-advisory: #B98225;
-  --color-ops-high: #C8644D;
-  --color-ops-extreme: #A83E45;
-  --color-ops-warm: #B99962;
+  --color-ops-bg: #111417;          /* Main background: Charcoal-black workspace */
+  --color-ops-panel: #1A1F22;       /* Panel background: Cards and control surfaces */
+  --color-ops-raised: #23292C;      /* Raised panel: Selected or elevated panels */
+  --color-ops-primary: #1A1F22;
+  --color-ops-secondary: #23292C;
+  --color-ops-selected: #253638;
+  --color-ops-text: #E8E5DC;        /* Primary text: Main labels and values */
+  --color-ops-muted: #9BA5A5;       /* Secondary text: Supporting information */
+  --color-ops-faint: #9BA5A5;
+  --color-ops-divider: #384145;     /* Divider: Rules and table lines */
+  --color-ops-teal: #3D8F91;        /* Instrument teal: Links, active controls, water data */
+  --color-ops-deepteal: #3D8F91;
+  --color-ops-sand: #C5A66A;        /* Warm sand: Secondary emphasis and historical data */
+  --color-ops-warm: #C5A66A;
+  --color-ops-safe: #5C9B72;        /* Safe: Normal conditions */
+  --color-ops-advisory: #C99A45;    /* Advisory: Moderate risk */
+  --color-ops-warning: #C96A50;     /* Warning: High risk */
+  --color-ops-high: #C96A50;
+  --color-ops-critical: #B74848;    /* Critical: Extreme risk */
+  --color-ops-extreme: #B74848;
 }
 
 @layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #F3F5F1;
-    color: #203235;
+    background-color: #111417;
+    color: #E8E5DC;
   }
 
   code, pre, .font-mono {
@@ -36,14 +41,14 @@
 
 /* Operational desk panel styling */
 .ops-panel {
-  background-color: #FFFFFF;
-  border: 1px solid #D2DDDA;
+  background-color: #1A1F22;
+  border: 1px solid #384145;
   border-radius: 6px;
 }
 
 .ops-panel-sub {
-  background-color: #E8EFEC;
-  border: 1px solid #D2DDDA;
+  background-color: #23292C;
+  border: 1px solid #384145;
   border-radius: 4px;
 }
 
@@ -54,14 +59,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #E8EFEC;
+  background: #111417;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #BAC8C5;
+  background: #384145;
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #82908F;
+  background: #9BA5A5;
 }

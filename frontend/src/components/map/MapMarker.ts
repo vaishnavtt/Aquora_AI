@@ -8,15 +8,15 @@ export interface RiskColorConfig {
 
 /** Canonical risk color mapping — single source of truth for all map markers and UI badges. */
 export const RISK_COLORS: Record<RiskLevel, RiskColorConfig> = {
-  low:      { hex: '#16A34A', label: 'Low Risk',      range: '< 30' },
-  moderate: { hex: '#F59E0B', label: 'Moderate Risk', range: '30 – 60' },
-  high:     { hex: '#F97316', label: 'High Risk',     range: '60 – 80' },
-  extreme:  { hex: '#DC2626', label: 'Critical Risk', range: '> 80' },
+  low:      { hex: '#5C9B72', label: 'Safe / Low',           range: '< 40' },
+  moderate: { hex: '#C99A45', label: 'Advisory / Moderate', range: '40 – 69' },
+  high:     { hex: '#C96A50', label: 'High Risk',           range: '70 – 84' },
+  extreme:  { hex: '#B74848', label: 'Critical Risk',       range: '85 – 100' },
 };
 
 /** Returns the color config for a given risk level, defaulting to a neutral grey on unknown. */
 export function getRiskColor(level: RiskLevel): RiskColorConfig {
-  return RISK_COLORS[level] ?? { hex: '#94A3B8', label: 'Unknown', range: '—' };
+  return RISK_COLORS[level] ?? { hex: '#9BA5A5', label: 'Unknown', range: '—' };
 }
 
 /**
@@ -34,7 +34,7 @@ export function createMarkerIcon(
   const { hex } = getRiskColor(riskLevel);
   const baseSize = isSelected ? 40 : 32;
   const pinHeight = Math.round(baseSize * 1.25);
-  const stroke = isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.75)';
+  const stroke = isSelected ? '#E8E5DC' : 'rgba(232,229,220,0.75)';
   const strokeWidth = isSelected ? 3 : 2;
 
   const ringMarkup = showRing

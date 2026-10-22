@@ -33,31 +33,31 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
   ];
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#D2DDDA] rounded p-4 shadow-xs" id="risk-history-section">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#D2DDDA] gap-2">
+    <div className="bg-[#1A1F22] border border-[#384145] rounded p-4 shadow-xs" id="risk-history-section">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#384145] gap-2">
         <div>
           <div className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4 text-[#197F80]" />
-            <h3 className="font-sans font-semibold text-[18px] text-[#203235]">
+            <TrendingUp className="w-4 h-4 text-[#3D8F91]" />
+            <h3 className="font-sans font-semibold text-[18px] text-[#E8E5DC]">
               Risk History &amp; 12h Forecast
             </h3>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#E8EFEC] text-[#125B61] border border-[#D2DDDA]">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#23292C] text-[#3D8F91] border border-[#384145]">
               {stationName}
             </span>
           </div>
-          <p className="text-xs text-[#667678] font-sans mt-0.5">
+          <p className="text-xs text-[#9BA5A5] font-sans mt-0.5">
             Continuous 24-hour observed composite risk trajectory and forward predictive projection.
           </p>
         </div>
 
         <div className="flex items-center space-x-3 text-[10px] font-mono">
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#125B61]" />
-            <span className="text-[#203235]">Past 24h Observed</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#3D8F91]" />
+            <span className="text-[#E8E5DC]">Past 24h Observed</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-[#C8644D]" />
-            <span className="text-[#C8644D]">+12h Model Forecast</span>
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-[#C96A50]" />
+            <span className="text-[#C96A50]">+12h Model Forecast</span>
           </div>
         </div>
       </div>
@@ -67,22 +67,22 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
           <ComposedChart data={trendData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#197F80" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#197F80" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#3D8F91" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#3D8F91" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#E8EFEC" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="#23292C" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 10, fill: '#667678', fontFamily: 'IBM Plex Mono' }}
+              tick={{ fontSize: 10, fill: '#9BA5A5', fontFamily: 'IBM Plex Mono' }}
               tickLine={false}
-              axisLine={{ stroke: '#D2DDDA' }}
+              axisLine={{ stroke: '#384145' }}
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fontSize: 10, fill: '#667678', fontFamily: 'IBM Plex Mono' }}
+              tick={{ fontSize: 10, fill: '#9BA5A5', fontFamily: 'IBM Plex Mono' }}
               tickLine={false}
-              axisLine={{ stroke: '#D2DDDA' }}
+              axisLine={{ stroke: '#384145' }}
               unit=" pts"
             />
             <Tooltip
@@ -90,15 +90,15 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
                 if (active && payload && payload.length) {
                   const p = payload[0].payload;
                   return (
-                    <div className="bg-[#FFFFFF] border border-[#D2DDDA] rounded p-2 text-xs font-mono shadow-xs">
-                      <div className="font-semibold text-[#203235]">{p.label}</div>
-                      <div className="text-[#125B61] mt-0.5">
+                    <div className="bg-[#1A1F22] border border-[#384145] rounded p-2 text-xs font-mono shadow-xs">
+                      <div className="font-semibold text-[#E8E5DC]">{p.label}</div>
+                      <div className="text-[#3D8F91] mt-0.5">
                         Risk Score: <strong>{p.score} / 100</strong>
                       </div>
-                      <div className="text-[#667678]">
+                      <div className="text-[#9BA5A5]">
                         Water Stage: {Number(p.stage).toFixed(2)} m
                       </div>
-                      <div className="text-[10px] text-[#82908F] mt-1">
+                      <div className="text-[10px] text-[#C5A66A] mt-1">
                         {p.isForecast ? '★ Predicted trajectory' : '✓ Verified sensor reading'}
                       </div>
                     </div>
@@ -109,36 +109,36 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
             />
             <ReferenceLine
               y={85}
-              stroke="#A83E45"
+              stroke="#B74848"
               strokeDasharray="3 3"
               label={{
                 value: 'Extreme (85)',
                 position: 'top',
-                fill: '#A83E45',
+                fill: '#B74848',
                 fontSize: 10,
                 fontFamily: 'IBM Plex Mono',
               }}
             />
             <ReferenceLine
               y={70}
-              stroke="#C8644D"
+              stroke="#C96A50"
               strokeDasharray="3 3"
               label={{
                 value: 'High (70)',
                 position: 'top',
-                fill: '#C8644D',
+                fill: '#C96A50',
                 fontSize: 10,
                 fontFamily: 'IBM Plex Mono',
               }}
             />
             <ReferenceLine
               y={40}
-              stroke="#B98225"
+              stroke="#C99A45"
               strokeDasharray="3 3"
               label={{
                 value: 'Moderate (40)',
                 position: 'top',
-                fill: '#B98225',
+                fill: '#C99A45',
                 fontSize: 10,
                 fontFamily: 'IBM Plex Mono',
               }}
@@ -146,7 +146,7 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
             <Area
               type="monotone"
               dataKey="score"
-              stroke="#125B61"
+              stroke="#3D8F91"
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#riskGradient)"
@@ -155,7 +155,7 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
         </ResponsiveContainer>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-[#82908F] pt-2 border-t border-[#D2DDDA] mt-2">
+      <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-[#9BA5A5] pt-2 border-t border-[#384145] mt-2">
         <span>Sampling interval: 6-hour rolling telemetry aggregation</span>
         <span>Sensor drift compensation: ±0.04m</span>
         <span>Confidence band: 94.2%</span>

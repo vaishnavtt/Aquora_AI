@@ -127,7 +127,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F5F1] text-[#203235] flex flex-col font-sans selection:bg-[#DCEBE7] selection:text-[#125B61]">
+    <div className="min-h-screen bg-[#111417] text-[#E8E5DC] flex flex-col font-sans selection:bg-[#3D8F91] selection:text-[#111417]">
       {/* Sticky Top Operations Header */}
       <OpsHeader
         health={health}
@@ -148,27 +148,27 @@ export function App() {
         {/* Content Viewport */}
         <main className="flex-1 p-3 sm:p-5 lg:p-6 space-y-5 max-w-[1550px] w-full mx-auto" id="overview-top">
           {/* Page Heading & Operational Status */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#D2DDDA]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#384145]">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-mono text-[10px] uppercase font-bold text-[#125B61] bg-[#E8EFEC] px-2 py-0.5 rounded border border-[#D2DDDA]">
+                <span className="font-mono text-[10px] uppercase font-bold text-[#3D8F91] bg-[#23292C] px-2 py-0.5 rounded border border-[#384145]">
                   Kerala Hydrology Operations Desk
                 </span>
-                <span className="font-mono text-[10px] text-[#667678]">
+                <span className="font-mono text-[10px] text-[#9BA5A5]">
                   State Disaster Management Network
                 </span>
               </div>
-              <h1 className="font-sans font-semibold text-[24px] text-[#203235] tracking-tight mt-1">
+              <h1 className="font-sans font-semibold text-[24px] text-[#E8E5DC] tracking-tight mt-1">
                 Water safety command center
               </h1>
             </div>
 
             <div className="flex items-center space-x-2 text-xs font-mono">
-              <span className="px-2 py-1 rounded bg-[#FFFFFF] border border-[#D2DDDA] text-[#667678]">
-                Pilot Surface: <strong className="text-[#125B61]">8 Primary Stations</strong>
+              <span className="px-2 py-1 rounded bg-[#1A1F22] border border-[#384145] text-[#9BA5A5]">
+                Pilot Surface: <strong className="text-[#3D8F91]">8 Primary Stations</strong>
               </span>
-              <span className="px-2 py-1 rounded bg-[#EDF5F0] border border-[#C5DFD0] text-[#25583E] font-medium flex items-center space-x-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#3F8F64]" />
+              <span className="px-2 py-1 rounded bg-[rgba(92,155,114,0.16)] border border-[rgba(92,155,114,0.35)] text-[#5C9B72] font-medium flex items-center space-x-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#5C9B72]" />
                 <span>Nominal Telemetry Sweep</span>
               </span>
             </div>
@@ -227,20 +227,20 @@ export function App() {
       </div>
 
       {/* Operational Desk Footer */}
-      <footer className="border-t border-[#D2DDDA] bg-[#FFFFFF] py-4 px-6 text-xs text-[#667678] font-mono">
+      <footer className="border-t border-[#384145] bg-[#1A1F22] py-4 px-6 text-xs text-[#9BA5A5] font-mono">
         <div className="max-w-[1550px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded bg-[#125B61] flex items-center justify-center text-white">
-              <Waves className="w-3 h-3 text-[#DCEBE7]" />
+            <div className="w-5 h-5 rounded bg-[#23292C] border border-[#384145] flex items-center justify-center text-[#3D8F91]">
+              <Waves className="w-3 h-3 text-[#3D8F91]" />
             </div>
-            <span className="font-semibold text-[#203235]">AQUORA AI</span>
+            <span className="font-semibold text-[#E8E5DC]">AQUORA AI</span>
             <span>·</span>
             <span>Kerala Water-Safety Operations Desk</span>
             <span>·</span>
-            <span className="text-[#3F8F64]">Telemetry Online</span>
+            <span className="text-[#5C9B72]">Telemetry Online</span>
           </div>
 
-          <div className="text-[11px] text-[#82908F]">
+          <div className="text-[11px] text-[#9BA5A5]">
             Field Pilot Telemetry &bull; Calibrated Hydrological Models &bull; Indian Standard Time (UTC+05:30)
           </div>
         </div>

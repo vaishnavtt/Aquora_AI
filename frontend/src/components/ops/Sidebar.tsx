@@ -96,10 +96,10 @@ export const OpsSidebar: React.FC<OpsSidebarProps> = ({
   ];
 
   return (
-    <aside className="w-full lg:w-64 bg-[#FFFFFF] border-b lg:border-b-0 lg:border-r border-[#D2DDDA] flex flex-col justify-between shrink-0">
+    <aside className="w-full lg:w-64 bg-[#1A1F22] border-b lg:border-b-0 lg:border-r border-[#384145] flex flex-col justify-between shrink-0">
       {/* Top Nav Rail */}
       <div className="p-3">
-        <div className="text-[10px] font-mono uppercase text-[#82908F] px-2 py-1 tracking-wider font-semibold hidden lg:block">
+        <div className="text-[10px] font-mono uppercase text-[#9BA5A5] px-2 py-1 tracking-wider font-semibold hidden lg:block">
           Operations Rail
         </div>
 
@@ -113,20 +113,20 @@ export const OpsSidebar: React.FC<OpsSidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectSection(item.id)}
-                className={`shrink-0 min-w-[200px] lg:min-w-0 lg:w-full text-left px-2.5 py-2 rounded text-xs transition-colors flex items-start space-x-2.5 border ${
+                className={`shrink-0 min-w-[200px] lg:min-w-0 lg:w-full text-left px-2.5 py-2 rounded text-xs transition-colors flex items-start space-x-2.5 border cursor-pointer ${
                   isActive
-                    ? 'bg-[#DCEBE7] border-[#197F80] text-[#125B61] font-semibold'
-                    : 'bg-transparent border-transparent text-[#203235] hover:bg-[#E8EFEC] hover:text-[#125B61]'
+                    ? 'bg-[#23292C] border-[#3D8F91] text-[#3D8F91] font-semibold'
+                    : 'bg-transparent border-transparent text-[#E8E5DC] hover:bg-[#23292C] hover:text-[#3D8F91]'
                 }`}
               >
                 <Icon
                   className={`w-4 h-4 mt-0.5 shrink-0 ${
-                    isActive ? 'text-[#197F80]' : 'text-[#667678]'
+                    isActive ? 'text-[#3D8F91]' : 'text-[#9BA5A5]'
                   }`}
                 />
                 <div className="min-w-0 truncate">
                   <div className="text-xs truncate leading-snug">{item.label}</div>
-                  <div className="text-[10px] text-[#667678] font-normal truncate">
+                  <div className="text-[10px] text-[#9BA5A5] font-normal truncate">
                     {item.sub}
                   </div>
                 </div>
@@ -137,27 +137,27 @@ export const OpsSidebar: React.FC<OpsSidebarProps> = ({
       </div>
 
       {/* Bottom Operational Notices */}
-      <div className="p-3 border-t border-[#D2DDDA] space-y-2.5 hidden lg:block bg-[#F3F5F1]">
+      <div className="p-3 border-t border-[#384145] space-y-2.5 hidden lg:block bg-[#111417]">
         {/* Prototype notice */}
-        <div className="p-2.5 rounded bg-[#FFFFFF] border border-[#D2DDDA] text-[11px] text-[#203235] space-y-1">
-          <div className="flex items-center space-x-1.5 font-semibold text-[#B98225]">
+        <div className="p-2.5 rounded bg-[#1A1F22] border border-[#384145] text-[11px] text-[#E8E5DC] space-y-1">
+          <div className="flex items-center space-x-1.5 font-semibold text-[#C5A66A]">
             <Info className="w-3.5 h-3.5 shrink-0" />
             <span className="text-[10px] font-mono uppercase tracking-wider">
               Prototype notice
             </span>
           </div>
-          <p className="text-[10px] text-[#667678] leading-relaxed">
+          <p className="text-[10px] text-[#9BA5A5] leading-relaxed">
             Baseline telemetry is simulated for this pilot surface.
           </p>
         </div>
 
         {/* Operating status & time standard */}
-        <div className="p-2 rounded bg-[#E8EFEC] border border-[#D2DDDA] flex flex-col space-y-1">
-          <div className="flex items-center space-x-1.5 text-[10px] text-[#3F8F64] font-medium">
+        <div className="p-2 rounded bg-[#23292C] border border-[#384145] flex flex-col space-y-1">
+          <div className="flex items-center space-x-1.5 text-[10px] text-[#5C9B72] font-medium">
             <CheckCircle2 className="w-3 h-3 shrink-0" />
             <span className="truncate">Telemetry within expected range</span>
           </div>
-          <span className="font-mono text-[9px] text-[#82908F]">
+          <span className="font-mono text-[9px] text-[#9BA5A5]">
             UTC+05:30 · Indian Standard Time
           </span>
         </div>

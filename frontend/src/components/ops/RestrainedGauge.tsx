@@ -43,7 +43,7 @@ export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#D2DDDA"
+            stroke="#384145"
             strokeWidth={strokeWidth}
             strokeDasharray={`${arcCircumference} ${circumference}`}
             strokeLinecap="round"
@@ -66,14 +66,14 @@ export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
 
         {/* Center Technical Readout */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-          <div className="text-[10px] font-mono uppercase text-[#82908F] tracking-wider">
+          <div className="text-[10px] font-mono uppercase text-[#9BA5A5] tracking-wider">
             Risk Score
           </div>
           <div className="flex items-baseline space-x-1">
-            <span className="font-mono text-3xl font-semibold text-[#203235]">
+            <span className="font-mono text-3xl font-semibold text-[#E8E5DC]">
               {Math.round(normalizedScore)}
             </span>
-            <span className="font-mono text-xs text-[#82908F]">/ 100</span>
+            <span className="font-mono text-xs text-[#9BA5A5]">/ 100</span>
           </div>
           <div
             className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase mt-0.5"
@@ -91,9 +91,9 @@ export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
       </div>
 
       {/* Model Confidence Sub-label */}
-      <div className="mt-2 text-center border-t border-[#D2DDDA] pt-1.5 w-full">
-        <span className="text-[10px] text-[#667678] font-sans">Model confidence: </span>
-        <span className="font-mono text-[11px] font-medium text-[#203235]">
+      <div className="mt-2 text-center border-t border-[#384145] pt-1.5 w-full">
+        <span className="text-[10px] text-[#9BA5A5] font-sans">Model confidence: </span>
+        <span className="font-mono text-[11px] font-medium text-[#E8E5DC]">
           {confidence.toFixed(1)}%
         </span>
       </div>
