@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Sliders, RefreshCw, AlertTriangle, ArrowRight, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Sliders, RefreshCw, AlertTriangle, ArrowRight, ShieldAlert, Sparkles, CheckCircle2, Info } from 'lucide-react';
 import { WaterBody, RiskLevel } from '../../types';
 import { OpsRiskBadge, RISK_TOKENS } from './RiskBadge';
 
@@ -19,12 +19,33 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
   const [waterTemp, setWaterTemp] = useState<number>(selectedStation?.water_temp_c ?? 24.0); // 10–35 °C
   const [exposureScenario, setExposureScenario] = useState<ExposureScenario>('Crowded Holiday/Festival');
 
-  // Baseline risk from selected station or default 47
-  const baselineRisk = selectedStation ? Math.round(selectedStation.current_risk_score ?? selectedStation.risk_score ?? 47) : 47;
-  const baselineLevel: RiskLevel = selectedStation ? selectedStation.current_risk_level : 'moderate';
+  useEffect(() => {
+    if (selectedStation?.water_temp_c != null) {
+      setWaterTemp(selectedStation.water_temp_c);
+    }
+  }, [selectedStation?.id]);
+
+  // Baseline risk from selected station without silent fallback to 47
+  const rawBaselineScore = selectedStation
+    ? (selectedStation.current_risk_score ?? selectedStation.risk_score)
+    : null;
+  const hasBaselineRisk = rawBaselineScore != null && !isNaN(rawBaselineScore);
+  const baselineRisk: number | null = hasBaselineRisk ? Math.round(rawBaselineScore!) : null;
+  const baselineLevel: RiskLevel | null = hasBaselineRisk ? selectedStation!.current_risk_level : null;
 
   // Real-time calculation of simulated risk
   const { simulatedRisk, simulatedLevel, deltaShift, recommendation } = useMemo(() => {
+    if (baselineRisk === null) {
+      return {
+        simulatedRisk: null,
+        simulatedLevel: null,
+        deltaShift: null,
+        recommendation: selectedStation
+          ? 'Baseline risk score is unrated for this station. A calibrated baseline observation is required before calculating what-if stress tests.'
+          : 'Select a monitored station from the directory or map to simulate operational what-if scenarios.',
+      };
+    }
+
     // Weight factors
     let rainImpact = rainfallInc * 0.22;
     let stageImpact = stageDelta * 14.5;
@@ -63,7 +84,7 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
       deltaShift: delta,
       recommendation: rec,
     };
-  }, [baselineRisk, rainfallInc, stageDelta, dischargeInc, waterTemp, exposureScenario]);
+  }, [baselineRisk, selectedStation, rainfallInc, stageDelta, dischargeInc, waterTemp, exposureScenario]);
 
   const handleReset = () => {
     setRainfallInc(0);
@@ -240,10 +261,10 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
                 Baseline risk
               </span>
               <div className="font-mono text-2xl font-bold text-[#E8E5DC] mt-1">
-                {baselineRisk}
+                {baselineRisk !== null ? baselineRisk : '—'}
               </div>
               <span className="text-[10px] font-mono text-[#9BA5A5] uppercase">
-                {baselineLevel}
+                {baselineLevel || 'Unrated'}
               </span>
             </div>
 
@@ -252,10 +273,10 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
                 Simulated risk
               </span>
               <div className="font-mono text-2xl font-bold text-[#C96A50] mt-1">
-                {simulatedRisk}
+                {simulatedRisk !== null ? simulatedRisk : '—'}
               </div>
               <span className="text-[10px] font-mono text-[#C96A50] uppercase font-semibold">
-                {simulatedLevel}
+                {simulatedLevel || 'Awaiting baseline'}
               </span>
             </div>
           </div>
@@ -266,23 +287,39 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
               <span className="text-[#9BA5A5]">Delta shift:</span>
               <span
                 className={`font-bold ${
-                  deltaShift > 0
+                  deltaShift === null
+                    ? 'text-[#9BA5A5]'
+                    : deltaShift > 0
                     ? 'text-[#C96A50]'
                     : deltaShift < 0
                     ? 'text-[#5C9B72]'
                     : 'text-[#9BA5A5]'
                 }`}
               >
-                {deltaShift > 0 ? `+${deltaShift}` : deltaShift} points
+                {deltaShift !== null
+                  ? deltaShift > 0
+                    ? `+${deltaShift} points`
+                    : `${deltaShift} points`
+                  : 'Unavailable'}
               </span>
             </div>
             <div className="flex justify-between items-center pt-1.5 border-t border-[#384145]">
               <span className="text-[#9BA5A5]">Risk shift:</span>
               <div className="flex items-center space-x-1.5 font-bold uppercase">
-                <span className="text-[#9BA5A5]">{baselineLevel}</span>
+                <span className="text-[#9BA5A5]">{baselineLevel || 'Unrated'}</span>
                 <ArrowRight className="w-3 h-3 text-[#3D8F91]" />
-                <span className={simulatedRisk >= 85 ? 'text-[#B74848]' : simulatedRisk >= 70 ? 'text-[#C96A50]' : 'text-[#C99A45]'}>
-                  {simulatedLevel}
+                <span
+                  className={
+                    simulatedRisk === null
+                      ? 'text-[#9BA5A5]'
+                      : simulatedRisk >= 85
+                      ? 'text-[#B74848]'
+                      : simulatedRisk >= 70
+                      ? 'text-[#C96A50]'
+                      : 'text-[#C99A45]'
+                  }
+                >
+                  {simulatedLevel || 'Awaiting baseline'}
                 </span>
               </div>
             </div>
@@ -300,8 +337,9 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
           </div>
 
           {/* Operational Guidance note */}
-          <div className="text-[10px] font-mono text-[#9BA5A5] bg-[#23292C] p-2 rounded border border-[#384145]">
-            Model inference updates on every slider adjustment using calibrated Kerala Random Forest hydro-coefficients.
+          <div className="text-[10px] font-mono text-[#9BA5A5] bg-[#23292C] p-2.5 rounded border border-[#384145] leading-relaxed">
+            <span className="text-[#3D8F91] font-semibold block mb-0.5">Experimental Operational Stress-Test Tool</span>
+            Real-time sensitivity response based on linear heuristic hydrologic factors (+0.22/mm rain, +14.5/m stage rise, +0.18/m³/s discharge, cold shock factor, and crowd exposure offset; score clamped 5–100). Exploratory scenario simulation tool, not a certified hydrodynamic forecast or individual drowning prediction.
           </div>
         </div>
       </div>

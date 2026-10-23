@@ -10,10 +10,11 @@ interface AllLocationsDirectoryProps {
 }
 
 export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
-  waterBodies,
+  waterBodies = [],
   selectedStation,
   onSelectStation,
 }) => {
+  const stations = waterBodies || [];
   const handleRowClick = (station: WaterBody) => {
     onSelectStation(station);
     // Smooth scroll to exposure-risk-section
@@ -40,7 +41,7 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
         </div>
 
         <span className="text-xs font-mono text-[#9BA5A5]">
-          Showing {waterBodies.length} active stations
+          Showing {stations.length} active stations
         </span>
       </div>
 
@@ -59,7 +60,7 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#384145] bg-[#1A1F22]">
-            {waterBodies.map((st) => {
+            {stations.map((st) => {
               const isSelected = selectedStation?.id === st.id;
               const reviewState =
                 st.review_state ||
@@ -92,7 +93,15 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
                       )}
                     </div>
                     <div className="text-[10px] text-[#9BA5A5] mt-0.5">
-                      {(st.latitude ?? 0).toFixed(4)}° N, {(st.longitude ?? 0).toFixed(4)}° E · Elevation {st.elevation_m ?? st.elevation_meters ?? 0}m
+                      {st.latitude != null && st.longitude != null
+                        ? `${st.latitude.toFixed(4)}° N, ${st.longitude.toFixed(4)}° E`
+                        : 'Coordinates Unavailable'}{' '}
+                      · Elevation{' '}
+                      {st.elevation_m != null
+                        ? `${st.elevation_m}m`
+                        : st.elevation_meters != null
+                        ? `${st.elevation_meters}m`
+                        : 'Unavailable'}
                     </div>
                   </td>
 
@@ -106,20 +115,30 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
                   {/* Stage / Normal */}
                   <td className="p-3">
                     <span className="text-[#E8E5DC] font-semibold">
-                      {(st.current_water_level_m ?? st.depth_meters ?? 0).toFixed(2)} m
+                      {st.current_water_level_m != null
+                        ? `${st.current_water_level_m.toFixed(2)} m`
+                        : st.depth_meters != null
+                        ? `${st.depth_meters.toFixed(2)} m`
+                        : 'Unavailable'}
                     </span>
                     <span className="text-[#9BA5A5] text-[11px] block">
-                      Normal: {(st.normal_water_level_m ?? (st.depth_meters ? Number((st.depth_meters * 0.7).toFixed(2)) : 0)).toFixed(2)} m
+                      Normal: {st.normal_water_level_m != null ? `${st.normal_water_level_m.toFixed(2)} m` : 'Uncalibrated'}
                     </span>
                   </td>
 
                   {/* Flow Velocity & Discharge */}
                   <td className="p-3">
                     <span className="text-[#E8E5DC] font-semibold">
-                      {(st.flow_velocity_mps ?? (st.flow_rate_cms ? Number((st.flow_rate_cms * 0.4).toFixed(2)) : 0)).toFixed(2)} m/s
+                      {st.flow_velocity_mps != null
+                        ? `${st.flow_velocity_mps.toFixed(2)} m/s`
+                        : 'Not Monitored'}
                     </span>
                     <span className="text-[#9BA5A5] text-[11px] block">
-                      {(st.discharge_cms ?? st.flow_rate_cms ?? 0).toFixed(1)} m³/s
+                      {st.discharge_cms != null
+                        ? `${st.discharge_cms.toFixed(1)} m³/s`
+                        : st.flow_rate_cms != null
+                        ? `${st.flow_rate_cms.toFixed(1)} m³/s`
+                        : 'Not Monitored'}
                     </span>
                   </td>
 

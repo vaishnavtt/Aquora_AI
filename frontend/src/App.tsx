@@ -610,22 +610,41 @@ export function App() {
                                     : 'bg-rose-950 text-rose-400 border border-rose-800'
                                 }`}
                               >
-                                {wb.current_risk_level} ({(wb.risk_score || wb.current_risk_score || 0).toFixed(0)})
+                                {wb.current_risk_level}{' '}
+                                {wb.risk_score != null
+                                  ? `(${wb.risk_score.toFixed(0)})`
+                                  : wb.current_risk_score != null
+                                  ? `(${wb.current_risk_score.toFixed(0)})`
+                                  : '(Unrated)'}
                               </span>
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-800/80 my-3 text-xs">
                               <div>
                                 <span className="text-[10px] text-slate-500 block">Temp</span>
-                                <span className="font-mono text-slate-200">{(wb.water_temp_c || 0).toFixed(1)}°C</span>
+                                <span className="font-mono text-slate-200">
+                                  {wb.water_temp_c != null ? `${wb.water_temp_c.toFixed(1)}°C` : 'Unavailable'}
+                                </span>
                               </div>
                               <div>
                                 <span className="text-[10px] text-slate-500 block">Flow</span>
-                                <span className="font-mono text-slate-200">{(wb.flow_rate_cms || wb.discharge_cms || 0).toFixed(1)} m³/s</span>
+                                <span className="font-mono text-slate-200">
+                                  {wb.flow_rate_cms != null
+                                    ? `${wb.flow_rate_cms.toFixed(1)} m³/s`
+                                    : wb.discharge_cms != null
+                                    ? `${wb.discharge_cms.toFixed(1)} m³/s`
+                                    : 'Unavailable'}
+                                </span>
                               </div>
                               <div>
                                 <span className="text-[10px] text-slate-500 block">Depth</span>
-                                <span className="font-mono text-slate-200">{(wb.depth_meters || wb.current_water_level_m || 0).toFixed(1)} m</span>
+                                <span className="font-mono text-slate-200">
+                                  {wb.depth_meters != null
+                                    ? `${wb.depth_meters.toFixed(1)} m`
+                                    : wb.current_water_level_m != null
+                                    ? `${wb.current_water_level_m.toFixed(1)} m`
+                                    : 'Unavailable'}
+                                </span>
                               </div>
                             </div>
 

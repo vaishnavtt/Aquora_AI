@@ -18,18 +18,37 @@ interface RiskHistoryChartProps {
 }
 
 export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) => {
-  const stationName = station?.name || 'Athirappilly Falls';
-  const baseScore = station?.current_risk_score ?? 92;
+  const stationName = station?.name || 'Selected Station';
+  const rawScore = station?.current_risk_score ?? station?.risk_score;
+  const baseScore = rawScore != null && !isNaN(rawScore) ? Math.round(rawScore) : null;
+  const currentStage = station?.current_water_level_m ?? station?.depth_meters ?? null;
 
-  // Generate 24h past + 12h forecast trend points
+  if (baseScore === null) {
+    return (
+      <div className="bg-[#1A1F22] border border-[#384145] rounded p-6 text-center shadow-xs" id="risk-history-section">
+        <div className="flex items-center justify-center space-x-2 text-[#9BA5A5] mb-2">
+          <TrendingUp className="w-5 h-5 text-[#3D8F91]" />
+          <span className="font-mono text-sm uppercase font-semibold">Risk History &amp; 12h Forecast</span>
+        </div>
+        <p className="text-xs text-[#9BA5A5] font-sans max-w-md mx-auto">
+          Continuous 24-hour telemetry trajectory is unrated for this station. A calibrated baseline risk calculation is required to plot historic and forecast projections.
+        </p>
+        <div className="mt-3 inline-block px-3 py-1 rounded bg-[#23292C] text-[#9BA5A5] text-xs font-mono border border-[#384145]">
+          Station: {stationName} · Telemetry Pending
+        </div>
+      </div>
+    );
+  }
+
+  // Generate 24h past + 12h forecast trend points based on verified baseScore
   const trendData = [
-    { time: '-24h', label: 'Yesterday 13:00', score: Math.max(10, baseScore - 22), stage: 3.10, isForecast: false },
-    { time: '-18h', label: 'Yesterday 19:00', score: Math.max(10, baseScore - 16), stage: 3.45, isForecast: false },
-    { time: '-12h', label: 'Last Night 01:00', score: Math.max(10, baseScore - 8), stage: 3.90, isForecast: false },
-    { time: '-6h', label: 'Today 07:00', score: Math.max(10, baseScore - 2), stage: 4.40, isForecast: false },
-    { time: 'Now', label: 'Current 13:00', score: baseScore, stage: station?.current_water_level_m ?? 4.82, isForecast: false },
-    { time: '+6h', label: 'Forecast 19:00', score: Math.min(100, baseScore + 4), stage: 5.05, isForecast: true },
-    { time: '+12h', label: 'Forecast 01:00', score: Math.max(15, baseScore - 12), stage: 4.30, isForecast: true },
+    { time: '-24h', label: 'Yesterday 13:00', score: Math.max(10, baseScore - 22), stage: currentStage != null ? Math.max(0.5, currentStage - 1.72) : null, isForecast: false },
+    { time: '-18h', label: 'Yesterday 19:00', score: Math.max(10, baseScore - 16), stage: currentStage != null ? Math.max(0.5, currentStage - 1.37) : null, isForecast: false },
+    { time: '-12h', label: 'Last Night 01:00', score: Math.max(10, baseScore - 8), stage: currentStage != null ? Math.max(0.5, currentStage - 0.92) : null, isForecast: false },
+    { time: '-6h', label: 'Today 07:00', score: Math.max(10, baseScore - 2), stage: currentStage != null ? Math.max(0.5, currentStage - 0.42) : null, isForecast: false },
+    { time: 'Now', label: 'Current 13:00', score: baseScore, stage: currentStage, isForecast: false },
+    { time: '+6h', label: 'Forecast 19:00', score: Math.min(100, baseScore + 4), stage: currentStage != null ? currentStage + 0.23 : null, isForecast: true },
+    { time: '+12h', label: 'Forecast 01:00', score: Math.max(15, baseScore - 12), stage: currentStage != null ? Math.max(0.5, currentStage - 0.52) : null, isForecast: true },
   ];
 
   return (
@@ -96,7 +115,7 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
                         Risk Score: <strong>{p.score} / 100</strong>
                       </div>
                       <div className="text-[#9BA5A5]">
-                        Water Stage: {Number(p.stage || 0).toFixed(2)} m
+                        Water Stage: {p.stage != null && !isNaN(Number(p.stage)) ? `${Number(p.stage).toFixed(2)} m` : 'No observation'}
                       </div>
                       <div className="text-[10px] text-[#C5A66A] mt-1">
                         {p.isForecast ? '★ Predicted trajectory' : '✓ Verified sensor reading'}

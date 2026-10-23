@@ -75,7 +75,7 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
             water_level_m: station.depth_meters,
             discharge_cms: station.flow_rate_cms,
             water_temp_c: station.water_temp_c,
-            elevation_m: station.elevation_meters ?? 15.0,
+            elevation_m: station.elevation_meters ?? station.elevation_m,
           })
             .then((res) => {
               if (isMounted) setAssessment(res);
@@ -360,33 +360,37 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
                     <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
                       <span className="text-slate-400 block text-[10px]">Water Stage</span>
                       <span className="font-mono text-slate-100 font-semibold">
-                        {assessment.layer_a_environmental_hazard.water_level_m !== null
-                          ? `${assessment.layer_a_environmental_hazard.water_level_m?.toFixed(2)} m`
-                          : `${station.depth_meters.toFixed(2)} m`}
+                        {assessment.layer_a_environmental_hazard.water_level_m != null
+                          ? `${assessment.layer_a_environmental_hazard.water_level_m.toFixed(2)} m`
+                          : station?.depth_meters != null
+                          ? `${station.depth_meters.toFixed(2)} m`
+                          : 'Unavailable'}
                       </span>
                     </div>
                     <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
                       <span className="text-slate-400 block text-[10px]">3h Stage Rise</span>
                       <span className="font-mono text-slate-100 font-semibold">
                         {assessment.layer_a_environmental_hazard.water_level_delta_3h_m != null
-                          ? `${(assessment.layer_a_environmental_hazard.water_level_delta_3h_m ?? 0) >= 0 ? '+' : ''}${assessment.layer_a_environmental_hazard.water_level_delta_3h_m.toFixed(2)} m`
-                          : '0.00 m'}
+                          ? `${assessment.layer_a_environmental_hazard.water_level_delta_3h_m >= 0 ? '+' : ''}${assessment.layer_a_environmental_hazard.water_level_delta_3h_m.toFixed(2)} m`
+                          : 'No observation'}
                       </span>
                     </div>
                     <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
                       <span className="text-slate-400 block text-[10px]">24h Rainfall</span>
                       <span className="font-mono text-slate-100 font-semibold">
-                        {assessment.layer_a_environmental_hazard.rainfall_24h_mm !== null
-                          ? `${assessment.layer_a_environmental_hazard.rainfall_24h_mm?.toFixed(1)} mm`
-                          : '15.0 mm'}
+                        {assessment.layer_a_environmental_hazard.rainfall_24h_mm != null
+                          ? `${assessment.layer_a_environmental_hazard.rainfall_24h_mm.toFixed(1)} mm`
+                          : 'No observation'}
                       </span>
                     </div>
                     <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
                       <span className="text-slate-400 block text-[10px]">River Discharge</span>
                       <span className="font-mono text-slate-100 font-semibold">
-                        {assessment.layer_a_environmental_hazard.estimated_discharge_cms !== null
-                          ? `${assessment.layer_a_environmental_hazard.estimated_discharge_cms?.toFixed(1)} m³/s`
-                          : `${station.flow_rate_cms.toFixed(1)} m³/s`}
+                        {assessment.layer_a_environmental_hazard.estimated_discharge_cms != null
+                          ? `${assessment.layer_a_environmental_hazard.estimated_discharge_cms.toFixed(1)} m³/s`
+                          : station?.flow_rate_cms != null
+                          ? `${station.flow_rate_cms.toFixed(1)} m³/s`
+                          : 'Not Monitored'}
                       </span>
                     </div>
                   </div>

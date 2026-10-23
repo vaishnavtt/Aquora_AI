@@ -149,20 +149,35 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
         icon: customIcon,
       });
 
+      const stageText = station.current_water_level_m != null
+        ? `${station.current_water_level_m.toFixed(2)} m`
+        : station.depth_meters != null
+        ? `${station.depth_meters.toFixed(2)} m`
+        : 'No observation';
+
+      const rawRiskScore = station.current_risk_score ?? station.risk_score;
+      const riskText = rawRiskScore != null
+        ? `${Math.round(rawRiskScore)} · ${station.current_risk_level}`
+        : `Unrated · ${station.current_risk_level || 'unknown'}`;
+
+      const coordText = station.latitude != null && station.longitude != null
+        ? `${station.latitude.toFixed(4)}° N, ${station.longitude.toFixed(4)}° E`
+        : 'Coordinates Unavailable';
+
       const popupHtml = `
         <div style="font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; line-height: 1.4; color: #E8E5DC; min-width: 190px; background-color: #1A1F22; padding: 4px;">
           <div style="font-size: 9px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; color: #9BA5A5; letter-spacing: 0.5px;">
-            ${station.type} · ${station.station_id || 'ID-0' + station.id}
+            ${station.type} · ${station.station_id || 'ID-' + station.id}
           </div>
           <div style="font-weight: 600; font-size: 14px; color: #3D8F91; margin-top: 2px;">
             ${station.name}
           </div>
           <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #9BA5A5; margin-bottom: 6px;">
-            ${(station.latitude ?? 0).toFixed(4)}° N, ${(station.longitude ?? 0).toFixed(4)}° E
+            ${coordText}
           </div>
           <div style="border-top: 1px solid #384145; padding-top: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9BA5A5;">Current Stage:</span>
-            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #E8E5DC;">${(station.current_water_level_m ?? station.depth_meters ?? 0).toFixed(2)} m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #E8E5DC;">${stageText}</span>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 2px;">
             <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9BA5A5;">Risk Score:</span>
@@ -177,7 +192,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
               font-weight: bold;
               text-transform: uppercase;
             ">
-              ${Math.round(station.current_risk_score ?? station.risk_score ?? 0)} · ${station.current_risk_level}
+              ${riskText}
             </span>
           </div>
         </div>

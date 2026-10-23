@@ -645,19 +645,23 @@ class DrowningRiskService:
         baseline = self.assess_drowning_risk(water_body=water_body)
 
         # Construct Simulated Request by applying increments
-        base_wl = baseline.layer_a_environmental_hazard.water_level_m or 2.5
-        base_r24 = baseline.layer_a_environmental_hazard.rainfall_24h_mm or 0.0
-        base_dis = baseline.layer_a_environmental_hazard.estimated_discharge_cms or 12.0
+        base_wl = baseline.layer_a_environmental_hazard.water_level_m
+        base_r24 = baseline.layer_a_environmental_hazard.rainfall_24h_mm
+        base_dis = baseline.layer_a_environmental_hazard.estimated_discharge_cms
+
+        sim_wl = round(base_wl + req.simulated_stage_delta_m, 3) if base_wl is not None else None
+        sim_r24 = round((base_r24 or 0.0) + req.simulated_rainfall_increment_mm, 2)
+        sim_dis = round(base_dis + req.simulated_discharge_increment_cms, 2) if base_dis is not None else None
 
         sim_req = DrowningRiskAssessRequest(
             water_body_id=req.water_body_id,
             water_body_type=req.water_body_type or baseline.water_body_type,
-            water_level_m=round(base_wl + req.simulated_stage_delta_m, 3),
+            water_level_m=sim_wl,
             water_level_delta_1h_m=round(max(0.0, req.simulated_stage_delta_m * 0.4), 3),
             water_level_delta_3h_m=round(max(0.0, req.simulated_stage_delta_m), 3),
             rainfall_1h_mm=round(req.simulated_rainfall_increment_mm * 0.25, 2),
-            rainfall_24h_mm=round(base_r24 + req.simulated_rainfall_increment_mm, 2),
-            discharge_cms=round(base_dis + req.simulated_discharge_increment_cms, 2),
+            rainfall_24h_mm=sim_r24,
+            discharge_cms=sim_dis,
             water_temp_c=req.simulated_water_temp_c,
             is_monsoon_season=True if req.simulated_rainfall_increment_mm >= 30.0 else None,
         )

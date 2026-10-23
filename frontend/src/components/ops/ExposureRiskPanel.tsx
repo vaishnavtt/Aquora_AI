@@ -28,32 +28,46 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
   station,
   onRunScenario,
 }) => {
-  const stationId = station.station_id || 'KA-04';
-  const lastVerified = station.last_verified || '13:24:08 IST';
-  const rainfallRate = station.rainfall_rate_mmh ?? 18.5;
-  const rainfallIntensity = station.rainfall_intensity ?? 'Heavy';
-  const waterTemp = station.water_temp_c ?? 24.2;
-  const humidity = station.humidity_pct ?? 88;
-  const windVelocity = station.wind_kmh ?? 14.2;
-  const sensorArray = station.sensor_array || stationId;
-  const confidence = station.model_confidence ?? 94.2;
-  const envScore = station.env_hazard_score ?? 84.0;
-  const hydroScore = station.hydrodynamic_score ?? 96.7;
+  const stationId = station.station_id || `ID-${station.id}`;
+  const lastVerified = station.last_verified || 'Telemetry Active';
+  const rainfallRate = station.rainfall_rate_mmh ?? null;
+  const rainfallIntensity = station.rainfall_intensity ?? (rainfallRate != null ? 'Observed' : 'Unrecorded');
+  const waterTemp = station.water_temp_c ?? null;
+  const humidity = station.humidity_pct ?? null;
+  const windVelocity = station.wind_kmh ?? null;
+  const sensorArray = station.sensor_array || (station.station_id ? `${station.station_id}-ARRAY` : 'Node Array');
+  const confidence = station.model_confidence ?? null;
+  const envScore = station.env_hazard_score ?? null;
+  const hydroScore = station.hydrodynamic_score ?? null;
 
   const hazardDrivers = station.primary_hazards && station.primary_hazards.length > 0
     ? station.primary_hazards
+    : station.current_risk_level === 'extreme' || station.current_risk_level === 'high'
+    ? [
+        'Elevated hydrological risk profile',
+        'Active telemetry monitoring underway',
+      ]
     : [
-        'Rapid water level surge +0.28 m/h',
-        'Extreme discharge velocity 2.45 m/s',
-        'Bank slope slippage index 0.81',
+        'Nominal baseline parameters',
+        'No critical hazard breach detected',
       ];
 
   const recommendedActions = station.recommended_actions && station.recommended_actions.length > 0
     ? station.recommended_actions
+    : station.current_risk_level === 'extreme'
+    ? [
+        'Restrict immediate shoreline entry',
+        'Verify downstream access controls',
+        'Maintain continuous watch',
+      ]
+    : station.current_risk_level === 'high'
+    ? [
+        'Deploy field caution notices',
+        'Monitor stage sensors closely',
+      ]
     : [
-        'Evacuate immediate riverbanks',
-        'Swimming & wading prohibited',
-        'Review access restrictions before 14:00 IST',
+        'Continue routine telemetry sweeps',
+        'Standard water-safety guidelines active',
       ];
 
   return (
@@ -72,10 +86,18 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
             <span className="capitalize">{station.type}</span>
             <span>·</span>
             <span>
-              {(station.latitude ?? 0).toFixed(4)}° N, {(station.longitude ?? 0).toFixed(4)}° E
+              {station.latitude != null && station.longitude != null
+                ? `${station.latitude.toFixed(4)}° N, ${station.longitude.toFixed(4)}° E`
+                : 'Coordinates Unavailable'}
             </span>
             <span>·</span>
-            <span>Elevation {station.elevation_m ?? station.elevation_meters ?? 0} m</span>
+            <span>
+              {station.elevation_m != null
+                ? `Elevation ${station.elevation_m} m`
+                : station.elevation_meters != null
+                ? `Elevation ${station.elevation_meters} m`
+                : 'Elevation Unavailable'}
+            </span>
           </div>
         </div>
 
@@ -98,23 +120,35 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Rainfall rate</span>
           <span className="font-mono text-[#E8E5DC] font-medium">
-            {(rainfallRate ?? 0).toFixed(1)} mm/h <span className="text-[#9BA5A5] font-sans">· {rainfallIntensity}</span>
+            {rainfallRate != null ? (
+              <>
+                {rainfallRate.toFixed(1)} mm/h <span className="text-[#9BA5A5] font-sans">· {rainfallIntensity}</span>
+              </>
+            ) : (
+              <span className="text-[#9BA5A5]">Unrecorded</span>
+            )}
           </span>
         </div>
 
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Water temperature</span>
-          <span className="font-mono text-[#E8E5DC] font-medium">{(waterTemp ?? 0).toFixed(1)} °C</span>
+          <span className="font-mono text-[#E8E5DC] font-medium">
+            {waterTemp != null ? `${waterTemp.toFixed(1)} °C` : <span className="text-[#9BA5A5]">Unavailable</span>}
+          </span>
         </div>
 
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Humidity</span>
-          <span className="font-mono text-[#E8E5DC] font-medium">{humidity}%</span>
+          <span className="font-mono text-[#E8E5DC] font-medium">
+            {humidity != null ? `${humidity}%` : <span className="text-[#9BA5A5]">Unavailable</span>}
+          </span>
         </div>
 
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Wind velocity</span>
-          <span className="font-mono text-[#E8E5DC] font-medium">{(windVelocity ?? 0).toFixed(1)} km/h</span>
+          <span className="font-mono text-[#E8E5DC] font-medium">
+            {windVelocity != null ? `${windVelocity.toFixed(1)} km/h` : <span className="text-[#9BA5A5]">Unavailable</span>}
+          </span>
         </div>
 
         <div>
@@ -135,7 +169,7 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
           </div>
 
           <RestrainedGauge
-            score={station.current_risk_score ?? station.risk_score ?? 50}
+            score={station.current_risk_score ?? station.risk_score ?? null}
             level={station.current_risk_level}
             confidence={confidence}
             size={160}
@@ -145,19 +179,29 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
             <div className="flex justify-between">
               <span>Current Stage:</span>
               <span className="text-[#E8E5DC] font-semibold">
-                {(station.current_water_level_m ?? station.depth_meters ?? 0).toFixed(2)} m
+                {station.current_water_level_m != null
+                  ? `${station.current_water_level_m.toFixed(2)} m`
+                  : station.depth_meters != null
+                  ? `${station.depth_meters.toFixed(2)} m`
+                  : 'Unavailable'}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Flow Velocity:</span>
               <span className="text-[#E8E5DC] font-semibold">
-                {(station.flow_velocity_mps ?? (station.flow_rate_cms ? Number((station.flow_rate_cms * 0.4).toFixed(2)) : 0)).toFixed(2)} m/s
+                {station.flow_velocity_mps != null
+                  ? `${station.flow_velocity_mps.toFixed(2)} m/s`
+                  : 'Not Monitored'}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Discharge:</span>
               <span className="text-[#E8E5DC] font-semibold">
-                {(station.discharge_cms ?? station.flow_rate_cms ?? 0).toFixed(1)} m³/s
+                {station.discharge_cms != null
+                  ? `${station.discharge_cms.toFixed(1)} m³/s`
+                  : station.flow_rate_cms != null
+                  ? `${station.flow_rate_cms.toFixed(1)} m³/s`
+                  : 'Not Monitored'}
               </span>
             </div>
           </div>
@@ -191,7 +235,13 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
               <div className="text-right shrink-0">
                 <span className="text-[10px] text-[#9BA5A5] font-mono uppercase block">Score</span>
                 <span className="font-mono text-base font-semibold text-[#E8E5DC]">
-                  {envScore.toFixed(1)} <span className="text-xs text-[#9BA5A5]">/ 100</span>
+                  {envScore != null ? (
+                    <>
+                      {envScore.toFixed(1)} <span className="text-xs text-[#9BA5A5]">/ 100</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-[#9BA5A5]">Uncalibrated</span>
+                  )}
                 </span>
               </div>
             </div>
@@ -215,7 +265,13 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
               <div className="text-right shrink-0">
                 <span className="text-[10px] text-[#9BA5A5] font-mono uppercase block">Score</span>
                 <span className="font-mono text-base font-semibold text-[#E8E5DC]">
-                  {hydroScore.toFixed(1)} <span className="text-xs text-[#9BA5A5]">/ 100</span>
+                  {hydroScore != null ? (
+                    <>
+                      {hydroScore.toFixed(1)} <span className="text-xs text-[#9BA5A5]">/ 100</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-[#9BA5A5]">Uncalibrated</span>
+                  )}
                 </span>
               </div>
             </div>

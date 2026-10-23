@@ -30,7 +30,7 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
   selectedStation,
 }) => {
   const [req, setReq] = useState<WhatIfSimulationRequest>({
-    water_body_id: selectedStation?.id ?? 7,
+    water_body_id: selectedStation?.id ?? null,
     water_body_type: selectedStation?.type ?? 'river',
     simulated_rainfall_increment_mm: 35.0,
     simulated_stage_delta_m: 0.45,
@@ -420,13 +420,17 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
                     <div className="flex justify-between">
                       <span>Stage:</span>
                       <strong className="text-slate-200">
-                        {simulation.baseline_assessment.layer_a_environmental_hazard.water_level_m?.toFixed(2) ?? '2.50'} m
+                        {simulation.baseline_assessment.layer_a_environmental_hazard.water_level_m != null
+                          ? `${simulation.baseline_assessment.layer_a_environmental_hazard.water_level_m.toFixed(2)} m`
+                          : 'Unavailable'}
                       </strong>
                     </div>
                     <div className="flex justify-between">
                       <span>24h Rain:</span>
                       <strong className="text-slate-200">
-                        {simulation.baseline_assessment.layer_a_environmental_hazard.rainfall_24h_mm?.toFixed(1) ?? '15.0'} mm
+                        {simulation.baseline_assessment.layer_a_environmental_hazard.rainfall_24h_mm != null
+                          ? `${simulation.baseline_assessment.layer_a_environmental_hazard.rainfall_24h_mm.toFixed(1)} mm`
+                          : 'Unavailable'}
                       </strong>
                     </div>
                   </div>
@@ -467,13 +471,17 @@ export const WhatIfSimulationPanel: React.FC<WhatIfSimulationPanelProps> = ({
                     <div className="flex justify-between">
                       <span className="text-slate-400">Simulated Stage:</span>
                       <strong className="text-cyan-200">
-                        {simulation.simulated_assessment.layer_a_environmental_hazard.water_level_m?.toFixed(2)} m
+                        {simulation.simulated_assessment.layer_a_environmental_hazard.water_level_m != null
+                          ? `${simulation.simulated_assessment.layer_a_environmental_hazard.water_level_m.toFixed(2)} m`
+                          : 'Unavailable'}
                       </strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Simulated Rain:</span>
                       <strong className="text-cyan-200">
-                        {simulation.simulated_assessment.layer_a_environmental_hazard.rainfall_24h_mm?.toFixed(1)} mm
+                        {simulation.simulated_assessment.layer_a_environmental_hazard.rainfall_24h_mm != null
+                          ? `${simulation.simulated_assessment.layer_a_environmental_hazard.rainfall_24h_mm.toFixed(1)} mm`
+                          : 'Unavailable'}
                       </strong>
                     </div>
                   </div>

@@ -132,19 +132,19 @@ class HazardMonitoringService:
 
         # 2. Verify telemetry physical data quality before generating any alerts
         stage_m = telemetry.water_level_m
-        flow_cms = telemetry.flow_rate_cms or 0.0
+        flow_cms = telemetry.flow_rate_cms
 
         is_non_physical = False
         anomaly_reason = ""
         if stage_m is not None and (stage_m < -5.0 or stage_m > 60.0):
             is_non_physical = True
             anomaly_reason = f"Stage reading {stage_m:.2f}m is physically implausible (-5m to 60m bounds)"
-        elif flow_cms < 0.0 or flow_cms > 15000.0:
+        elif flow_cms is not None and (flow_cms < 0.0 or flow_cms > 15000.0):
             is_non_physical = True
             anomaly_reason = f"Flow reading {flow_cms:.2f} cms violates physical boundaries"
-        elif stage_m is None and flow_cms == 0.0:
+        elif stage_m is None and flow_cms is None:
             is_non_physical = True
-            anomaly_reason = "Both water stage and flow readings are missing or zeroed"
+            anomaly_reason = "Both water stage and flow readings are missing from telemetry"
 
         if is_non_physical:
             logger.warning("Telemetry data-quality anomaly at %s: %s", telemetry.station_name, anomaly_reason)
@@ -199,8 +199,8 @@ class HazardMonitoringService:
                 "timestamp": telemetry.observation_timestamp or evaluated_at.isoformat(),
             }
 
-        # 4. Check flow rate breach
-        if flow_cms >= self.flow_threshold_cms:
+        # 4. Check flow rate breach (only if flow is measured)
+        if flow_cms is not None and flow_cms >= self.flow_threshold_cms:
             triggers.append(
                 HazardEvaluationTrigger(
                     trigger_type="FLOW_RATE_BREACH",
