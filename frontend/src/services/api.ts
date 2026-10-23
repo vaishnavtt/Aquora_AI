@@ -32,93 +32,10 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-// DEMO / Fallback synthetic datasets clearly labeled for Hackathon evaluation
-export const DEMO_WATER_BODIES: WaterBody[] = [
-  {
-    id: 1,
-    name: 'Emerald Bay (DEMO Station)',
-    type: 'lake',
-    latitude: 37.7749,
-    longitude: -122.4194,
-    current_risk_level: 'low',
-    risk_score: 18.5,
-    water_temp_c: 20.5,
-    flow_rate_cms: 0.8,
-    depth_meters: 4.5,
-    last_updated: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-    description: 'DEMO DATA: Calm sub-alpine lake basin with gentle circulation currents.'
-  },
-  {
-    id: 2,
-    name: 'Cascade Canyon River (DEMO Station)',
-    type: 'river',
-    latitude: 37.8044,
-    longitude: -122.2711,
-    current_risk_level: 'high',
-    risk_score: 76.2,
-    water_temp_c: 11.8,
-    flow_rate_cms: 9.4,
-    depth_meters: 3.2,
-    last_updated: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    description: 'DEMO DATA: Steep canyon gorge river with surging snowmelt and dangerous undercurrents.'
-  },
-  {
-    id: 3,
-    name: 'Marina Outer Point (DEMO Station)',
-    type: 'coastal',
-    latitude: 37.8272,
-    longitude: -122.4230,
-    current_risk_level: 'moderate',
-    risk_score: 52.0,
-    water_temp_c: 15.1,
-    flow_rate_cms: 3.6,
-    depth_meters: 7.0,
-    last_updated: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-    description: 'DEMO DATA: Coastal inlet with tidal rip tides and high wind chop during incoming tides.'
-  },
-  {
-    id: 4,
-    name: 'Blue Ridge Basin (DEMO Station)',
-    type: 'reservoir',
-    latitude: 37.7500,
-    longitude: -122.3800,
-    current_risk_level: 'low',
-    risk_score: 14.0,
-    water_temp_c: 22.0,
-    flow_rate_cms: 0.4,
-    depth_meters: 8.5,
-    last_updated: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    description: 'DEMO DATA: Controlled municipal reservoir with stable thermal layering and monitored perimeter.'
-  },
-  {
-    id: 5,
-    name: 'Silver Rapids Crossing (DEMO Station)',
-    type: 'river',
-    latitude: 37.7900,
-    longitude: -122.3500,
-    current_risk_level: 'moderate',
-    risk_score: 48.0,
-    water_temp_c: 16.2,
-    flow_rate_cms: 4.8,
-    depth_meters: 2.8,
-    last_updated: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-    description: 'DEMO DATA: Shallow braided river section with boulder friction and localized vortex eddies.'
-  },
-  {
-    id: 6,
-    name: 'Blackwood Gorge (DEMO Station)',
-    type: 'river',
-    latitude: 37.8350,
-    longitude: -122.3100,
-    current_risk_level: 'extreme',
-    risk_score: 88.5,
-    water_temp_c: 8.5,
-    flow_rate_cms: 16.2,
-    depth_meters: 5.4,
-    last_updated: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-    description: 'DEMO DATA: High velocity torrent in narrow rock bottleneck with sub-zero wind chills.'
-  }
-];
+import { KERALA_STATIONS } from '../data/keralaStations';
+
+// DEMO / Fallback synthetic datasets calibrated for Kerala Hydrology Pilot
+export const DEMO_WATER_BODIES: WaterBody[] = KERALA_STATIONS;
 
 export const DEMO_RISK_CHANGES: RiskChangeEvent[] = [
   {

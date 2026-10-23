@@ -2,7 +2,15 @@
 
 export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
 export type RiskCategory = 'LOW' | 'MODERATE' | 'HIGH' | 'VERY HIGH';
-export type WaterBodyType = 'lake' | 'river' | 'reservoir' | 'coastal' | 'quarry' | 'waterfall' | 'canal' | 'pond';
+export type WaterBodyType =
+  | 'river'
+  | 'reservoir'
+  | 'lake'
+  | 'waterfall'
+  | 'canal'
+  | 'coastal'
+  | 'quarry'
+  | 'pond';
 
 export interface HealthResponse {
   status: string;
@@ -18,18 +26,44 @@ export interface WaterBody {
   type: WaterBodyType;
   latitude: number;
   longitude: number;
-  current_risk_level: RiskLevel;
-  risk_score: number;
+  elevation_m: number;
+  current_water_level_m: number;
+  normal_water_level_m: number;
+  danger_water_level_m: number;
+  flow_velocity_mps: number;
+  discharge_cms: number;
   water_temp_c: number;
+  current_risk_level: RiskLevel;
+  current_risk_score: number;
+  is_demonstration_data: boolean;
+
+  // Full compatibility properties
+  risk_score: number;
   flow_rate_cms: number;
   depth_meters: number;
+  last_updated: string;
+
+  // Operational telemetry metadata
+  station_id?: string;
+  station_code?: string;
+  last_verified?: string;
+  rainfall_rate_mmh?: number;
+  rainfall_intensity?: string;
+  humidity_pct?: number;
+  wind_kmh?: number;
+  sensor_array?: string;
+  model_confidence?: number;
+  env_hazard_score?: number;
+  hydrodynamic_score?: number;
+  primary_hazards?: string[];
+  recommended_actions?: string[];
+  stage_surge_rate?: string;
+  review_state?: string;
+
   elevation_meters?: number | null;
   basin_region?: string | null;
   data_source?: string | null;
-  last_updated: string;
   description?: string;
-  /** True when this record is synthetic or unvalidated demonstration data */
-  is_demonstration_data?: boolean;
 }
 
 
