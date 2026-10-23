@@ -121,14 +121,60 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
     },
 }
 
+# Calibrated reference river gauge monitoring stations across Kerala river basins
+KERALA_TELEMETRY_STATIONS: List[Dict[str, Any]] = [
+    {"name": "RAMAMANGALAM BRIDGE", "latitude": 9.9482, "longitude": 76.5412, "basin": "Muvattupuzha"},
+    {"name": "PALA", "latitude": 9.7011, "longitude": 76.6822, "basin": "Meenachil"},
+    {"name": "TRINAYAKUDAM", "latitude": 9.7011, "longitude": 76.4031, "basin": "Meenachil"},
+    {"name": "MANIYAR DAM", "latitude": 9.3294, "longitude": 76.8797, "basin": "Pamba"},
+    {"name": "MALAYATTOOR", "latitude": 10.1814, "longitude": 76.5050, "basin": "Periyar"},
+    {"name": "BANGLAMKADAVU", "latitude": 9.3433, "longitude": 76.8292, "basin": "Pamba"},
+    {"name": "CHAMPAKULAM", "latitude": 9.4036, "longitude": 76.4131, "basin": "Kuttanad"},
+    {"name": "THOTTAPPALLY", "latitude": 9.3175, "longitude": 76.3864, "basin": "Coastal Spillway"},
+]
+
+
+def find_nearest_telemetry_station(lat: float, lon: float) -> Tuple[str, float]:
+    """
+    Computes great-circle distance (Haversine formula in km) from any coordinate
+    in Kerala to the nearest calibrated river telemetry station.
+    """
+    import math
+
+    best_station = "RAMAMANGALAM BRIDGE"
+    min_distance = float("inf")
+    r_earth = 6371.0  # Mean radius of Earth in km
+
+    for st in KERALA_TELEMETRY_STATIONS:
+        st_lat = st["latitude"]
+        st_lon = st["longitude"]
+        d_lat = math.radians(st_lat - lat)
+        d_lon = math.radians(st_lon - lon)
+        a = (
+            math.sin(d_lat / 2.0) ** 2
+            + math.cos(math.radians(lat))
+            * math.cos(math.radians(st_lat))
+            * math.sin(d_lon / 2.0) ** 2
+        )
+        c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+        dist = r_earth * c
+        if dist < min_distance:
+            min_distance = dist
+            best_station = st["name"]
+
+    return best_station, round(min_distance, 2)
+
+
 SCIENTIFIC_DISCLAIMER = (
-    "AQUORA AI SCIENTIFIC NOTICE: This drowning-risk assessment represents an integrated two-layer index "
-    "combining empirical environmental hazard (calibrated Scikit-Learn ML inference on Kerala water levels, "
-    "rainfall telemetry, and discharge) with site-specific contextual vulnerability profiles (water body "
-    "bathymetry, access hazards, and regional mortality trends from NCRB / Kerala Fire Force). "
-    "Because micro-level geolocation individual drowning incident logs are not publicly maintained, "
-    "this score is NOT a calibrated personal drowning probability. It provides an operational risk classification "
-    "to guide preventive precautions and emergency awareness."
+    "AQUORA AI SCIENTIFIC INTEGRITY & OPERATIONAL NOTICE: AQUORA AI evaluates operational environmental hazard "
+    "and water-body contextual vulnerability to support proactive aquatic safety decisions. "
+    "Crucial scientific distinctions apply across the platform: "
+    "(1) Environmental Hazard Assessment: Estimates physical aquatic danger based on monitored stage, flow, rainfall, and elevation; "
+    "(2) Water-Level Forecasting: Predicts future hydrological trends from temporal features without implying incident occurrence; "
+    "(3) Hypothetical Scenario Simulation: Calculates what-if responses to manual increments (not observations); "
+    "(4) Actual Drowning Incident Prediction: AQUORA does NOT predict individual drowning occurrences or personal mortality probability, "
+    "as no micro-level person-specific incident registry exists. This model is an operational risk and decision-support tool, "
+    "not a certified personal drowning prediction model."
 )
 
 
@@ -532,7 +578,28 @@ class DrowningRiskService:
         elif wb_type == "river":
             recommendations.append("River Alert: Beware of shifting sandbanks and underwater whirlpools near bridge pilings.")
 
-        timestamp_str = datetime.now(timezone.utc).isoformat()
+        # Determine actual observation timestamp:
+        # If water_body has a real recorded last_updated timestamp, use it.
+        # Otherwise, if this is an unobserved baseline, observation timestamp is None (Unknown),
+        # NEVER substituting the current retrieval time!
+        obs_timestamp: Optional[str] = None
+        if water_body and getattr(water_body, "last_updated", None):
+            obs_dt = water_body.last_updated
+            if isinstance(obs_dt, datetime):
+                obs_timestamp = obs_dt.isoformat()
+            else:
+                obs_timestamp = str(obs_dt)
+
+        retrieval_timestamp_str = datetime.now(timezone.utc).isoformat()
+
+        # Compute nearest reference telemetry station and distance
+        nearest_station, distance_km = find_nearest_telemetry_station(lat, lon)
+
+        # Determine data source
+        if water_body and getattr(water_body, "source_type", None):
+            data_src = str(water_body.source_type)
+        else:
+            data_src = "Kerala Hydrological & Water Resources Registry (Historical Baseline)"
 
         return DrowningRiskAssessmentResponse(
             water_body_id=wb_id,
@@ -552,7 +619,11 @@ class DrowningRiskService:
             primary_hazards=all_hazards,
             safety_recommendations=recommendations,
             data_freshness_status=freshness,
-            observation_timestamp=timestamp_str,
+            observation_timestamp=obs_timestamp,
+            retrieval_timestamp=retrieval_timestamp_str,
+            data_source=data_src,
+            nearest_telemetry_station=nearest_station,
+            monitoring_station_distance_km=distance_km,
             missing_variables=missing_vars,
         )
 
@@ -592,8 +663,11 @@ class DrowningRiskService:
         )
 
         simulated = self.assess_drowning_risk(water_body=water_body, req=sim_req)
-        # Mark simulated assessment freshness
+        # Mark simulated assessment freshness, source, and timestamps
         simulated.data_freshness_status = "HYPOTHETICAL_SIMULATION"
+        simulated.data_source = "AQUORA Hydrodynamic Scenario Simulator (Hypothetical What-If)"
+        simulated.observation_timestamp = None  # Crucial: Not an observation!
+        simulated.retrieval_timestamp = datetime.now(timezone.utc).isoformat()
 
         delta_score = round(simulated.risk_score - baseline.risk_score, 1)
         delta_cat = f"{baseline.risk_category} -> {simulated.risk_category}"

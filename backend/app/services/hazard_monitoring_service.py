@@ -103,8 +103,8 @@ class HazardMonitoringService:
         evaluated_at = datetime.now(timezone.utc)
         telemetry = river_data_service.get_river_data(station_query)
 
-        # 1. Check if telemetry is unavailable
-        if telemetry.status == "UNAVAILABLE":
+        # 1. Check if telemetry is unavailable or failed quality checks
+        if telemetry.status in ("UNAVAILABLE", "ERROR"):
             result = HazardEvaluationResult(
                 station_name=telemetry.station_name,
                 evaluation_status="TELEMETRY_UNAVAILABLE",
@@ -120,7 +120,7 @@ class HazardMonitoringService:
                 confirmed_by_provider=False,
                 evaluated_at=evaluated_at,
                 notice=(
-                    f"Live telemetry unavailable for '{telemetry.station_name}'. "
+                    f"Live telemetry unavailable for '{telemetry.station_name}' (Status: {telemetry.status}). "
                     f"Threshold evaluation safely skipped; stale or fabricated data is never substituted."
                 ),
             )
@@ -130,9 +130,45 @@ class HazardMonitoringService:
                 self._evaluations_count += 1
             return result
 
-        # 2. Extract telemetry readings
+        # 2. Verify telemetry physical data quality before generating any alerts
         stage_m = telemetry.water_level_m
         flow_cms = telemetry.flow_rate_cms or 0.0
+
+        is_non_physical = False
+        anomaly_reason = ""
+        if stage_m is not None and (stage_m < -5.0 or stage_m > 60.0):
+            is_non_physical = True
+            anomaly_reason = f"Stage reading {stage_m:.2f}m is physically implausible (-5m to 60m bounds)"
+        elif flow_cms < 0.0 or flow_cms > 15000.0:
+            is_non_physical = True
+            anomaly_reason = f"Flow reading {flow_cms:.2f} cms violates physical boundaries"
+        elif stage_m is None and flow_cms == 0.0:
+            is_non_physical = True
+            anomaly_reason = "Both water stage and flow readings are missing or zeroed"
+
+        if is_non_physical:
+            logger.warning("Telemetry data-quality anomaly at %s: %s", telemetry.station_name, anomaly_reason)
+            result = HazardEvaluationResult(
+                station_name=telemetry.station_name,
+                evaluation_status="DATA_QUALITY_ANOMALY",
+                is_live=telemetry.is_live,
+                observed_stage_m=stage_m,
+                stage_delta_m=None,
+                observed_flow_cms=flow_cms,
+                recalculated_risk_score=None,
+                recalculated_risk_level=None,
+                triggers_detected=[],
+                generated_alert_id=None,
+                outbound_delivery_status="SKIPPED",
+                confirmed_by_provider=False,
+                evaluated_at=evaluated_at,
+                notice=f"Telemetry rejected during data-quality check: {anomaly_reason}. Alert suppressed.",
+            )
+            with self._lock:
+                self._recent_evaluations.append(result)
+                self._last_evaluation_timestamp = evaluated_at
+                self._evaluations_count += 1
+            return result
         triggers: List[HazardEvaluationTrigger] = []
 
         # 3. Detect sudden stage surge compared to previous observation
@@ -215,9 +251,14 @@ class HazardMonitoringService:
         if triggers:
             eval_status = "HAZARD_DETECTED"
             trigger_summaries = "; ".join(t.description for t in triggers)
+            obs_time = telemetry.observation_timestamp or "Unknown"
+            src = getattr(telemetry, "data_source", None) or getattr(telemetry, "source_type", None) or "Hydrological Gauge"
             alert_msg = (
-                f"[AUTOMATED HAZARD ADVISORY] Threshold condition breach at {telemetry.station_name}: "
-                f"{trigger_summaries}"
+                f"[AQUORA ADVISORY] Hazard breach at {telemetry.station_name}. "
+                f"Reason: {trigger_summaries}. "
+                f"Observed: {obs_time} (Source: {src}). "
+                f"Guidance: Maintain 15m shoreline setback. Prohibit wading/swimming. "
+                f"Notice: Automated decision support; not an official statutory evacuation order."
             )
 
             # Match water body in DB if available

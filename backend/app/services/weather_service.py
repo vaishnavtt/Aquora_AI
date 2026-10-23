@@ -97,6 +97,8 @@ class WeatherService:
             hourly_forecast=hourly_pts,
             is_live_data=False,
             data_source="Offline Kerala Climatological Baseline",
+            observation_timestamp=None,
+            retrieval_timestamp=now_iso,
             fetched_at=now_iso,
             disclaimer=f"NOTICE: {reason} Showing regional baseline estimates."
         )
@@ -188,6 +190,8 @@ class WeatherService:
                 hourly_forecast=hourly_list,
                 is_live_data=True,
                 data_source="Open-Meteo Live API (High-Resolution NWP)",
+                observation_timestamp=current.get("time"),
+                retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
                 fetched_at=datetime.now(timezone.utc).isoformat(),
                 disclaimer="Live atmospheric telemetry ingested via Open-Meteo REST service. Elevation derived from high-resolution DEM.",
             )

@@ -80,6 +80,61 @@ KERALA_STATIONS_CONFIG: Dict[str, Dict[str, Any]] = {
             "description": "Confirmed historical telemetry observation in Kerala SW archive for TRINAYAKUDAM (20-Jan-2025 09:00 IST)."
         },
     },
+    "MANIYAR DAM": {
+        "canonical": "MANIYAR DAM",
+        "district": "PATHANAMTHITTA",
+        "river": "Kakkattar / Pamba",
+        "features_file": None,
+        "latest_reading": {
+            "timestamp": "2025-03-10T14:00:00+05:30",
+            "water_level_m": 33.445,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for MANIYAR DAM (10-Mar-2025 14:00 IST). Dam reservoir telemetry with Mean Sea Level datum."
+        },
+    },
+    "MALAYATTOOR KODANAD BRIDGE": {
+        "canonical": "MALAYATTOOR KODANAD BRIDGE",
+        "district": "ERNAKULAM",
+        "river": "Periyar",
+        "features_file": None,
+        "latest_reading": {
+            "timestamp": "2022-11-25T15:00:00+05:30",
+            "water_level_m": 0.72,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for MALAYATTOOR KODANAD BRIDGE (25-Nov-2022 15:00 IST)."
+        },
+    },
+    "BANGLAMKADAVU": {
+        "canonical": "BANGLAMKADAVU",
+        "district": "PATHANAMTHITTA",
+        "river": "Kallada / Achenkovil",
+        "features_file": None,
+        "latest_reading": {
+            "timestamp": "2024-06-21T01:00:00+05:30",
+            "water_level_m": 7.306,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for BANGLAMKADAVU (21-Jun-2024 01:00 IST)."
+        },
+    },
+    "CHAMPAKULAM": {
+        "canonical": "CHAMPAKULAM",
+        "district": "ALAPPUZHA",
+        "river": "Pamba (Kuttanad)",
+        "features_file": None,
+        "latest_reading": {
+            "timestamp": "2024-10-04T09:30:00+05:30",
+            "water_level_m": 1.075,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for CHAMPAKULAM (04-Oct-2024 09:30 IST)."
+        },
+    },
+    "THOTTAPPALLY": {
+        "canonical": "THOTTAPPALLY",
+        "district": "ALAPPUZHA",
+        "river": "Spillway",
+        "features_file": None,
+        "latest_reading": {
+            "timestamp": "2025-03-10T14:00:00+05:30",
+            "water_level_m": 1.089,
+            "description": "Confirmed historical telemetry observation in Kerala SW archive for THOTTAPPALLY (10-Mar-2025 14:00 IST)."
+        },
+    },
 }
 
 def resolve_kerala_station(station_query: str) -> Optional[str]:
@@ -90,6 +145,16 @@ def resolve_kerala_station(station_query: str) -> Optional[str]:
         return "PALA"
     if "TRINAYAKUDAM" in clean:
         return "TRINAYAKUDAM"
+    if "MANIYAR" in clean:
+        return "MANIYAR DAM"
+    if "MALAYATTOOR" in clean or "KODANAD" in clean:
+        return "MALAYATTOOR KODANAD BRIDGE"
+    if "BANGLAMKADAVU" in clean:
+        return "BANGLAMKADAVU"
+    if "CHAMPAKULAM" in clean:
+        return "CHAMPAKULAM"
+    if "THOTTAPPALLY" in clean:
+        return "THOTTAPPALLY"
     return None
 
 
@@ -117,7 +182,7 @@ class LiveNWICProvider(RiverDataProvider):
     ):
         self.api_base_url = (
             api_base_url
-            or os.getenv("NWIC_API_BASE_URL", "https://nwdp.gov.in/api/v1")
+            or os.getenv("NWIC_API_BASE_URL", "https://nwdp.nwic.gov.in/api/v1")
         ).rstrip("/")
         self.api_key = api_key or os.getenv("NWIC_API_KEY", "")
         self.timeout_seconds = float(os.getenv("NWIC_TIMEOUT_SECONDS", str(timeout_seconds)))
@@ -126,6 +191,14 @@ class LiveNWICProvider(RiverDataProvider):
 
     def fetch_station_data(self, station_name: str) -> RiverDataResponse:
         cache_key = station_name.strip().upper()
+
+        # Resolve station metadata if Kerala station
+        resolved_key = resolve_kerala_station(station_name)
+        cfg = KERALA_STATIONS_CONFIG.get(resolved_key) if resolved_key else None
+
+        st_canonical = cfg["canonical"] if cfg else (cache_key or STATION_CANONICAL)
+        st_district = cfg["district"] if cfg else DISTRICT_CANONICAL
+        st_reading = cfg["latest_reading"] if cfg else LATEST_HISTORICAL_RECORD
 
         # Check cache freshness
         if cache_key in self._cache:
@@ -138,15 +211,18 @@ class LiveNWICProvider(RiverDataProvider):
                     }
                 )
 
+        now_iso = datetime.now(timezone.utc).isoformat()
+
         # If no verified government API key is provided, report explicit UNAVAILABLE status
         if not self.api_key or self.api_key == "your_nwic_api_key_here":
             response = RiverDataResponse(
-                station_name=STATION_CANONICAL,
-                district=DISTRICT_CANONICAL,
+                station_name=st_canonical,
+                district=st_district,
                 status="UNAVAILABLE",
                 water_level_m=None,
                 flow_rate_cms=None,
                 observation_timestamp=None,
+                retrieval_timestamp=now_iso,
                 is_live=False,
                 is_cached=False,
                 data_source=OFFICIAL_SOURCE_AGENCY,
@@ -157,15 +233,19 @@ class LiveNWICProvider(RiverDataProvider):
                 ),
                 access_requirements=(
                     "Official live river telemetry requires registered API access via the National Water "
-                    "Data Portal (https://nwdp.gov.in) under the Ministry of Jal Shakti. "
+                    "Data Portal (https://nwdp.nwic.gov.in / nwdp.gov.in) under the Ministry of Jal Shakti. "
                     "Provide NWIC_API_KEY in backend environment to activate live polling."
                 ),
-                latest_historical_reading=LatestHistoricalReading(**LATEST_HISTORICAL_RECORD),
+                latest_historical_reading=LatestHistoricalReading(
+                    timestamp=st_reading["timestamp"],
+                    water_level_m=st_reading["water_level_m"],
+                    description=st_reading["description"],
+                ),
             )
             return response
 
         # Attempt authenticated live request to NWIC endpoint
-        endpoint_url = f"{self.api_base_url}/telemetry/river-water-level?station={urllib.parse.quote(station_name)}"
+        endpoint_url = f"{self.api_base_url}/telemetry/river-water-level?station={urllib.parse.quote(st_canonical)}"
         headers = {
             "User-Agent": "AQUORA-AI/1.0",
             "Accept": "application/json",
@@ -179,24 +259,32 @@ class LiveNWICProvider(RiverDataProvider):
                     payload = json.loads(raw_resp.read().decode("utf-8"))
                     raw_level = float(payload.get("water_level_m", 0.0))
                     raw_time = payload.get("observation_timestamp")
+                    resp_station_name = payload.get("station_name", st_canonical)
 
-                    if not (0.0 <= raw_level <= 25.0):
-                        raise ValueError(f"Water level out of plausible range (0-25m): {raw_level}")
+                    # Dynamic plausibility limit based on station type (dam reservoirs exceed typical river beds)
+                    max_plausible_m = 120.0 if "DAM" in st_canonical else 25.0
+                    if not (0.0 <= raw_level <= max_plausible_m):
+                        raise ValueError(f"Water level out of plausible range (0-{max_plausible_m}m): {raw_level}")
 
                     resp = RiverDataResponse(
-                        station_name=STATION_CANONICAL,
-                        district=DISTRICT_CANONICAL,
+                        station_name=resp_station_name,
+                        district=st_district,
                         status="LIVE",
                         water_level_m=round(raw_level, 4),
                         flow_rate_cms=payload.get("flow_rate_cms"),
                         observation_timestamp=raw_time,
+                        retrieval_timestamp=now_iso,
                         is_live=True,
                         is_cached=False,
                         data_source=OFFICIAL_SOURCE_AGENCY,
                         data_freshness="Live Telemetry (< 15 min old)",
                         notice="Live telemetry feed authenticated via National Water Data Portal (NWIC).",
                         access_requirements="Live API authenticated via NWIC_API_KEY.",
-                        latest_historical_reading=LatestHistoricalReading(**LATEST_HISTORICAL_RECORD),
+                        latest_historical_reading=LatestHistoricalReading(
+                            timestamp=st_reading["timestamp"],
+                            water_level_m=st_reading["water_level_m"],
+                            description=st_reading["description"],
+                        ),
                     )
                     self._cache[cache_key] = (time.time(), resp)
                     return resp
@@ -206,23 +294,28 @@ class LiveNWICProvider(RiverDataProvider):
                     )
 
         except Exception as exc:
-            logger.warning("Live telemetry fetch from NWIC failed: %s", exc)
+            logger.warning("Live telemetry fetch from NWIC failed for %s: %s", st_canonical, exc)
             return RiverDataResponse(
-                station_name=STATION_CANONICAL,
-                district=DISTRICT_CANONICAL,
+                station_name=st_canonical,
+                district=st_district,
                 status="UNAVAILABLE",
                 water_level_m=None,
                 flow_rate_cms=None,
                 observation_timestamp=None,
+                retrieval_timestamp=now_iso,
                 is_live=False,
                 is_cached=False,
                 data_source=OFFICIAL_SOURCE_AGENCY,
                 data_freshness="Service Connection Failed",
                 notice=f"Upstream NWIC live telemetry endpoint could not be reached ({type(exc).__name__}).",
                 access_requirements=(
-                    "Verify NWIC_API_BASE_URL and network connectivity to nwdp.gov.in."
+                    "Verify NWIC_API_BASE_URL and network connectivity to nwdp.nwic.gov.in / nwdp.gov.in."
                 ),
-                latest_historical_reading=LatestHistoricalReading(**LATEST_HISTORICAL_RECORD),
+                latest_historical_reading=LatestHistoricalReading(
+                    timestamp=st_reading["timestamp"],
+                    water_level_m=st_reading["water_level_m"],
+                    description=st_reading["description"],
+                ),
             )
 
 
@@ -323,6 +416,7 @@ class LiveUSGSProvider(RiverDataProvider):
                     water_level_m=stage_m,
                     flow_rate_cms=flow_cms,
                     observation_timestamp=obs_time,
+                    retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
                     is_live=True,
                     is_cached=False,
                     data_source=USGS_SOURCE_AGENCY,
@@ -343,6 +437,7 @@ class LiveUSGSProvider(RiverDataProvider):
                 water_level_m=None,
                 flow_rate_cms=None,
                 observation_timestamp=None,
+                retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
                 is_live=False,
                 is_cached=False,
                 data_source=USGS_SOURCE_AGENCY,
@@ -364,6 +459,7 @@ class HistoricalRiverDataProvider(RiverDataProvider):
             water_level_m=LATEST_HISTORICAL_RECORD["water_level_m"],
             flow_rate_cms=None,
             observation_timestamp=LATEST_HISTORICAL_RECORD["timestamp"],
+            retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
             is_live=False,
             is_cached=False,
             data_source=OFFICIAL_SOURCE_AGENCY,
@@ -389,7 +485,7 @@ class RiverDataService:
     def _get_station_features_df(self, station_canonical: str):
         if station_canonical not in self._cached_features_dfs:
             config = KERALA_STATIONS_CONFIG.get(station_canonical)
-            if not config:
+            if not config or not config.get("features_file"):
                 return None
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
             csv_path = os.path.join(project_root, "data", "processed", config["features_file"])
@@ -419,11 +515,17 @@ class RiverDataService:
         # Route Kerala SW stations
         kerala_st = resolve_kerala_station(station_query)
         if kerala_st:
-            if kerala_st == STATION_CANONICAL:
-                # Check live NWIC feed (returns UNAVAILABLE if NWIC_API_KEY absent)
+            # If authorized live NWIC credentials are configured and not explicit historical request
+            if self.live_nwic_provider.api_key and self.live_nwic_provider.api_key != "your_nwic_api_key_here" and mode_clean != "historical":
+                live_res = self.live_nwic_provider.fetch_station_data(kerala_st)
+                if live_res.is_live:
+                    return live_res
+
+            # When NWIC credentials are unconfigured, canonical station reports UNAVAILABLE status in auto mode
+            if kerala_st == STATION_CANONICAL and mode_clean != "historical":
                 return self.live_nwic_provider.fetch_station_data(STATION_CANONICAL)
 
-            # Historical archive record for other calibrated stations (e.g. Pala, Trinayakudam)
+            # Historical archive record for other calibrated stations (e.g. Pala, Trinayakudam, Maniyar Dam)
             cfg = KERALA_STATIONS_CONFIG[kerala_st]
             rec = cfg["latest_reading"]
             return RiverDataResponse(
@@ -433,6 +535,7 @@ class RiverDataService:
                 water_level_m=rec["water_level_m"],
                 flow_rate_cms=None,
                 observation_timestamp=rec["timestamp"],
+                retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
                 is_live=False,
                 is_cached=False,
                 data_source=OFFICIAL_SOURCE_AGENCY,
@@ -457,6 +560,7 @@ class RiverDataService:
             water_level_m=None,
             flow_rate_cms=None,
             observation_timestamp=None,
+            retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
             is_live=False,
             is_cached=False,
             data_source="Government Telemetry Portal",

@@ -1,4 +1,4 @@
-﻿// API Contract Data Types matching docs/api-contract.md
+// API Contract Data Types matching docs/api-contract.md
 
 export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
 export type RiskCategory = 'LOW' | 'MODERATE' | 'HIGH' | 'VERY HIGH';
@@ -127,6 +127,8 @@ export interface RiverDataResponse {
   water_level_m?: number | null;
   flow_rate_cms?: number | null;
   observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
+  monitoring_station_distance_km?: number | null;
   is_live: boolean;
   is_cached: boolean;
   data_source: string;
@@ -235,6 +237,7 @@ export interface DimensionAudit {
   units?: string | null;
   source?: string | null;
   observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
   limitation_reason?: string | null;
 }
 
@@ -247,6 +250,8 @@ export interface EnvironmentalPipelineAuditResponse {
   longitude: number;
   audit_timestamp: string;
   data_freshness: string;
+  nearest_telemetry_station?: string | null;
+  monitoring_station_distance_km?: number | null;
   dimensions: Record<string, DimensionAudit>;
   available_dimensions_count: number;
   unavailable_dimensions_count: number;
@@ -387,6 +392,10 @@ export interface DrowningRiskAssessment {
   safety_recommendations: string[];
   data_freshness_status: string;
   observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
+  data_source?: string;
+  nearest_telemetry_station?: string | null;
+  monitoring_station_distance_km?: number | null;
   missing_variables: string[];
 }
 
@@ -484,6 +493,47 @@ export interface LiveWeatherResponse {
   is_live_data: boolean;
   data_source: string;
   fetched_at: string;
+  observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
   disclaimer: string;
 }
+
+// Authority Inspection Prioritization Types
+export type InspectionPriorityTier = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'ROUTINE';
+
+export interface SiteInspectionPriorityItem {
+  water_body_id: number;
+  location_name: string;
+  water_body_type: string;
+  district: string;
+  latitude: number;
+  longitude: number;
+  environmental_hazard_score: number;
+  environmental_hazard_category: string;
+  composite_risk_score: number;
+  composite_risk_level: string;
+  top_contributing_factors: string[];
+  data_freshness_status: string;
+  relevant_limitations: string[];
+  nearest_telemetry_station?: string | null;
+  telemetry_distance_km?: number | null;
+  inspection_priority: InspectionPriorityTier;
+  priority_rank_score: number;
+  priority_explanation: string;
+  last_inspection_date?: string | null;
+  suggested_inspection_focus: string[];
+}
+
+export interface InspectionPrioritizationResponse {
+  generated_at: string;
+  total_sites_evaluated: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  routine_count: number;
+  prioritized_sites: SiteInspectionPriorityItem[];
+  priority_scoring_methodology: string;
+  disclaimer: string;
+}
+
 

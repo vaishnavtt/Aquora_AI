@@ -26,6 +26,8 @@ import {
   ModelStatusResponse,
   ForecastVsObservationResponse,
   LiveWeatherResponse,
+  InspectionPrioritizationResponse,
+  SiteInspectionPriorityItem,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -565,6 +567,15 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(formatApiError(err, `Weather fetch for water body failed: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async getInspectionPrioritization(signal?: AbortSignal): Promise<InspectionPrioritizationResponse> {
+    const res = await fetch(`${API_BASE_URL}/authority/inspection-prioritization`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Inspection prioritization fetch failed: ${res.statusText} (${res.status})`));
     }
     return await res.json();
   },

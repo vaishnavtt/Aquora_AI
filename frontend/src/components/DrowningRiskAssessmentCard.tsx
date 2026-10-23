@@ -485,20 +485,80 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
             </div>
           </div>
 
-          {/* Missing Data and Uncertainty Indicators */}
-          {assessment.missing_variables.length > 0 && (
-            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
-              <div className="font-semibold text-slate-300 flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-cyan-400" />
-                Data Freshness & Uncertainty Assumptions:
-              </div>
-              <ul className="list-disc list-inside space-y-0.5 text-slate-400 text-[10px]">
-                {assessment.missing_variables.map((m, idx) => (
-                  <li key={idx}>{m}</li>
-                ))}
-              </ul>
+          {/* Data Timestamps & Provenance Auditing */}
+          <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800/90 space-y-2 text-[11px]">
+            <div className="font-bold text-slate-200 flex items-center justify-between border-b border-slate-800/70 pb-1.5">
+              <span className="flex items-center gap-1.5 text-cyan-300">
+                <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                Data Timestamps &amp; Provenance
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700">
+                Status: {assessment.data_freshness_status}
+              </span>
             </div>
-          )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono">
+              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span className="text-slate-400 block font-sans">Observation Timestamp:</span>
+                <span className="text-slate-200 font-semibold block mt-0.5">
+                  {assessment.observation_timestamp
+                    ? new Date(assessment.observation_timestamp).toUTCString()
+                    : 'Unknown (Historical Survey Baseline)'}
+                </span>
+                <span className="text-[9px] text-slate-500 font-sans block mt-0.5">
+                  Underlying physical sensor measurement time
+                </span>
+              </div>
+
+              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span className="text-slate-400 block font-sans">Retrieval / Inference Time:</span>
+                <span className="text-slate-200 font-semibold block mt-0.5">
+                  {assessment.retrieval_timestamp
+                    ? new Date(assessment.retrieval_timestamp).toUTCString()
+                    : new Date().toUTCString()}
+                </span>
+                <span className="text-[9px] text-slate-500 font-sans block mt-0.5">
+                  AQUORA platform evaluation query time
+                </span>
+              </div>
+
+              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span className="text-slate-400 block font-sans">Data Source:</span>
+                <span className="text-slate-200 font-semibold block mt-0.5 truncate">
+                  {assessment.data_source || station.data_source || 'Kerala Water Resources Registry'}
+                </span>
+                <span className="text-[9px] text-slate-500 font-sans block mt-0.5">
+                  Authority repository or telemetry provider
+                </span>
+              </div>
+
+              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span className="text-slate-400 block font-sans">Nearest River Telemetry Station:</span>
+                <span className="text-cyan-300 font-semibold block mt-0.5">
+                  {assessment.nearest_telemetry_station
+                    ? `${assessment.nearest_telemetry_station} (${assessment.monitoring_station_distance_km != null ? `${assessment.monitoring_station_distance_km.toFixed(1)} km` : ''})`
+                    : 'Calibrated Kerala Gauge Network'}
+                </span>
+                <span className="text-[9px] text-slate-500 font-sans block mt-0.5">
+                  Reference gauge distance for spatial uncertainty
+                </span>
+              </div>
+            </div>
+
+            {assessment.missing_variables.length > 0 && (
+              <div className="mt-2 pt-1.5 border-t border-slate-800/60">
+                <span className="text-[10px] font-sans font-semibold text-amber-300 flex items-center gap-1 mb-1">
+                  <AlertCircle className="w-3 h-3 text-amber-400" />
+                  Observational Gaps &amp; Limiting Assumptions:
+                </span>
+                <ul className="list-disc list-inside space-y-0.5 text-slate-400 text-[10px]">
+                  {assessment.missing_variables.map((m, idx) => (
+                    <li key={idx}>{m}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
           {/* Scientific Disclaimer Toggle */}
           <div className="border-t border-slate-800 pt-3">
