@@ -297,7 +297,7 @@ describe('AQUORA AI - Location-Aware River Discovery & Classification Suite', ()
 
   describe('4. Unmonitored OpenStreetMap Feature Display & Scientific Limitation', () => {
     it('displays NO PREDICTION AVAILABLE and explicit point-level disclaimer for unmonitored features', async () => {
-      const unmonitoredWaterBody: WaterBody = {
+      const unmonitoredWaterBody = {
         id: 10001,
         name: 'Periyar River (Aluva Reach)',
         type: 'river',
@@ -314,7 +314,7 @@ describe('AQUORA AI - Location-Aware River Discovery & Classification Suite', ()
         last_updated: new Date().toISOString(),
         description: 'Unmonitored geographic feature from OpenStreetMap.',
         is_demonstration_data: false,
-      };
+      } as unknown as WaterBody;
 
       await act(async () => {
         root!.render(
@@ -333,7 +333,7 @@ describe('AQUORA AI - Location-Aware River Discovery & Classification Suite', ()
     });
 
     it('displays LOW risk badge for monitored calm water bodies without defaulting to MODERATE', () => {
-      const calmMonitoredStation: WaterBody = {
+      const calmMonitoredStation = {
         id: 1,
         name: 'Ramamangalam Bridge',
         type: 'river',
@@ -349,7 +349,7 @@ describe('AQUORA AI - Location-Aware River Discovery & Classification Suite', ()
         data_source: 'Kerala State Water Resources Department',
         last_updated: new Date().toISOString(),
         is_demonstration_data: false,
-      };
+      } as unknown as WaterBody;
 
       act(() => {
         root!.render(

@@ -26,22 +26,21 @@ import {
   ModelStatusResponse,
   ForecastVsObservationResponse,
   LiveWeatherResponse,
-<<<<<<< HEAD
   NearbyRiverItem,
   NearbyRiversResponse,
   RiverSearchResponse,
   RiskClassificationRuleResponse,
-=======
   InspectionPrioritizationResponse,
   SiteInspectionPriorityItem,
->>>>>>> origin/main
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-<<<<<<< HEAD
-// DEMO / Fallback synthetic datasets clearly labeled for Hackathon evaluation - Centered on Kerala
-export const DEMO_WATER_BODIES: WaterBody[] = [
+import { KERALA_STATIONS } from '../data/keralaStations';
+
+// DEMO / Fallback synthetic datasets calibrated for Kerala Hydrology Pilot
+export const DEMO_WATER_BODIES: WaterBody[] = KERALA_STATIONS;
+const _OLD_DEMO_WATER_BODIES: any[] = [
   {
     id: 1,
     name: 'Ramamangalam Bridge (Kerala SW)',
@@ -223,12 +222,6 @@ export const DEMO_WATER_BODIES: WaterBody[] = [
     is_demonstration_data: false,
   }
 ];
-=======
-import { KERALA_STATIONS } from '../data/keralaStations';
-
-// DEMO / Fallback synthetic datasets calibrated for Kerala Hydrology Pilot
-export const DEMO_WATER_BODIES: WaterBody[] = KERALA_STATIONS;
->>>>>>> origin/main
 
 export const DEMO_RISK_CHANGES: RiskChangeEvent[] = [
   {

@@ -26,22 +26,25 @@ export interface WaterBody {
   type: WaterBodyType;
   latitude: number;
   longitude: number;
-  elevation_m: number;
-  current_water_level_m: number;
-  normal_water_level_m: number;
-  danger_water_level_m: number;
-  flow_velocity_mps: number;
-  discharge_cms: number;
+  elevation_m?: number | null;
+  elevation_meters?: number | null;
+  current_water_level_m?: number | null;
+  normal_water_level_m?: number | null;
+  danger_water_level_m?: number | null;
+  flow_velocity_mps?: number | null;
+  discharge_cms?: number | null;
   water_temp_c: number;
   current_risk_level: RiskLevel;
-  current_risk_score: number;
+  current_risk_score?: number | null;
   is_demonstration_data: boolean;
 
-  // Full compatibility properties
   risk_score: number;
   flow_rate_cms: number;
   depth_meters: number;
   last_updated: string;
+  basin_region?: string | null;
+  data_source?: string | null;
+  description?: string | null;
 
   // Operational telemetry metadata
   station_id?: string;
@@ -59,11 +62,6 @@ export interface WaterBody {
   recommended_actions?: string[];
   stage_surge_rate?: string;
   review_state?: string;
-
-  elevation_meters?: number | null;
-  basin_region?: string | null;
-  data_source?: string | null;
-  description?: string;
 }
 
 

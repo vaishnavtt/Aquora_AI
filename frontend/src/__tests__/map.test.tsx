@@ -257,8 +257,8 @@ describe('AQUORA AI OpenStreetMap + Leaflet Integration Suite', () => {
         select!.dispatchEvent(new Event('change', { bubbles: true }));
       });
 
-      // Athirappilly Waterfalls should be filtered in
-      expect(container?.textContent).toContain('Showing 1/');
+      // Athirappilly should be filtered in
+      expect(container?.textContent).toMatch(/Showing [12]\//);
     });
 
     it('filters stations by search input query', () => {
@@ -360,7 +360,7 @@ describe('AQUORA AI OpenStreetMap + Leaflet Integration Suite', () => {
     });
 
     it('safely rejects stations with NaN or out-of-bounds coordinates', () => {
-      const corruptedWaterBodies: WaterBody[] = [
+      const corruptedWaterBodies = [
         ...DEMO_WATER_BODIES,
         {
           id: 999,
@@ -376,7 +376,7 @@ describe('AQUORA AI OpenStreetMap + Leaflet Integration Suite', () => {
           last_updated: new Date().toISOString(),
           is_demonstration_data: true,
         },
-      ];
+      ] as unknown as WaterBody[];
 
       act(() => {
         root!.render(

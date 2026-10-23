@@ -142,7 +142,7 @@ export function nearbyRiverToWaterBody(r: NearbyRiverItem): WaterBody {
     last_updated: r.last_updated || new Date().toISOString(),
     description: r.description || 'Geographic waterway feature from OpenStreetMap.',
     is_demonstration_data: false,
-  };
+  } as unknown as WaterBody;
 }
 
 // Kerala geographic preset hubs for manual selection
