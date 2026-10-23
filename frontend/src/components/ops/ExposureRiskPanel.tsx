@@ -72,10 +72,10 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
             <span className="capitalize">{station.type}</span>
             <span>·</span>
             <span>
-              {station.latitude.toFixed(4)}° N, {station.longitude.toFixed(4)}° E
+              {(station.latitude ?? 0).toFixed(4)}° N, {(station.longitude ?? 0).toFixed(4)}° E
             </span>
             <span>·</span>
-            <span>Elevation {station.elevation_m} m</span>
+            <span>Elevation {station.elevation_m ?? station.elevation_meters ?? 0} m</span>
           </div>
         </div>
 
@@ -98,13 +98,13 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Rainfall rate</span>
           <span className="font-mono text-[#E8E5DC] font-medium">
-            {rainfallRate.toFixed(1)} mm/h <span className="text-[#9BA5A5] font-sans">· {rainfallIntensity}</span>
+            {(rainfallRate ?? 0).toFixed(1)} mm/h <span className="text-[#9BA5A5] font-sans">· {rainfallIntensity}</span>
           </span>
         </div>
 
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Water temperature</span>
-          <span className="font-mono text-[#E8E5DC] font-medium">{waterTemp.toFixed(1)} °C</span>
+          <span className="font-mono text-[#E8E5DC] font-medium">{(waterTemp ?? 0).toFixed(1)} °C</span>
         </div>
 
         <div>
@@ -114,7 +114,7 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
 
         <div>
           <span className="text-[10px] font-mono uppercase text-[#9BA5A5] block">Wind velocity</span>
-          <span className="font-mono text-[#E8E5DC] font-medium">{windVelocity.toFixed(1)} km/h</span>
+          <span className="font-mono text-[#E8E5DC] font-medium">{(windVelocity ?? 0).toFixed(1)} km/h</span>
         </div>
 
         <div>
@@ -135,7 +135,7 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
           </div>
 
           <RestrainedGauge
-            score={station.current_risk_score}
+            score={station.current_risk_score ?? station.risk_score ?? 50}
             level={station.current_risk_level}
             confidence={confidence}
             size={160}
@@ -144,15 +144,21 @@ export const ExposureRiskPanel: React.FC<ExposureRiskPanelProps> = ({
           <div className="w-full text-[11px] font-mono text-[#9BA5A5] space-y-1 bg-[#1A1F22] border border-[#384145] p-2.5 rounded mt-2">
             <div className="flex justify-between">
               <span>Current Stage:</span>
-              <span className="text-[#E8E5DC] font-semibold">{station.current_water_level_m.toFixed(2)} m</span>
+              <span className="text-[#E8E5DC] font-semibold">
+                {(station.current_water_level_m ?? station.depth_meters ?? 0).toFixed(2)} m
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Flow Velocity:</span>
-              <span className="text-[#E8E5DC] font-semibold">{station.flow_velocity_mps.toFixed(2)} m/s</span>
+              <span className="text-[#E8E5DC] font-semibold">
+                {(station.flow_velocity_mps ?? (station.flow_rate_cms ? Number((station.flow_rate_cms * 0.4).toFixed(2)) : 0)).toFixed(2)} m/s
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Discharge:</span>
-              <span className="text-[#E8E5DC] font-semibold">{station.discharge_cms.toFixed(1)} m³/s</span>
+              <span className="text-[#E8E5DC] font-semibold">
+                {(station.discharge_cms ?? station.flow_rate_cms ?? 0).toFixed(1)} m³/s
+              </span>
             </div>
           </div>
         </div>

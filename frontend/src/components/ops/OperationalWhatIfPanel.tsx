@@ -20,7 +20,7 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
   const [exposureScenario, setExposureScenario] = useState<ExposureScenario>('Crowded Holiday/Festival');
 
   // Baseline risk from selected station or default 47
-  const baselineRisk = selectedStation ? Math.round(selectedStation.current_risk_score) : 47;
+  const baselineRisk = selectedStation ? Math.round(selectedStation.current_risk_score ?? selectedStation.risk_score ?? 47) : 47;
   const baselineLevel: RiskLevel = selectedStation ? selectedStation.current_risk_level : 'moderate';
 
   // Real-time calculation of simulated risk

@@ -158,11 +158,11 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
             ${station.name}
           </div>
           <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #9BA5A5; margin-bottom: 6px;">
-            ${station.latitude.toFixed(4)}° N, ${station.longitude.toFixed(4)}° E
+            ${(station.latitude ?? 0).toFixed(4)}° N, ${(station.longitude ?? 0).toFixed(4)}° E
           </div>
           <div style="border-top: 1px solid #384145; padding-top: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9BA5A5;">Current Stage:</span>
-            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #E8E5DC;">${station.current_water_level_m.toFixed(2)} m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #E8E5DC;">${(station.current_water_level_m ?? station.depth_meters ?? 0).toFixed(2)} m</span>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 2px;">
             <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9BA5A5;">Risk Score:</span>
@@ -177,7 +177,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
               font-weight: bold;
               text-transform: uppercase;
             ">
-              ${station.current_risk_score} · ${station.current_risk_level}
+              ${Math.round(station.current_risk_score ?? station.risk_score ?? 0)} · ${station.current_risk_level}
             </span>
           </div>
         </div>

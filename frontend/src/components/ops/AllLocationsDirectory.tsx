@@ -92,7 +92,7 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
                       )}
                     </div>
                     <div className="text-[10px] text-[#9BA5A5] mt-0.5">
-                      {st.latitude.toFixed(4)}° N, {st.longitude.toFixed(4)}° E · Elevation {st.elevation_m}m
+                      {(st.latitude ?? 0).toFixed(4)}° N, {(st.longitude ?? 0).toFixed(4)}° E · Elevation {st.elevation_m ?? st.elevation_meters ?? 0}m
                     </div>
                   </td>
 
@@ -106,20 +106,20 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
                   {/* Stage / Normal */}
                   <td className="p-3">
                     <span className="text-[#E8E5DC] font-semibold">
-                      {st.current_water_level_m.toFixed(2)} m
+                      {(st.current_water_level_m ?? st.depth_meters ?? 0).toFixed(2)} m
                     </span>
                     <span className="text-[#9BA5A5] text-[11px] block">
-                      Normal: {st.normal_water_level_m.toFixed(2)} m
+                      Normal: {(st.normal_water_level_m ?? (st.depth_meters ? Number((st.depth_meters * 0.7).toFixed(2)) : 0)).toFixed(2)} m
                     </span>
                   </td>
 
                   {/* Flow Velocity & Discharge */}
                   <td className="p-3">
                     <span className="text-[#E8E5DC] font-semibold">
-                      {st.flow_velocity_mps.toFixed(2)} m/s
+                      {(st.flow_velocity_mps ?? (st.flow_rate_cms ? Number((st.flow_rate_cms * 0.4).toFixed(2)) : 0)).toFixed(2)} m/s
                     </span>
                     <span className="text-[#9BA5A5] text-[11px] block">
-                      {st.discharge_cms.toFixed(1)} m³/s
+                      {(st.discharge_cms ?? st.flow_rate_cms ?? 0).toFixed(1)} m³/s
                     </span>
                   </td>
 
@@ -127,7 +127,7 @@ export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
                   <td className="p-3">
                     <OpsRiskBadge
                       level={st.current_risk_level}
-                      score={st.current_risk_score}
+                      score={st.current_risk_score ?? st.risk_score}
                       showScore={true}
                       size="sm"
                     />

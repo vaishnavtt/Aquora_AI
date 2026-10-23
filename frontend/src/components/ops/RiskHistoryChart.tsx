@@ -96,7 +96,7 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
                         Risk Score: <strong>{p.score} / 100</strong>
                       </div>
                       <div className="text-[#9BA5A5]">
-                        Water Stage: {Number(p.stage).toFixed(2)} m
+                        Water Stage: {Number(p.stage || 0).toFixed(2)} m
                       </div>
                       <div className="text-[10px] text-[#C5A66A] mt-1">
                         {p.isForecast ? '★ Predicted trajectory' : '✓ Verified sensor reading'}
