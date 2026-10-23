@@ -1,72 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+:root {
+  /* AQUORA Light Theme Palette */
+  --color-page-bg: #F5EEDD;
+  --color-topbar-bg: #F5EEDD;
+
+  --color-sidebar-bg: #16587B;
+  --color-sidebar-text: #F5EEDD;
+  --color-sidebar-text-muted: #D6E3EA;
+  --color-sidebar-active-bg: #F5EEDD;
+  --color-sidebar-active-text: #16587B;
+
+  --color-card-bg: #84B3CE;
+  --color-card-item: #F5EEDD;
+  --color-card-divider: #6A9AB6;
+  --color-page-divider: #DDD2B8;
+
+  --color-text-main: #082536;
+  --color-text-label: #0F3A52;
+  --color-text-meta: #134059;
+  --color-link: #0B3F5A;
+
+  /* Risk colors on light surfaces (left edges, timeline dots, deltas) */
+  --color-risk-safe: #17895C;
+  --color-risk-watch: #C79A12;
+  --color-risk-high: #D9631E;
+  --color-risk-extreme: #D12F3B;
+
+  /* Badges: dark pill #0B2C40 with light text */
+  --color-badge-bg: #0B2C40;
+  --color-badge-safe: #5FDDB4;
+  --color-badge-watch: #F4CD6B;
+  --color-badge-high: #FFA564;
+  --color-badge-extreme: #FF8F9B;
+
+  /* Gauge panel: dark #0E3F5C, text #F5EEDD */
+  --color-gauge-bg: #0E3F5C;
+  --color-gauge-text: #F5EEDD;
+  --color-gauge-band-safe: #3FCF8E;
+  --color-gauge-band-watch: #F2C14E;
+  --color-gauge-band-high: #FF8A3D;
+  --color-gauge-band-extreme: #FF5A5F;
+}
+
 @theme {
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
-  /* AQUORA Operations Desk Color Palette */
-  --color-ops-bg: #111417;          /* Main background: Charcoal-black workspace */
-  --color-ops-panel: #1A1F22;       /* Panel background: Cards and control surfaces */
-  --color-ops-raised: #23292C;      /* Raised panel: Selected or elevated panels */
-  --color-ops-primary: #1A1F22;
-  --color-ops-secondary: #23292C;
-  --color-ops-selected: #253638;
-  --color-ops-text: #E8E5DC;        /* Primary text: Main labels and values */
-  --color-ops-muted: #9BA5A5;       /* Secondary text: Supporting information */
-  --color-ops-faint: #9BA5A5;
-  --color-ops-divider: #384145;     /* Divider: Rules and table lines */
-  --color-ops-teal: #3D8F91;        /* Instrument teal: Links, active controls, water data */
-  --color-ops-deepteal: #3D8F91;
-  --color-ops-sand: #C5A66A;        /* Warm sand: Secondary emphasis and historical data */
-  --color-ops-warm: #C5A66A;
-  --color-ops-safe: #5C9B72;        /* Safe: Normal conditions */
-  --color-ops-advisory: #C99A45;    /* Advisory: Moderate risk */
-  --color-ops-warning: #C96A50;     /* Warning: High risk */
-  --color-ops-high: #C96A50;
-  --color-ops-critical: #B74848;    /* Critical: Extreme risk */
-  --color-ops-extreme: #B74848;
+  /* AQUORA Light Theme Tokens */
+  --color-bg: #F5EEDD;
+  --color-surface-1: #84B3CE;
+  --color-surface-2: #F5EEDD;
+  --color-border: #6A9AB6;
+  --color-border-page: #DDD2B8;
+  --color-text-1: #082536;
+  --color-text-2: #0F3A52;
+  --color-text-3: #134059;
+  --color-accent: #0B3F5A;
+
+  --color-page-bg: #F5EEDD;
+  --color-topbar-bg: #F5EEDD;
+  --color-sidebar-bg: #16587B;
+  --color-sidebar-text: #F5EEDD;
+  --color-sidebar-text-muted: #D6E3EA;
+  --color-sidebar-active-bg: #F5EEDD;
+  --color-sidebar-active-text: #16587B;
+  --color-card-bg: #84B3CE;
+  --color-card-item: #F5EEDD;
+  --color-card-divider: #6A9AB6;
+  --color-page-divider: #DDD2B8;
+  --color-text-main: #082536;
+  --color-text-label: #0F3A52;
+  --color-text-meta: #134059;
+  --color-link: #0B3F5A;
+
+  --color-risk-safe: #17895C;
+  --color-risk-watch: #C79A12;
+  --color-risk-high: #D9631E;
+  --color-risk-extreme: #D12F3B;
+
+  --color-badge-bg: #0B2C40;
+  --color-badge-safe: #5FDDB4;
+  --color-badge-watch: #F4CD6B;
+  --color-badge-high: #FFA564;
+  --color-badge-extreme: #FF8F9B;
+
+  --color-gauge-bg: #0E3F5C;
+  --color-gauge-text: #F5EEDD;
+  --color-gauge-band-safe: #3FCF8E;
+  --color-gauge-band-watch: #F2C14E;
+  --color-gauge-band-high: #FF8A3D;
+  --color-gauge-band-extreme: #FF5A5F;
+
+  /* Legacy aliases for backward compat */
+  --color-ops-bg: #F5EEDD;
+  --color-ops-panel: #84B3CE;
+  --color-ops-raised: #F5EEDD;
+  --color-ops-primary: #84B3CE;
+  --color-ops-secondary: #F5EEDD;
+  --color-ops-selected: #F5EEDD;
+  --color-ops-text: #082536;
+  --color-ops-muted: #0F3A52;
+  --color-ops-faint: #134059;
+  --color-ops-divider: #6A9AB6;
+  --color-ops-teal: #0B3F5A;
+  --color-ops-deepteal: #0B3F5A;
+  --color-ops-sand: #C79A12;
+  --color-ops-warm: #C79A12;
+  --color-ops-safe: #17895C;
+  --color-ops-advisory: #C79A12;
+  --color-ops-warning: #D9631E;
+  --color-ops-high: #D9631E;
+  --color-ops-critical: #D12F3B;
+  --color-ops-extreme: #D12F3B;
 }
 
 @layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #111417;
-    color: #E8E5DC;
+    background-color: #F5EEDD;
+    color: #082536;
+    font-size: 14px;
   }
 
   code, pre, .font-mono {
     font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  *:focus-visible {
+    outline: 2px solid #0B3F5A;
+    outline-offset: 2px;
   }
 }
 
-/* Operational desk panel styling */
+/* Card surface */
 .ops-panel {
-  background-color: #1A1F22;
-  border: 1px solid #384145;
-  border-radius: 6px;
+  background-color: #84B3CE;
+  border-radius: 12px;
 }
 
 .ops-panel-sub {
-  background-color: #23292C;
-  border: 1px solid #384145;
-  border-radius: 4px;
+  background-color: #F5EEDD;
+  border-radius: 8px;
 }
 
-/* Subtle operational scrollbar */
+/* Operational scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #111417;
+  background: #F5EEDD;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #384145;
+  background: #6A9AB6;
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9BA5A5;
+  background: #16587B;
+}
+
+/* Tabular numbers for mono elements */
+.font-mono, [class*="font-mono"] {
+  font-variant-numeric: tabular-nums;
 }

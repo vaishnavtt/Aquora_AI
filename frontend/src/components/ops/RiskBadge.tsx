@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, AlertOctagon, Flame } from 'lucide-react';
+import { CheckCircle2, CircleDot, Triangle, Octagon } from 'lucide-react';
 import { RiskLevel } from '../../types';
 
 export const RISK_TOKENS: Record<
@@ -10,40 +10,45 @@ export const RISK_TOKENS: Record<
     bgHex: string;
     borderHex: string;
     textHex: string;
+    surfaceColor: string;
     Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   }
 > = {
   low: {
-    label: 'SAFE / LOW',
-    hex: '#5C9B72',
-    bgHex: 'rgba(92, 155, 114, 0.16)',
-    borderHex: 'rgba(92, 155, 114, 0.35)',
-    textHex: '#7DC798',
-    Icon: ShieldCheck,
+    label: 'Safe',
+    hex: '#5FDDB4',
+    bgHex: '#0B2C40',
+    borderHex: 'transparent',
+    textHex: '#5FDDB4',
+    surfaceColor: '#17895C',
+    Icon: CheckCircle2,
   },
   moderate: {
-    label: 'ADVISORY / MODERATE',
-    hex: '#C99A45',
-    bgHex: 'rgba(201, 154, 69, 0.16)',
-    borderHex: 'rgba(201, 154, 69, 0.35)',
-    textHex: '#E5B662',
-    Icon: AlertTriangle,
+    label: 'Watch',
+    hex: '#F4CD6B',
+    bgHex: '#0B2C40',
+    borderHex: 'transparent',
+    textHex: '#F4CD6B',
+    surfaceColor: '#C79A12',
+    Icon: CircleDot,
   },
   high: {
-    label: 'HIGH RISK',
-    hex: '#C96A50',
-    bgHex: 'rgba(201, 106, 80, 0.16)',
-    borderHex: 'rgba(201, 106, 80, 0.35)',
-    textHex: '#E68A72',
-    Icon: AlertOctagon,
+    label: 'High',
+    hex: '#FFA564',
+    bgHex: '#0B2C40',
+    borderHex: 'transparent',
+    textHex: '#FFA564',
+    surfaceColor: '#D9631E',
+    Icon: Triangle,
   },
   extreme: {
-    label: 'EXTREME RISK',
-    hex: '#B74848',
-    bgHex: 'rgba(183, 72, 72, 0.16)',
-    borderHex: 'rgba(183, 72, 72, 0.35)',
-    textHex: '#D96B6B',
-    Icon: Flame,
+    label: 'Extreme',
+    hex: '#FF8F9B',
+    bgHex: '#0B2C40',
+    borderHex: 'transparent',
+    textHex: '#FF8F9B',
+    surfaceColor: '#D12F3B',
+    Icon: Octagon,
   },
 };
 
@@ -66,9 +71,9 @@ export const OpsRiskBadge: React.FC<OpsRiskBadgeProps> = ({
   const { Icon } = token;
 
   const sizeClasses = {
-    sm: 'text-[10px] px-1.5 py-0.5 gap-1',
-    md: 'text-[11px] px-2 py-0.5 gap-1.5 font-medium',
-    lg: 'text-xs px-2.5 py-1 gap-2 font-semibold',
+    sm: 'text-[11px] px-2 py-0.5 gap-1.5',
+    md: 'text-[12px] px-2.5 py-1 gap-1.5',
+    lg: 'text-[13px] px-3 py-1 gap-2 font-medium',
   };
 
   const iconSizes = {
@@ -79,23 +84,21 @@ export const OpsRiskBadge: React.FC<OpsRiskBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center rounded border font-mono tracking-tight uppercase ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center rounded-full font-sans font-medium ${sizeClasses[size]} ${className}`}
       style={{
         backgroundColor: token.bgHex,
-        borderColor: token.borderHex,
         color: token.textHex,
       }}
       role="status"
-      aria-label={`Operational Risk Level: ${token.label}`}
+      aria-label={`Risk Level: ${token.label}`}
     >
-      <span
-        className="w-1.5 h-1.5 rounded-full shrink-0"
-        style={{ backgroundColor: token.hex }}
+      <Icon
+        className={`${iconSizes[size]} shrink-0`}
+        style={{ color: token.hex, strokeWidth: 1.5 }}
       />
-      <Icon className={`${iconSizes[size]} shrink-0`} style={{ color: token.hex }} />
       <span>{token.label}</span>
       {showScore && typeof score === 'number' && (
-        <span className="font-mono font-semibold ml-0.5">
+        <span className="font-mono ml-0.5 opacity-80">
           ({score.toFixed(0)})
         </span>
       )}

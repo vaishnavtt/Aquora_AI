@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Waves, RefreshCw, Radio, Search } from 'lucide-react';
+import { Waves, RefreshCw, Search, Menu } from 'lucide-react';
 import { HealthResponse } from '../../types';
 
 interface OpsHeaderProps {
@@ -8,6 +8,8 @@ interface OpsHeaderProps {
   onRefresh: () => void;
   searchTerm: string;
   onSearchChange: (query: string) => void;
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
 }
 
 export const OpsHeader: React.FC<OpsHeaderProps> = ({
@@ -16,13 +18,14 @@ export const OpsHeader: React.FC<OpsHeaderProps> = ({
   onRefresh,
   searchTerm,
   onSearchChange,
+  onToggleSidebar,
+  isSidebarOpen,
 }) => {
   const [istTime, setIstTime] = useState<string>('');
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      // Format as IST time (e.g. 22 Oct 2026 09:25:40 IST)
       const options: Intl.DateTimeFormatOptions = {
         timeZone: 'Asia/Kolkata',
         day: '2-digit',
@@ -45,81 +48,81 @@ export const OpsHeader: React.FC<OpsHeaderProps> = ({
   const isConnected = health ? health.status === 'healthy' : true;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#1A1F22] border-b border-[#384145] shadow-xs">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
-        {/* Left: Brand Mark, Name, Status, Subtitle */}
-        <div className="flex items-center space-x-3 shrink-0">
+    <header className="sticky top-0 z-50 bg-[#F5EEDD] border-b border-[#DDD2B8]">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        {/* Left: Menu Toggle + Brand Mark + Name */}
+        <div className="flex items-center space-x-2.5 shrink-0">
+          {/* Menu button to toggle sidebar */}
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            aria-label={isSidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            className="p-1.5 rounded-lg bg-[#F5EEDD] hover:bg-[#EAE0CA] border border-[#DDD2B8] text-[#0F3A52] hover:text-[#082536] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B3F5A]"
+          >
+            <Menu className="w-5 h-5" style={{ strokeWidth: 1.5 }} />
+          </button>
+
           {/* AQUORA Wave Mark */}
-          <div className="w-8 h-8 rounded-md bg-[#23292C] border border-[#384145] flex items-center justify-center text-[#3D8F91] shrink-0 shadow-xs">
-            <Waves className="w-4 h-4 text-[#3D8F91]" />
+          <div className="w-8 h-8 rounded-lg bg-[#16587B] flex items-center justify-center text-[#F5EEDD] shrink-0">
+            <Waves className="w-4 h-4 text-[#F5EEDD]" />
           </div>
 
-          <div className="flex flex-col">
-            <div className="flex items-center space-x-2">
-              <span className="font-sans font-bold text-[15px] tracking-tight text-[#E8E5DC]">
-                AQUORA
-              </span>
-              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-[#23292C] text-[#3D8F91] border border-[#384145]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5C9B72]" />
-                <span>Telemetry online</span>
-              </span>
-            </div>
-            <span className="text-[11px] text-[#9BA5A5] font-sans truncate">
-              River &amp; reservoir risk monitoring · Kerala pilot
-            </span>
-          </div>
+          <span className="font-sans font-semibold text-[16px] tracking-tight text-[#082536]">
+            AQUORA
+          </span>
         </div>
 
         {/* Middle: Location search input */}
-        <div className="flex-1 max-w-md mx-2 hidden md:block">
+        <div className="flex-1 max-w-md mx-4 hidden md:block">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#9BA5A5] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#134059] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search locations..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full bg-[#111417] hover:bg-[#23292C]/70 focus:bg-[#23292C] border border-[#384145] focus:border-[#3D8F91] rounded px-3 pl-8 py-1.5 text-xs text-[#E8E5DC] placeholder-[#9BA5A5] focus:outline-none transition-colors font-sans"
+              className="w-full bg-[#F5EEDD] hover:bg-[#FAF6EC] focus:bg-[#FAF6EC] border border-[#DDD2B8] focus:border-[#0B3F5A] rounded-lg px-3 pl-8 py-2 text-[13px] text-[#082536] placeholder-[#134059] focus:outline-none transition-colors font-sans"
             />
           </div>
         </div>
 
-        {/* Right: Connection status, Refresh button, Current timestamp in IST */}
+        {/* Right: Telemetry status, Sync button, IST timestamp */}
         <div className="flex items-center space-x-3 shrink-0">
-          {/* Connection status with last update */}
-          <div className="flex items-center space-x-2 px-2.5 py-1 bg-[#23292C] border border-[#384145] rounded text-xs font-mono text-[#E8E5DC]">
-            <Radio className="w-3 h-3 text-[#5C9B72]" />
-            <span className="hidden sm:inline text-[11px] text-[#9BA5A5]">
-              {isConnected ? 'Sync: Nominal' : 'Sync: Local'}
-            </span>
-            <button
-              onClick={onRefresh}
-              title="Manual telemetry refresh"
-              className="text-[#9BA5A5] hover:text-[#3D8F91] transition-colors ml-1 p-0.5 cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+          {/* Telemetry status */}
+          <div className="hidden sm:flex items-center space-x-1.5 text-[12px] font-mono">
+            <span className="w-2 h-2 rounded-full bg-[#17895C]" />
+            <span className="text-[#17895C] font-medium">Telemetry online</span>
           </div>
 
+          {/* Sync button */}
+          <button
+            onClick={onRefresh}
+            title="Manual telemetry sync"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#F5EEDD] hover:bg-[#EAE0CA] border border-[#DDD2B8] rounded-lg text-[12px] font-sans text-[#0F3A52] hover:text-[#082536] transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Sync</span>
+          </button>
+
           {/* Current timestamp in IST */}
-          <div className="hidden lg:flex items-center px-2.5 py-1 bg-[#111417] border border-[#384145] rounded">
-            <span className="font-mono text-[11px] text-[#E8E5DC] whitespace-nowrap">
-              {istTime || '13:25:00 IST'}
+          <div className="hidden lg:flex items-center px-2.5 py-1.5 bg-[#F5EEDD] border border-[#DDD2B8] rounded-lg">
+            <span className="font-mono text-[12px] text-[#134059] whitespace-nowrap">
+              {istTime || '—'}
             </span>
           </div>
         </div>
       </div>
 
       {/* Mobile Search Input */}
-      <div className="md:hidden px-4 pb-2">
+      <div className="md:hidden px-4 pb-2.5">
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-[#9BA5A5] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-[#134059] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search locations..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-[#111417] border border-[#384145] rounded px-3 pl-8 py-1.5 text-xs text-[#E8E5DC] placeholder-[#9BA5A5] focus:outline-none"
+            className="w-full bg-[#F5EEDD] border border-[#DDD2B8] rounded-lg px-3 pl-8 py-2 text-[13px] text-[#082536] placeholder-[#134059] focus:outline-none focus:border-[#0B3F5A] transition-colors"
           />
         </div>
       </div>

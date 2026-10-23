@@ -11,18 +11,83 @@ import { RiverLevelForecastPanel } from './components/ops/RiverLevelForecastPane
 import { DataModelProvenancePanel } from './components/ops/DataModelProvenancePanel';
 import { AllLocationsDirectory } from './components/ops/AllLocationsDirectory';
 import { RiskHistoryChart } from './components/ops/RiskHistoryChart';
+import { OpsRiskBadge } from './components/ops/RiskBadge';
 import { KERALA_STATIONS } from './data/keralaStations';
 import { WaterBody, HealthResponse } from './types';
 import { api } from './services/api';
-import { Waves, ShieldAlert, Radio, AlertCircle } from 'lucide-react';
+import { Waves, ArrowRight } from 'lucide-react';
+
+const PAGE_META: Record<OpsNavSection, { title: string; subtitle: string }> = {
+  'overview': {
+    title: 'Water safety command center',
+    subtitle: '8 stations',
+  },
+  'exposure-risk': {
+    title: 'Hydrological risk assessment',
+    subtitle: 'Real-time multi-model exposure evaluation by station',
+  },
+  'incident-actions': {
+    title: 'Incident actions console',
+    subtitle: 'Review monitored telemetry sites and dispatch emergency notices',
+  },
+  'map': {
+    title: 'Operations map',
+    subtitle: 'Interactive geospatial telemetry & hazard zones across Kerala river basins',
+  },
+  'what-if': {
+    title: 'Operational what-if simulation',
+    subtitle: 'Simulate flood pulses, rainfall surges & catchment stress testing',
+  },
+  'river-forecast': {
+    title: 'Hydrological forecast & trajectory',
+    subtitle: '1-hour predictive stage forecast & 24-hour historical records',
+  },
+  'risk-history': {
+    title: 'Hydrological forecast & trajectory',
+    subtitle: '1-hour predictive stage forecast & 24-hour historical records',
+  },
+  'all-locations': {
+    title: 'All monitored locations directory',
+    subtitle: 'Full Kerala pilot monitoring directory with calibrated thresholds',
+  },
+  'provenance': {
+    title: 'Data & model provenance',
+    subtitle: 'Verified historical telemetry archives & model benchmarks',
+  },
+};
 
 export function App() {
   const [activeSection, setActiveSection] = useState<OpsNavSection>('overview');
   const [waterBodies, setWaterBodies] = useState<WaterBody[]>(KERALA_STATIONS);
-  const [selectedStation, setSelectedStation] = useState<WaterBody>(KERALA_STATIONS[0]); // Default Athirappilly Falls
+  const [selectedStation, setSelectedStation] = useState<WaterBody>(KERALA_STATIONS[0]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+
+  // Sync URL hash with active section
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as OpsNavSection;
+      const validSections: OpsNavSection[] = [
+        'overview',
+        'exposure-risk',
+        'incident-actions',
+        'map',
+        'what-if',
+        'river-forecast',
+        'all-locations',
+        'provenance',
+      ];
+      if (validSections.includes(hash)) {
+        setActiveSection(hash);
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Check health and synchronize on boot
   useEffect(() => {
@@ -43,7 +108,6 @@ export function App() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // Small random perturbation to simulate live sensor jitter
       setWaterBodies((prev) =>
         prev.map((wb) => ({
           ...wb,
@@ -70,64 +134,26 @@ export function App() {
     );
     if (found) {
       setSelectedStation(found);
-      const el = document.getElementById('exposure-risk-section');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      handleNavClick('exposure-risk');
     }
   };
 
   const handleRunScenario = (station: WaterBody) => {
     setSelectedStation(station);
-    setActiveSection('what-if');
-    const el = document.getElementById('what-if-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    handleNavClick('what-if');
   };
 
   const handleNavClick = (section: OpsNavSection) => {
-    setActiveSection(section);
-    let targetId = '';
-    switch (section) {
-      case 'overview':
-        targetId = 'overview-top';
-        break;
-      case 'exposure-risk':
-        targetId = 'exposure-risk-section';
-        break;
-      case 'incident-actions':
-        targetId = 'incident-actions-section';
-        break;
-      case 'map':
-        targetId = 'map-section';
-        break;
-      case 'what-if':
-        targetId = 'what-if-section';
-        break;
-      case 'risk-history':
-        targetId = 'risk-history-section';
-        break;
-      case 'all-locations':
-        targetId = 'all-locations-section';
-        break;
-      case 'river-forecast':
-        targetId = 'river-forecast-section';
-        break;
-      case 'provenance':
-        targetId = 'provenance-section';
-        break;
-    }
-    if (targetId) {
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
+    const target = section === 'risk-history' ? 'river-forecast' : section;
+    setActiveSection(target);
+    window.location.hash = target;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const currentMeta = PAGE_META[activeSection] || PAGE_META['overview'];
+
   return (
-    <div className="min-h-screen bg-[#111417] text-[#E8E5DC] flex flex-col font-sans selection:bg-[#3D8F91] selection:text-[#111417]">
+    <div className="min-h-screen bg-[#F5EEDD] text-[#082536] flex flex-col font-sans selection:bg-[#0B3F5A] selection:text-[#F5EEDD]">
       {/* Sticky Top Operations Header */}
       <OpsHeader
         health={health}
@@ -135,112 +161,263 @@ export function App() {
         onRefresh={handleRefresh}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        isSidebarOpen={isSidebarOpen}
       />
 
-      {/* Main Operations Canvas with Navigation Rail */}
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {/* Navigation Sidebar */}
+      {/* Main Operations Canvas with Slide-out Navigation Drawer */}
+      <div className="flex-1 flex flex-col">
+        {/* Navigation Sidebar Drawer */}
         <OpsSidebar
           activeSection={activeSection}
           onSelectSection={handleNavClick}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         {/* Content Viewport */}
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 space-y-5 max-w-[1550px] w-full mx-auto" id="overview-top">
+        <main className="flex-1 p-3 sm:p-5 lg:p-6 space-y-6 max-w-[1550px] w-full mx-auto" id="main-content">
           {/* Page Heading & Operational Status */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#384145]">
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 pb-4 border-b border-[#DDD2B8]">
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-mono text-[10px] uppercase font-bold text-[#3D8F91] bg-[#23292C] px-2 py-0.5 rounded border border-[#384145]">
-                  Kerala Hydrology Operations Desk
-                </span>
-                <span className="font-mono text-[10px] text-[#9BA5A5]">
-                  State Disaster Management Network
-                </span>
-              </div>
-              <h1 className="font-sans font-semibold text-[24px] text-[#E8E5DC] tracking-tight mt-1">
-                Water safety command center
+              <h1 className="font-sans font-semibold text-[26px] sm:text-[28px] text-[#082536] tracking-tight">
+                {currentMeta.title}
               </h1>
+              <span className="font-mono text-[12px] text-[#134059] mt-1 block">
+                {currentMeta.subtitle}
+              </span>
             </div>
 
-            <div className="flex items-center space-x-2 text-xs font-mono">
-              <span className="px-2 py-1 rounded bg-[#1A1F22] border border-[#384145] text-[#9BA5A5]">
-                Pilot Surface: <strong className="text-[#3D8F91]">8 Primary Stations</strong>
+            <div className="flex items-center space-x-2 text-xs font-mono shrink-0">
+              <span className="px-2.5 py-1 rounded-md bg-[#84B3CE] text-[#082536] font-medium">
+                Kerala pilot
               </span>
-              <span className="px-2 py-1 rounded bg-[rgba(92,155,114,0.16)] border border-[rgba(92,155,114,0.35)] text-[#5C9B72] font-medium flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5C9B72]" />
-                <span>Nominal Telemetry Sweep</span>
+              <span className="px-2.5 py-1 rounded-md bg-[#F5EEDD] border border-[#DDD2B8] text-[#17895C] font-semibold flex items-center space-x-1.5 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[#17895C]" />
+                <span>Telemetry nominal</span>
               </span>
             </div>
           </div>
 
-          {/* Operational KPI Strip */}
-          <KPICards
-            waterBodies={filteredStations}
-            onSelectStationByName={handleSelectStationByName}
-          />
+          {/* PAGE 1: OVERVIEW */}
+          {activeSection === 'overview' && (
+            <div className="space-y-6">
+              {/* Situation Card */}
+              <KPICards
+                waterBodies={filteredStations}
+                onSelectStationByName={handleSelectStationByName}
+              />
 
-          {/* Station Status Changes Ticker */}
-          <StatusTicker
-            onViewRiskHistory={() => handleNavClick('risk-history')}
-            onSelectStationByName={handleSelectStationByName}
-          />
+              {/* Recent Changes Timeline */}
+              <StatusTicker
+                onViewRiskHistory={() => handleNavClick('river-forecast')}
+                onSelectStationByName={handleSelectStationByName}
+              />
 
-          {/* Primary Panel: Exposure Risk Assessment */}
-          <ExposureRiskPanel
-            station={selectedStation}
-            onRunScenario={handleRunScenario}
-          />
+              {/* Overview Station Grid */}
+              <div className="bg-[#84B3CE] rounded-xl p-5 border border-[#6A9AB6] shadow-xs">
+                <div className="flex items-center justify-between pb-4 border-b border-[#6A9AB6]">
+                  <div>
+                    <h2 className="font-sans font-semibold text-[18px] text-[#082536]">
+                      Monitored station fleet
+                    </h2>
+                    <p className="text-[12px] text-[#134059] font-sans mt-0.5">
+                      Select any station to open its dedicated risk assessment
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleNavClick('all-locations')}
+                    className="flex items-center space-x-1.5 text-xs font-sans text-[#0B3F5A] hover:text-[#16587B] font-semibold transition-colors cursor-pointer"
+                  >
+                    <span>Full directory</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-          {/* Interactive Map & Operational Scenario Panels */}
-          <OperationsMap
-            waterBodies={filteredStations}
-            selectedStation={selectedStation}
-            onSelectStation={(st) => setSelectedStation(st)}
-          />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                  {filteredStations.map((station) => (
+                    <button
+                      key={station.id}
+                      onClick={() => {
+                        setSelectedStation(station);
+                        handleNavClick('exposure-risk');
+                      }}
+                      className="text-left p-4 rounded-lg bg-[#F5EEDD] hover:bg-[#FAF6EC] border border-[#6A9AB6] hover:border-[#0B3F5A] transition-all cursor-pointer group flex flex-col justify-between shadow-xs"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-mono text-[10px] text-[#134059] uppercase font-semibold">
+                            {station.type}
+                          </span>
+                          <OpsRiskBadge level={station.current_risk_level} size="sm" />
+                        </div>
+                        <div className="font-sans font-semibold text-[14px] text-[#082536] group-hover:text-[#0B3F5A] transition-colors">
+                          {station.name}
+                        </div>
+                      </div>
 
-          {/* Operational What-If Panel */}
-          <OperationalWhatIfPanel selectedStation={selectedStation} />
+                      <div className="mt-3 pt-2.5 border-t border-[#6A9AB6] flex items-center justify-between text-xs font-mono">
+                        <span className="text-[#134059]">
+                          Stage: <strong className="text-[#082536]">{station.current_water_level_m.toFixed(2)}m</strong>
+                        </span>
+                        <span className="text-[#0B3F5A] text-[11px] font-semibold group-hover:translate-x-0.5 transition-transform flex items-center">
+                          Assess &rarr;
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
-          {/* Incident Actions Console */}
-          <IncidentActionsConsole
-            waterBodies={waterBodies}
-            selectedStation={selectedStation}
-          />
+          {/* PAGE 2: RISK ASSESSMENT */}
+          {activeSection === 'exposure-risk' && (
+            <div className="space-y-4">
+              {/* Station Switcher Bar */}
+              <div className="p-3.5 bg-[#84B3CE] border border-[#6A9AB6] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-[#0F3A52] font-semibold shrink-0">Selected station:</span>
+                  <select
+                    value={selectedStation.id}
+                    onChange={(e) => {
+                      const found = waterBodies.find((w) => w.id === Number(e.target.value));
+                      if (found) setSelectedStation(found);
+                    }}
+                    className="bg-[#F5EEDD] border border-[#6A9AB6] rounded-lg px-3 py-1.5 text-xs text-[#082536] font-sans font-medium focus:outline-none focus:border-[#0B3F5A] cursor-pointer"
+                  >
+                    {waterBodies.map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.name} ({st.type} · {st.current_risk_level.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          {/* River Level Forecast Panel */}
-          <RiverLevelForecastPanel />
+                {/* Quick Station Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                  {waterBodies.map((st) => {
+                    const isSelected = st.id === selectedStation.id;
+                    return (
+                      <button
+                        key={st.id}
+                        onClick={() => setSelectedStation(st)}
+                        className={`px-3 py-1 rounded-lg text-xs font-sans transition-colors cursor-pointer shrink-0 ${
+                          isSelected
+                            ? 'bg-[#0B3F5A] text-[#F5EEDD] font-medium border border-[#0B3F5A] shadow-xs'
+                            : 'bg-[#F5EEDD] text-[#0F3A52] hover:text-[#082536] border border-[#6A9AB6]'
+                        }`}
+                      >
+                        {st.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Data & Model Provenance Panel */}
-          <DataModelProvenancePanel />
+              {/* Exposure Risk Panel Hero */}
+              <ExposureRiskPanel
+                station={selectedStation}
+                onRunScenario={handleRunScenario}
+              />
+            </div>
+          )}
 
-          {/* Full Monitored Directory */}
-          <AllLocationsDirectory
-            waterBodies={filteredStations}
-            selectedStation={selectedStation}
-            onSelectStation={(st) => setSelectedStation(st)}
-          />
+          {/* PAGE 3: INCIDENTS */}
+          {activeSection === 'incident-actions' && (
+            <div>
+              <IncidentActionsConsole
+                waterBodies={waterBodies}
+                selectedStation={selectedStation}
+              />
+            </div>
+          )}
 
-          {/* Risk History & Forecast Trajectory */}
-          <RiskHistoryChart station={selectedStation} />
+          {/* PAGE 4: MAP */}
+          {activeSection === 'map' && (
+            <div>
+              <OperationsMap
+                waterBodies={filteredStations}
+                selectedStation={selectedStation}
+                onSelectStation={(st) => setSelectedStation(st)}
+              />
+            </div>
+          )}
+
+          {/* PAGE 5: WHAT-IF */}
+          {activeSection === 'what-if' && (
+            <div className="space-y-4">
+              {/* Station Switcher */}
+              <div className="p-3.5 bg-[#84B3CE] border border-[#6A9AB6] rounded-xl flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-[#0F3A52] font-semibold">Simulation target:</span>
+                  <select
+                    value={selectedStation.id}
+                    onChange={(e) => {
+                      const found = waterBodies.find((w) => w.id === Number(e.target.value));
+                      if (found) setSelectedStation(found);
+                    }}
+                    className="bg-[#F5EEDD] border border-[#6A9AB6] rounded-lg px-3 py-1.5 text-xs text-[#082536] font-sans font-medium focus:outline-none focus:border-[#0B3F5A] cursor-pointer"
+                  >
+                    {waterBodies.map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.name} ({st.type} · {st.current_risk_level.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <OperationalWhatIfPanel selectedStation={selectedStation} />
+            </div>
+          )}
+
+          {/* PAGE 6: FORECAST & HISTORY */}
+          {(activeSection === 'river-forecast' || activeSection === 'risk-history') && (
+            <div className="space-y-6">
+              <RiverLevelForecastPanel />
+              <RiskHistoryChart station={selectedStation} />
+            </div>
+          )}
+
+          {/* PAGE 7: LOCATIONS */}
+          {activeSection === 'all-locations' && (
+            <div>
+              <AllLocationsDirectory
+                waterBodies={filteredStations}
+                selectedStation={selectedStation}
+                onSelectStation={(st) => {
+                  setSelectedStation(st);
+                  handleNavClick('exposure-risk');
+                }}
+              />
+            </div>
+          )}
+
+          {/* PAGE 8: DATA & MODELS */}
+          {activeSection === 'provenance' && (
+            <div>
+              <DataModelProvenancePanel />
+            </div>
+          )}
         </main>
       </div>
 
       {/* Operational Desk Footer */}
-      <footer className="border-t border-[#384145] bg-[#1A1F22] py-4 px-6 text-xs text-[#9BA5A5] font-mono">
+      <footer className="border-t border-[#DDD2B8] bg-[#F5EEDD] py-4 px-6 text-xs text-[#134059] font-mono mt-auto">
         <div className="max-w-[1550px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded bg-[#23292C] border border-[#384145] flex items-center justify-center text-[#3D8F91]">
-              <Waves className="w-3 h-3 text-[#3D8F91]" />
+            <div className="w-6 h-6 rounded bg-[#16587B] flex items-center justify-center text-[#F5EEDD]">
+              <Waves className="w-3.5 h-3.5 text-[#F5EEDD]" />
             </div>
-            <span className="font-semibold text-[#E8E5DC]">AQUORA AI</span>
+            <span className="font-semibold text-[#082536]">AQUORA AI</span>
             <span>·</span>
             <span>Kerala Water-Safety Operations Desk</span>
             <span>·</span>
-            <span className="text-[#5C9B72]">Telemetry Online</span>
+            <span className="text-[#17895C] font-semibold">Telemetry Online</span>
           </div>
 
-          <div className="text-[11px] text-[#9BA5A5]">
+          <div className="text-[11px] text-[#134059]">
             Field Pilot Telemetry &bull; Calibrated Hydrological Models &bull; Indian Standard Time (UTC+05:30)
           </div>
         </div>
