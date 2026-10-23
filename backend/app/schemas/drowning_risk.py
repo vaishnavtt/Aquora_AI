@@ -67,7 +67,11 @@ class DrowningRiskAssessmentResponse(BaseModel):
     primary_hazards: List[str] = Field(default_factory=list, description="All active physical and contextual hazard factors")
     safety_recommendations: List[str] = Field(default_factory=list, description="Actionable safety directives for the public and operators")
     data_freshness_status: str = Field(..., description="Data freshness: LIVE_STREAM, RECENT_TELEMETRY, HISTORICAL_BASELINE, or SYNTHETIC_SIMULATION")
-    observation_timestamp: Optional[str] = Field(None, description="Timestamp of the most recent environmental observation")
+    observation_timestamp: Optional[str] = Field(None, description="Timestamp of the physical environmental observation, or None if unknown/baseline")
+    retrieval_timestamp: Optional[str] = Field(None, description="Timestamp when this evaluation was calculated/retrieved by the backend")
+    data_source: str = Field("Multi-source Hydro-Environmental", description="Data provenance sources")
+    nearest_telemetry_station: Optional[str] = Field(None, description="Name of nearest reference river telemetry station")
+    monitoring_station_distance_km: Optional[float] = Field(None, description="Distance in kilometres to nearest reference river telemetry station")
     missing_variables: List[str] = Field(default_factory=list, description="List of unobserved telemetry variables with imputed assumptions")
 
 

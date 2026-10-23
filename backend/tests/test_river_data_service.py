@@ -232,6 +232,55 @@ class TestRiverDataService(unittest.TestCase):
         self.assertEqual(data_hist["status"], "HISTORICAL")
         self.assertEqual(data_hist["water_level_m"], 2.162)
 
+    def test_kerala_stations_expanded_routing(self):
+        service = RiverDataService()
+
+        # Maniyar Dam (Pathanamthitta)
+        resp_maniyar = service.get_river_data("MANIYAR-DAM")
+        self.assertEqual(resp_maniyar.status, "HISTORICAL")
+        self.assertEqual(resp_maniyar.station_name, "MANIYAR DAM")
+        self.assertEqual(resp_maniyar.district, "PATHANAMTHITTA")
+        self.assertEqual(resp_maniyar.water_level_m, 33.445)
+        self.assertFalse(resp_maniyar.is_live)
+        self.assertIn("Kerala State Water Resources Department", resp_maniyar.data_source)
+
+        # Malayattoor Kodanad Bridge (Ernakulam)
+        resp_malayattoor = service.get_river_data("MALAYATTOOR")
+        self.assertEqual(resp_malayattoor.status, "HISTORICAL")
+        self.assertEqual(resp_malayattoor.station_name, "MALAYATTOOR KODANAD BRIDGE")
+        self.assertEqual(resp_malayattoor.district, "ERNAKULAM")
+        self.assertEqual(resp_malayattoor.water_level_m, 0.72)
+
+        # Banglamkadavu (Pathanamthitta)
+        resp_banglam = service.get_river_data("BANGLAMKADAVU")
+        self.assertEqual(resp_banglam.status, "HISTORICAL")
+        self.assertEqual(resp_banglam.station_name, "BANGLAMKADAVU")
+        self.assertEqual(resp_banglam.district, "PATHANAMTHITTA")
+        self.assertEqual(resp_banglam.water_level_m, 7.306)
+
+    def test_live_nwic_provider_maniyar_dam_authenticated(self):
+        mock_payload = {
+            "station_name": "MANIYAR DAM",
+            "water_level_m": 33.5,
+            "flow_rate_cms": None,
+            "observation_timestamp": "2026-10-21T12:00:00+05:30",
+        }
+        with patch("urllib.request.urlopen") as mock_urlopen:
+            mock_resp = MagicMock()
+            mock_resp.status = 200
+            mock_resp.read.return_value = json.dumps(mock_payload).encode("utf-8")
+            mock_resp.__enter__.return_value = mock_resp
+            mock_urlopen.return_value = mock_resp
+
+            provider = LiveNWICProvider(api_key="valid_nwic_token_abc")
+            resp = provider.fetch_station_data("MANIYAR DAM")
+
+            self.assertEqual(resp.status, "LIVE")
+            self.assertTrue(resp.is_live)
+            self.assertEqual(resp.station_name, "MANIYAR DAM")
+            self.assertEqual(resp.district, "PATHANAMTHITTA")
+            self.assertEqual(resp.water_level_m, 33.5)
+
 
 if __name__ == "__main__":
     unittest.main()

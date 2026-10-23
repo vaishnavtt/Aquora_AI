@@ -28,7 +28,9 @@ class LiveWeatherResponse(BaseModel):
     hourly_forecast: List[LiveHourlyPrecipitation] = Field(default_factory=list, description="Hourly forward forecast")
     is_live_data: bool = Field(True, description="True if fetched live from Open-Meteo, False if fallback")
     data_source: str = Field("Open-Meteo Weather API", description="Originating weather provider")
-    fetched_at: str = Field(..., description="Timestamp of API retrieval")
+    observation_timestamp: Optional[str] = Field(None, description="ISO timestamp of the underlying meteorological observation/forecast cycle")
+    retrieval_timestamp: Optional[str] = Field(None, description="ISO timestamp of API retrieval by AQUORA")
+    fetched_at: str = Field(..., description="Timestamp of API retrieval (legacy alias for retrieval_timestamp)")
     disclaimer: str = Field(
         default="Live meteorological conditions retrieved via Open-Meteo API. Forecasts represent atmospheric projections.",
         description="Data provenance notice"

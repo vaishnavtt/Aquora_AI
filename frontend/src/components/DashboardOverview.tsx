@@ -29,7 +29,11 @@ import {
   Calendar,
   Sparkles,
   Waves,
-  Smartphone
+  Smartphone,
+  Filter,
+  CheckSquare,
+  FileWarning,
+  Search,
 } from 'lucide-react';
 import {
   DashboardResponse,
@@ -42,6 +46,9 @@ import {
   HazardMonitoringStatusResponse,
   HistoricalSeriesResponse,
   ForecastVsObservationResponse,
+  InspectionPrioritizationResponse,
+  SiteInspectionPriorityItem,
+  InspectionPriorityTier,
 } from '../types';
 import { api } from '../services/api';
 
@@ -105,6 +112,26 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const [forecastVsObs, setForecastVsObs] = useState<ForecastVsObservationResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [hoveredReading, setHoveredReading] = useState<{ timestamp: string; water_level_m: number; flow?: number | null } | null>(null);
+
+  // Task 3: Authority Inspection Prioritization State
+  const [inspectionData, setInspectionData] = useState<InspectionPrioritizationResponse | null>(null);
+  const [inspectionLoading, setInspectionLoading] = useState<boolean>(false);
+  const [inspectionPriorityFilter, setInspectionPriorityFilter] = useState<string>('ALL');
+  const [inspectionSortBy, setInspectionSortBy] = useState<'priority' | 'hazard' | 'risk' | 'name'>('priority');
+  const [inspectionSearchQuery, setInspectionSearchQuery] = useState<string>('');
+  const [showMethodology, setShowMethodology] = useState<boolean>(false);
+
+  const fetchInspectionPrioritization = async () => {
+    setInspectionLoading(true);
+    try {
+      const data = await api.getInspectionPrioritization();
+      setInspectionData(data);
+    } catch (err) {
+      console.warn('Failed to fetch inspection prioritization:', err);
+    } finally {
+      setInspectionLoading(false);
+    }
+  };
 
   const fetchHistoricalData = async (station: 'RAMAMANGALAM-BRIDGE' | 'USGS-11164500') => {
     setHistoryLoading(true);
@@ -194,6 +221,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   useEffect(() => {
     fetchAlertData();
     fetchMonitoringStatus();
+    fetchInspectionPrioritization();
   }, []);
 
   const handleSendAlert = async (e: React.FormEvent) => {
@@ -1245,6 +1273,354 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
       )}
+
+      {/* ============================================================== */}
+      {/* TASK 3: AUTHORITY INSPECTION PRIORITIZATION DECISION SUPPORT   */}
+      {/* ============================================================== */}
+      <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-6 space-y-6 shadow-xl">
+        {/* Header & Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-rose-400" />
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                Authority Inspection Prioritization
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/60 font-semibold uppercase">
+                  RISK-INFORMED SITE AUDIT TRIAGE
+                </span>
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Multi-factor inspection queue ranking: evaluates environmental hazard, site structural vulnerability, and observational uncertainty penalties.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowMethodology(!showMethodology)}
+              className="px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 text-xs text-slate-300 font-medium flex items-center gap-1.5 transition-colors"
+            >
+              <Info className="w-3.5 h-3.5 text-cyan-400" />
+              {showMethodology ? 'Hide Methodology' : 'Scoring Methodology'}
+            </button>
+            <button
+              onClick={fetchInspectionPrioritization}
+              disabled={inspectionLoading}
+              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-colors disabled:opacity-50"
+              title="Refresh Prioritization Queue"
+            >
+              <RefreshCw className={`w-4 h-4 ${inspectionLoading ? 'animate-spin text-cyan-400' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Priority Tier Counters Strip */}
+        {inspectionData && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button
+              onClick={() => setInspectionPriorityFilter('CRITICAL')}
+              className={`p-3.5 rounded-xl border text-left transition-all ${
+                inspectionPriorityFilter === 'CRITICAL'
+                  ? 'bg-rose-950/70 border-rose-500 shadow-md ring-1 ring-rose-500'
+                  : 'bg-slate-950/80 border-rose-900/40 hover:border-rose-700/60'
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs text-rose-300 font-semibold">
+                <span>Critical Priority</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+              </div>
+              <div className="text-2xl font-black text-rose-400 mt-1 font-mono">
+                {inspectionData.critical_count}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">Urgent on-site audit</p>
+            </button>
+
+            <button
+              onClick={() => setInspectionPriorityFilter('HIGH')}
+              className={`p-3.5 rounded-xl border text-left transition-all ${
+                inspectionPriorityFilter === 'HIGH'
+                  ? 'bg-amber-950/70 border-amber-500 shadow-md ring-1 ring-amber-500'
+                  : 'bg-slate-950/80 border-amber-900/40 hover:border-amber-700/60'
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs text-amber-300 font-semibold">
+                <span>High Priority</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              </div>
+              <div className="text-2xl font-black text-amber-400 mt-1 font-mono">
+                {inspectionData.high_count}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">Audit within 14 days</p>
+            </button>
+
+            <button
+              onClick={() => setInspectionPriorityFilter('MEDIUM')}
+              className={`p-3.5 rounded-xl border text-left transition-all ${
+                inspectionPriorityFilter === 'MEDIUM'
+                  ? 'bg-yellow-950/70 border-yellow-500 shadow-md ring-1 ring-yellow-500'
+                  : 'bg-slate-950/80 border-yellow-900/40 hover:border-yellow-700/60'
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs text-yellow-300 font-semibold">
+                <span>Medium Priority</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+              </div>
+              <div className="text-2xl font-black text-yellow-400 mt-1 font-mono">
+                {inspectionData.medium_count}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">Scheduled seasonal audit</p>
+            </button>
+
+            <button
+              onClick={() => setInspectionPriorityFilter('ROUTINE')}
+              className={`p-3.5 rounded-xl border text-left transition-all ${
+                inspectionPriorityFilter === 'ROUTINE'
+                  ? 'bg-emerald-950/70 border-emerald-500 shadow-md ring-1 ring-emerald-500'
+                  : 'bg-slate-950/80 border-emerald-900/40 hover:border-emerald-700/60'
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold">
+                <span>Routine Monitoring</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              </div>
+              <div className="text-2xl font-black text-emerald-400 mt-1 font-mono">
+                {inspectionData.routine_count}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">Periodic seasonal check</p>
+            </button>
+          </div>
+        )}
+
+        {/* Methodology & Limitations Callout */}
+        {showMethodology && inspectionData && (
+          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs text-slate-300 font-mono">
+            <div className="flex items-center gap-2 text-cyan-300 font-bold font-sans">
+              <FileWarning className="w-4 h-4 text-cyan-400" />
+              <span>Prioritization Formula &amp; Scientific Limitations:</span>
+            </div>
+            <p className="leading-relaxed text-slate-400 text-[11px]">
+              {inspectionData.priority_scoring_methodology}
+            </p>
+            <div className="pt-2 border-t border-slate-800/80 text-[10px] text-amber-400/90 font-sans">
+              <strong>Mandatory Decision-Support Notice:</strong> {inspectionData.disclaimer}
+            </div>
+          </div>
+        )}
+
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          {/* Tier Buttons */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-slate-400 text-[11px] mr-1 flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5" />
+              Tier:
+            </span>
+            {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'ROUTINE'].map((tier) => (
+              <button
+                key={tier}
+                onClick={() => setInspectionPriorityFilter(tier)}
+                className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors ${
+                  inspectionPriorityFilter === tier
+                    ? 'bg-cyan-600 text-white shadow-sm'
+                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                {tier}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort & Search Controls */}
+          <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
+            <div className="relative flex-1 sm:w-44">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={inspectionSearchQuery}
+                onChange={(e) => setInspectionSearchQuery(e.target.value)}
+                placeholder="Filter site or type..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1 text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-slate-400 text-[11px]">Sort:</span>
+              <select
+                value={inspectionSortBy}
+                onChange={(e: any) => setInspectionSortBy(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-cyan-500"
+              >
+                <option value="priority">Priority Score</option>
+                <option value="risk">Composite Risk</option>
+                <option value="hazard">Env Hazard</option>
+                <option value="name">Location Name</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Prioritized Locations Table */}
+        {inspectionLoading ? (
+          <div className="p-8 text-center space-y-2">
+            <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-slate-400">Computing risk-informed municipal inspection prioritization...</p>
+          </div>
+        ) : inspectionData ? (() => {
+          let sites = [...inspectionData.prioritized_sites];
+
+          if (inspectionPriorityFilter !== 'ALL') {
+            sites = sites.filter((s) => s.inspection_priority === inspectionPriorityFilter);
+          }
+
+          if (inspectionSearchQuery.trim()) {
+            const q = inspectionSearchQuery.toLowerCase();
+            sites = sites.filter(
+              (s) =>
+                s.location_name.toLowerCase().includes(q) ||
+                s.water_body_type.toLowerCase().includes(q) ||
+                s.district.toLowerCase().includes(q)
+            );
+          }
+
+          if (inspectionSortBy === 'priority') {
+            sites.sort((a, b) => b.priority_rank_score - a.priority_rank_score);
+          } else if (inspectionSortBy === 'risk') {
+            sites.sort((a, b) => b.composite_risk_score - a.composite_risk_score);
+          } else if (inspectionSortBy === 'hazard') {
+            sites.sort((a, b) => b.environmental_hazard_score - a.environmental_hazard_score);
+          } else if (inspectionSortBy === 'name') {
+            sites.sort((a, b) => a.location_name.localeCompare(b.location_name));
+          }
+
+          if (sites.length === 0) {
+            return (
+              <div className="p-8 text-center text-slate-400 text-xs bg-slate-950/60 rounded-xl border border-slate-800">
+                No monitored water bodies match the selected filter ({inspectionPriorityFilter}).
+              </div>
+            );
+          }
+
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="text-slate-400 border-b border-slate-800 font-medium text-[11px]">
+                  <tr>
+                    <th className="pb-2.5 px-2">Priority Tier &amp; Score</th>
+                    <th className="pb-2.5 px-2">Location &amp; Type</th>
+                    <th className="pb-2.5 px-2">Environmental Hazard</th>
+                    <th className="pb-2.5 px-2">Data Freshness &amp; Station Distance</th>
+                    <th className="pb-2.5 px-2">Priority Drivers &amp; Rationale</th>
+                    <th className="pb-2.5 px-2">Last Inspection Record</th>
+                    <th className="pb-2.5 px-2 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                  {sites.map((item) => {
+                    const matchedWb = waterBodies.find((w) => w.id === item.water_body_id);
+                    return (
+                      <tr key={item.water_body_id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-2">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono ${
+                              item.inspection_priority === 'CRITICAL'
+                                ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                                : item.inspection_priority === 'HIGH'
+                                ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                                : item.inspection_priority === 'MEDIUM'
+                                ? 'bg-yellow-950 text-yellow-300 border border-yellow-800'
+                                : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                item.inspection_priority === 'CRITICAL'
+                                  ? 'bg-rose-400 animate-pulse'
+                                  : item.inspection_priority === 'HIGH'
+                                  ? 'bg-amber-400'
+                                  : item.inspection_priority === 'MEDIUM'
+                                  ? 'bg-yellow-400'
+                                  : 'bg-emerald-400'
+                              }`}
+                            />
+                            {item.inspection_priority} &bull; {item.priority_rank_score.toFixed(1)}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-2">
+                          <span className="font-bold text-slate-100 block">{item.location_name}</span>
+                          <span className="text-[10px] text-slate-400 capitalize">{item.water_body_type} &bull; {item.district}</span>
+                        </td>
+
+                        <td className="py-3 px-2">
+                          <span className="font-mono text-slate-200 block font-bold">
+                            {item.environmental_hazard_score.toFixed(1)} / 100
+                          </span>
+                          <span className="text-[10px] text-slate-400 block font-mono">
+                            Category: {item.environmental_hazard_category}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-2">
+                          <span className="text-slate-300 block font-mono text-[10px]">
+                            {item.data_freshness_status}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block">
+                            Nearest: {item.nearest_telemetry_station || 'None'} ({item.telemetry_distance_km != null ? `${item.telemetry_distance_km.toFixed(1)} km` : 'N/A'})
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-2 max-w-xs">
+                          <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                            {item.priority_explanation}
+                          </p>
+                          {item.top_contributing_factors.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.top_contributing_factors.slice(0, 2).map((fac, fIdx) => (
+                                <span
+                                  key={fIdx}
+                                  className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-sans"
+                                >
+                                  {fac}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-2">
+                          <span className="text-[10px] font-mono text-slate-400 block">
+                            {item.last_inspection_date || 'No official record'}
+                          </span>
+                          <span className="text-[9px] text-slate-500 font-sans block">
+                            Unverified municipal site
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-2 text-right">
+                          <button
+                            onClick={() => {
+                              if (matchedWb) {
+                                onSelectWaterBody(matchedWb);
+                              }
+                            }}
+                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-semibold transition-colors"
+                          >
+                            Inspect &rarr;
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : (
+          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center text-xs text-slate-400">
+            Inspection prioritization service initializing...
+          </div>
+        )}
+      </div>
 
       {/* Monitored Zones Snapshot Table */}
       <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-md">

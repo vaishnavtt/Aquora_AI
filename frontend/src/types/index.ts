@@ -1,8 +1,16 @@
-﻿// API Contract Data Types matching docs/api-contract.md
+// API Contract Data Types matching docs/api-contract.md
 
 export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
 export type RiskCategory = 'LOW' | 'MODERATE' | 'HIGH' | 'VERY HIGH';
-export type WaterBodyType = 'lake' | 'river' | 'reservoir' | 'coastal' | 'quarry' | 'waterfall' | 'canal' | 'pond';
+export type WaterBodyType =
+  | 'river'
+  | 'reservoir'
+  | 'lake'
+  | 'waterfall'
+  | 'canal'
+  | 'coastal'
+  | 'quarry'
+  | 'pond';
 
 export interface HealthResponse {
   status: string;
@@ -18,18 +26,44 @@ export interface WaterBody {
   type: WaterBodyType;
   latitude: number;
   longitude: number;
-  current_risk_level: RiskLevel;
-  risk_score: number;
+  elevation_m: number;
+  current_water_level_m: number;
+  normal_water_level_m: number;
+  danger_water_level_m: number;
+  flow_velocity_mps: number;
+  discharge_cms: number;
   water_temp_c: number;
+  current_risk_level: RiskLevel;
+  current_risk_score: number;
+  is_demonstration_data: boolean;
+
+  // Full compatibility properties
+  risk_score: number;
   flow_rate_cms: number;
   depth_meters: number;
+  last_updated: string;
+
+  // Operational telemetry metadata
+  station_id?: string;
+  station_code?: string;
+  last_verified?: string;
+  rainfall_rate_mmh?: number;
+  rainfall_intensity?: string;
+  humidity_pct?: number;
+  wind_kmh?: number;
+  sensor_array?: string;
+  model_confidence?: number;
+  env_hazard_score?: number;
+  hydrodynamic_score?: number;
+  primary_hazards?: string[];
+  recommended_actions?: string[];
+  stage_surge_rate?: string;
+  review_state?: string;
+
   elevation_meters?: number | null;
   basin_region?: string | null;
   data_source?: string | null;
-  last_updated: string;
   description?: string;
-  /** True when this record is synthetic or unvalidated demonstration data */
-  is_demonstration_data?: boolean;
 }
 
 
@@ -127,6 +161,8 @@ export interface RiverDataResponse {
   water_level_m?: number | null;
   flow_rate_cms?: number | null;
   observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
+  monitoring_station_distance_km?: number | null;
   is_live: boolean;
   is_cached: boolean;
   data_source: string;
@@ -235,6 +271,7 @@ export interface DimensionAudit {
   units?: string | null;
   source?: string | null;
   observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
   limitation_reason?: string | null;
 }
 
@@ -247,6 +284,8 @@ export interface EnvironmentalPipelineAuditResponse {
   longitude: number;
   audit_timestamp: string;
   data_freshness: string;
+  nearest_telemetry_station?: string | null;
+  monitoring_station_distance_km?: number | null;
   dimensions: Record<string, DimensionAudit>;
   available_dimensions_count: number;
   unavailable_dimensions_count: number;
@@ -387,6 +426,10 @@ export interface DrowningRiskAssessment {
   safety_recommendations: string[];
   data_freshness_status: string;
   observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
+  data_source?: string;
+  nearest_telemetry_station?: string | null;
+  monitoring_station_distance_km?: number | null;
   missing_variables: string[];
 }
 
@@ -484,6 +527,47 @@ export interface LiveWeatherResponse {
   is_live_data: boolean;
   data_source: string;
   fetched_at: string;
+  observation_timestamp?: string | null;
+  retrieval_timestamp?: string | null;
   disclaimer: string;
 }
+
+// Authority Inspection Prioritization Types
+export type InspectionPriorityTier = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'ROUTINE';
+
+export interface SiteInspectionPriorityItem {
+  water_body_id: number;
+  location_name: string;
+  water_body_type: string;
+  district: string;
+  latitude: number;
+  longitude: number;
+  environmental_hazard_score: number;
+  environmental_hazard_category: string;
+  composite_risk_score: number;
+  composite_risk_level: string;
+  top_contributing_factors: string[];
+  data_freshness_status: string;
+  relevant_limitations: string[];
+  nearest_telemetry_station?: string | null;
+  telemetry_distance_km?: number | null;
+  inspection_priority: InspectionPriorityTier;
+  priority_rank_score: number;
+  priority_explanation: string;
+  last_inspection_date?: string | null;
+  suggested_inspection_focus: string[];
+}
+
+export interface InspectionPrioritizationResponse {
+  generated_at: string;
+  total_sites_evaluated: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  routine_count: number;
+  prioritized_sites: SiteInspectionPriorityItem[];
+  priority_scoring_methodology: string;
+  disclaimer: string;
+}
+
 

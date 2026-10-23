@@ -9,9 +9,10 @@ import {
   Info,
   Waves,
   Sparkles,
+  Radio,
 } from 'lucide-react';
 
-export type NavTab = 'overview' | 'drowning-risk' | 'authority' | 'map' | 'simulator' | 'trends' | 'stations' | 'forecasting' | 'data-audit';
+export type NavTab = 'operations-desk' | 'overview' | 'drowning-risk' | 'authority' | 'map' | 'simulator' | 'trends' | 'stations' | 'forecasting' | 'data-audit';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -26,10 +27,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     {
+      id: 'operations-desk' as NavTab,
+      label: 'Operations Desk',
+      icon: Radio,
+      badge: 'Pilot',
+      badgeColor: 'teal',
+      desc: 'Kerala Hydrology Command Center',
+    },
+    {
       id: 'overview' as NavTab,
-      label: 'Overview',
+      label: 'Overview & Triage',
       icon: LayoutDashboard,
-      desc: 'Summary & live hazard feed',
+      desc: 'Summary & authority inspection queue',
     },
     {
       id: 'drowning-risk' as NavTab,
