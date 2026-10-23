@@ -10,6 +10,7 @@ class DimensionAudit(BaseModel):
     units: Optional[str] = None
     source: Optional[str] = None
     observation_timestamp: Optional[str] = None
+    retrieval_timestamp: Optional[str] = None
     limitation_reason: Optional[str] = None
 
 
@@ -24,6 +25,8 @@ class EnvironmentalPipelineAuditResponse(BaseModel):
     longitude: float
     audit_timestamp: datetime
     data_freshness: str
+    nearest_telemetry_station: Optional[str] = None
+    monitoring_station_distance_km: Optional[float] = None
     dimensions: Dict[str, DimensionAudit]
     available_dimensions_count: int
     unavailable_dimensions_count: int

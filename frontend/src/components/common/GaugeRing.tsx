@@ -25,10 +25,10 @@ export const GaugeRing: React.FC<GaugeRingProps> = ({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   const getColor = (val: number): { stroke: string; text: string; bg: string } => {
-    if (isNaN(val)) return { stroke: '#94A3B8', text: 'text-slate-500', bg: 'bg-slate-100' };
-    if (val < 40) return { stroke: '#16A34A', text: 'text-emerald-700', bg: 'bg-emerald-50' };
-    if (val < 70) return { stroke: '#F59E0B', text: 'text-amber-700', bg: 'bg-amber-50' };
-    return { stroke: '#DC2626', text: 'text-rose-700', bg: 'bg-rose-50' };
+    if (isNaN(val)) return { stroke: '#9BA5A5', text: 'text-[#9BA5A5]', bg: 'bg-[#23292C]' };
+    if (val < 40) return { stroke: '#5C9B72', text: 'text-[#5C9B72]', bg: 'bg-[rgba(92,155,114,0.16)]' };
+    if (val < 70) return { stroke: '#C99A45', text: 'text-[#C99A45]', bg: 'bg-[rgba(201,154,69,0.16)]' };
+    return { stroke: '#C96A50', text: 'text-[#C96A50]', bg: 'bg-[rgba(201,106,80,0.16)]' };
   };
 
   const colors = getColor(normalizedScore);
@@ -54,7 +54,7 @@ export const GaugeRing: React.FC<GaugeRingProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#E2E8F0"
+          stroke="#384145"
           strokeWidth={strokeWidth}
           fill="transparent"
           className="transition-colors"
@@ -79,7 +79,7 @@ export const GaugeRing: React.FC<GaugeRingProps> = ({
           <span className={`text-2xl font-bold tracking-tight font-mono ${colors.text}`}>
             {Math.round(normalizedScore)}
           </span>
-          <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
+          <span className="text-[10px] uppercase font-semibold text-[#9BA5A5] tracking-wider font-mono">
             / {maxScore}
           </span>
         </div>

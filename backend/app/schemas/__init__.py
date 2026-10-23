@@ -39,6 +39,10 @@ try:
         HazardMonitoringEvaluationRequest,
         HazardMonitoringStatusResponse,
     )
+    from app.schemas.inspection import (
+        SiteInspectionPriorityItem,
+        InspectionPrioritizationResponse,
+    )
 except ImportError:
     from backend.app.schemas.common import (
         RiskLevelEnum,
@@ -80,6 +84,10 @@ except ImportError:
         HazardMonitoringEvaluationRequest,
         HazardMonitoringStatusResponse,
     )
+    from backend.app.schemas.inspection import (
+        SiteInspectionPriorityItem,
+        InspectionPrioritizationResponse,
+    )
 
 
 __all__ = [
@@ -114,5 +122,7 @@ __all__ = [
     "HazardEvaluationResult",
     "HazardMonitoringEvaluationRequest",
     "HazardMonitoringStatusResponse",
+    "SiteInspectionPriorityItem",
+    "InspectionPrioritizationResponse",
 ]
 

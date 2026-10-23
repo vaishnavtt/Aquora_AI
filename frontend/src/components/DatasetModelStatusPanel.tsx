@@ -105,7 +105,9 @@ export const DatasetModelStatusPanel: React.FC = () => {
             <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
               <span className="text-[11px] text-slate-400 block font-medium">Out-of-Time Test F1</span>
               <span className="text-xl font-bold text-emerald-400 font-mono mt-1 block">
-                {(modelStatus.metrics_summary?.f1_score ?? 0.9784).toFixed(4)}
+                {modelStatus.metrics_summary?.f1_score != null
+                  ? modelStatus.metrics_summary.f1_score.toFixed(4)
+                  : 'Pending'}
               </span>
               <span className="text-[10px] text-slate-400 font-mono">Zero Future Leakage</span>
             </div>
@@ -113,9 +115,16 @@ export const DatasetModelStatusPanel: React.FC = () => {
             <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
               <span className="text-[11px] text-slate-400 block font-medium">Out-of-Time PR-AUC</span>
               <span className="text-xl font-bold text-cyan-400 font-mono mt-1 block">
-                {(modelStatus.metrics_summary?.pr_auc ?? 0.9992).toFixed(4)}
+                {modelStatus.metrics_summary?.pr_auc != null
+                  ? modelStatus.metrics_summary.pr_auc.toFixed(4)
+                  : 'Pending'}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Brier: {(modelStatus.metrics_summary?.brier_score ?? 0.0106).toFixed(4)}</span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Brier:{' '}
+                {modelStatus.metrics_summary?.brier_score != null
+                  ? modelStatus.metrics_summary.brier_score.toFixed(4)
+                  : 'Pending'}
+              </span>
             </div>
           </div>
 
@@ -373,28 +382,36 @@ export const DatasetModelStatusPanel: React.FC = () => {
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 text-[10px] block">ROC-AUC (Antecedent)</span>
                   <span className="text-lg font-bold text-cyan-400">
-                    {(modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics?.roc_auc ?? 0.8907).toFixed(4)}
+                    {modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics?.roc_auc != null
+                      ? modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics.roc_auc.toFixed(4)
+                      : 'Pending'}
                   </span>
                   <span className="text-[9px] text-slate-500 block">Out-of-time test</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 text-[10px] block">PR-AUC (Antecedent)</span>
                   <span className="text-lg font-bold text-indigo-400">
-                    {(modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics?.pr_auc ?? 0.2322).toFixed(4)}
+                    {modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics?.pr_auc != null
+                      ? modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics.pr_auc.toFixed(4)
+                      : 'Pending'}
                   </span>
                   <span className="text-[9px] text-emerald-400 block">8.8x vs Base Rate (0.0265)</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 text-[10px] block">Accuracy</span>
                   <span className="text-lg font-bold text-slate-200">
-                    {(modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics?.accuracy ?? 0.9667).toFixed(4)}
+                    {modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics?.accuracy != null
+                      ? modelStatus.leak_free_antecedent_benchmark.uncalibrated_test_metrics.accuracy.toFixed(4)
+                      : 'Pending'}
                   </span>
                   <span className="text-[9px] text-slate-500 block">Out-of-time test</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 text-[10px] block">Brier Score</span>
                   <span className="text-lg font-bold text-emerald-400">
-                    {(modelStatus.leak_free_antecedent_benchmark.calibrated_test_metrics?.brier_score ?? 0.0235).toFixed(4)}
+                    {modelStatus.leak_free_antecedent_benchmark.calibrated_test_metrics?.brier_score != null
+                      ? modelStatus.leak_free_antecedent_benchmark.calibrated_test_metrics.brier_score.toFixed(4)
+                      : 'Pending'}
                   </span>
                   <span className="text-[9px] text-slate-500 block">Calibrated probability</span>
                 </div>
@@ -437,12 +454,12 @@ export const DatasetModelStatusPanel: React.FC = () => {
                     {modelStatus.spatial_generalization_benchmark.station_evaluations.map((st, i) => (
                       <tr key={i} className="hover:bg-slate-800/30">
                         <td className="py-2.5 px-3 font-bold text-white">{st.station}</td>
-                        <td className="py-2.5 px-3 text-slate-400">{st.sample_count.toLocaleString()}</td>
-                        <td className="py-2.5 px-3 text-slate-400">{(st.positive_rate * 100).toFixed(1)}%</td>
-                        <td className="py-2.5 px-3 text-slate-300">{st.accuracy.toFixed(4)}</td>
-                        <td className="py-2.5 px-3 text-cyan-300 font-semibold">{st.f1_score.toFixed(4)}</td>
-                        <td className="py-2.5 px-3 text-emerald-400 font-bold">{st.roc_auc.toFixed(4)}</td>
-                        <td className="py-2.5 px-3 text-indigo-300">{st.pr_auc.toFixed(4)}</td>
+                        <td className="py-2.5 px-3 text-slate-400">{st.sample_count?.toLocaleString() ?? '—'}</td>
+                        <td className="py-2.5 px-3 text-slate-400">{st.positive_rate != null ? `${(st.positive_rate * 100).toFixed(1)}%` : '—'}</td>
+                        <td className="py-2.5 px-3 text-slate-300">{st.accuracy != null ? st.accuracy.toFixed(4) : '—'}</td>
+                        <td className="py-2.5 px-3 text-cyan-300 font-semibold">{st.f1_score != null ? st.f1_score.toFixed(4) : '—'}</td>
+                        <td className="py-2.5 px-3 text-emerald-400 font-bold">{st.roc_auc != null ? st.roc_auc.toFixed(4) : '—'}</td>
+                        <td className="py-2.5 px-3 text-indigo-300">{st.pr_auc != null ? st.pr_auc.toFixed(4) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

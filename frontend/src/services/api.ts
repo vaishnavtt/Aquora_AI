@@ -26,14 +26,20 @@ import {
   ModelStatusResponse,
   ForecastVsObservationResponse,
   LiveWeatherResponse,
+<<<<<<< HEAD
   NearbyRiverItem,
   NearbyRiversResponse,
   RiverSearchResponse,
   RiskClassificationRuleResponse,
+=======
+  InspectionPrioritizationResponse,
+  SiteInspectionPriorityItem,
+>>>>>>> origin/main
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
+<<<<<<< HEAD
 // DEMO / Fallback synthetic datasets clearly labeled for Hackathon evaluation - Centered on Kerala
 export const DEMO_WATER_BODIES: WaterBody[] = [
   {
@@ -217,6 +223,12 @@ export const DEMO_WATER_BODIES: WaterBody[] = [
     is_demonstration_data: false,
   }
 ];
+=======
+import { KERALA_STATIONS } from '../data/keralaStations';
+
+// DEMO / Fallback synthetic datasets calibrated for Kerala Hydrology Pilot
+export const DEMO_WATER_BODIES: WaterBody[] = KERALA_STATIONS;
+>>>>>>> origin/main
 
 export const DEMO_RISK_CHANGES: RiskChangeEvent[] = [
   {
@@ -882,6 +894,16 @@ export const api = {
       scientific_disclaimer: 'Authoritative AQUORA risk classification scale. LOW risk indicates calm baseline conditions, NOT a swimming or recreational safety guarantee.',
     };
   },
+
+  async getInspectionPrioritization(signal?: AbortSignal): Promise<InspectionPrioritizationResponse> {
+    const res = await fetch(`${API_BASE_URL}/authority/inspection-prioritization`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Inspection prioritization fetch failed: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
 };
 
 export interface HistoricalScenario {

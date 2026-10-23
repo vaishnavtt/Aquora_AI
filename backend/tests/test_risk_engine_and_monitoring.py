@@ -323,6 +323,84 @@ class TestAutomatedHazardMonitoring(unittest.TestCase):
         self.assertFalse(resp2.confirmed_by_provider)
         self.assertIn("Duplicate alert suppressed", resp2.provider_message)
 
+    def test_unmeasured_flow_rate_preserved_as_none_not_zero(self):
+        """Telemetry with unmeasured flow rate preserves observed_flow_cms=None and does not fake 0.0 or trigger breach."""
+        from unittest.mock import patch
+        from app.schemas.river_data import RiverDataResponse
+
+        mock_partial = RiverDataResponse(
+            station_name="Test Partial Station",
+            district="KERALA",
+            status="LIVE",
+            water_level_m=2.45,
+            flow_rate_cms=None,  # Unmeasured velocity/discharge
+            observation_timestamp=datetime.now(timezone.utc).isoformat(),
+            retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
+            is_live=True,
+            is_cached=False,
+            data_source="NWIC Live",
+            data_freshness="Live Stage Only",
+            notice="Stage gauge online; velocity meter not installed.",
+        )
+
+        with patch("app.services.river_data_service.river_data_service.get_river_data", return_value=mock_partial):
+            res = hazard_monitoring_service.evaluate_station("Test Partial Station", db=self.db, safe_simulation=True)
+            self.assertEqual(res.evaluation_status, "NOMINAL")
+            self.assertIsNone(res.observed_flow_cms, "Observed flow must remain None, not converted to 0.0")
+            self.assertEqual(res.observed_stage_m, 2.45)
+            # Flow breach trigger must NOT be fired
+            trigger_types = [t.trigger_type for t in res.triggers_detected]
+            self.assertNotIn("FLOW_RATE_BREACH", trigger_types)
+
+    def test_both_stage_and_flow_missing_detected_as_anomaly(self):
+        """When both stage and flow are absent, data-quality check flags anomaly and suppresses alerts."""
+        from unittest.mock import patch
+        from app.schemas.river_data import RiverDataResponse
+
+        mock_empty = RiverDataResponse(
+            station_name="Test Empty Station",
+            district="KERALA",
+            status="LIVE",
+            water_level_m=None,
+            flow_rate_cms=None,
+            observation_timestamp=datetime.now(timezone.utc).isoformat(),
+            retrieval_timestamp=datetime.now(timezone.utc).isoformat(),
+            is_live=True,
+            is_cached=False,
+            data_source="Test Node",
+            data_freshness="Blank Sensor",
+            notice="All sensor channels silent",
+        )
+
+        with patch("app.services.river_data_service.river_data_service.get_river_data", return_value=mock_empty):
+            res = hazard_monitoring_service.evaluate_station("Test Empty Station", db=self.db, safe_simulation=True)
+            self.assertEqual(res.evaluation_status, "DATA_QUALITY_ANOMALY")
+            self.assertIsNone(res.observed_stage_m)
+            self.assertIsNone(res.observed_flow_cms)
+            self.assertEqual(res.outbound_delivery_status, "SKIPPED")
+            self.assertIn("Both water stage and flow readings are missing", res.notice)
+
+    def test_what_if_simulation_unmeasured_baseline_does_not_fabricate_stage(self):
+        """Verifies that simulate_what_if does not invent baseline stage or discharge when unmeasured."""
+        from app.services.drowning_risk_service import drowning_risk_service
+        from app.schemas.drowning_risk import WhatIfSimulationRequest
+
+        # Request simulation with delta on unmeasured baseline (no water body specified)
+        sim_req = WhatIfSimulationRequest(
+            water_body_id=None,
+            water_body_type="river",
+            simulated_rainfall_increment_mm=50.0,
+            simulated_stage_delta_m=0.5,
+            simulated_discharge_increment_cms=10.0,
+        )
+        res = drowning_risk_service.simulate_what_if(sim_req, db=self.db)
+        self.assertTrue(res.is_hypothetical_simulation)
+        # Baseline environmental hazard stage was None, so simulated absolute stage should remain None
+        self.assertIsNone(res.baseline_assessment.layer_a_environmental_hazard.water_level_m)
+        self.assertIsNone(res.simulated_assessment.layer_a_environmental_hazard.water_level_m)
+        # But simulated deltas are accurately recorded in the assessment
+        self.assertEqual(res.simulated_assessment.layer_a_environmental_hazard.water_level_delta_3h_m, 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()

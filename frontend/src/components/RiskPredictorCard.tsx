@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PredictRequest, PredictResponse, WaterBody } from '../types';
 import { api } from '../services/api';
 import { Cpu, AlertCircle, ShieldAlert, Sparkles, CheckCircle2, Sliders, Info } from 'lucide-react';
@@ -18,6 +18,18 @@ export const RiskPredictorCard: React.FC<RiskPredictorCardProps> = ({ selectedWa
     visibility_meters: 2500.0,
     include_ai_explanation: false,
   });
+
+  useEffect(() => {
+    if (selectedWaterBody) {
+      setFormData((prev) => ({
+        ...prev,
+        water_body_id: selectedWaterBody.id,
+        water_temp_c: selectedWaterBody.water_temp_c ?? prev.water_temp_c,
+        flow_rate_cms: selectedWaterBody.flow_rate_cms ?? selectedWaterBody.discharge_cms ?? prev.flow_rate_cms,
+        depth_meters: selectedWaterBody.depth_meters ?? selectedWaterBody.current_water_level_m ?? prev.depth_meters,
+      }));
+    }
+  }, [selectedWaterBody]);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictResponse | null>(null);

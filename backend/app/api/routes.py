@@ -77,7 +77,9 @@ try:
     from app.services.river_data_service import river_data_service
     from app.services.alert_service import alert_service
     from app.services.hazard_monitoring_service import hazard_monitoring_service
-    from app.services.drowning_risk_service import drowning_risk_service, get_drowning_risk_service
+    from app.schemas.inspection import InspectionPrioritizationResponse, SiteInspectionPriorityItem
+    from app.services.inspection_service import inspection_service
+    from app.services.drowning_risk_service import drowning_risk_service, get_drowning_risk_service, find_nearest_telemetry_station
 except ImportError:
     from backend.app.core.config import settings
     from backend.app.db.session import get_db
@@ -144,7 +146,9 @@ except ImportError:
     from backend.app.services.river_data_service import river_data_service
     from backend.app.services.alert_service import alert_service
     from backend.app.services.hazard_monitoring_service import hazard_monitoring_service
-    from backend.app.services.drowning_risk_service import drowning_risk_service, get_drowning_risk_service
+    from backend.app.schemas.inspection import InspectionPrioritizationResponse, SiteInspectionPriorityItem
+    from backend.app.services.inspection_service import inspection_service
+    from backend.app.services.drowning_risk_service import drowning_risk_service, get_drowning_risk_service, find_nearest_telemetry_station
 
 router = APIRouter()
 
@@ -494,6 +498,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
     is_ramamangalam = "RAMAMANGALAM" in wb.name.upper()
 
     dimensions = {}
+    now_iso = datetime.now(timezone.utc).isoformat()
 
     # 1. Rainfall: Verified real-time raingauge telemetry stream
     dimensions["rainfall"] = DimensionAudit(
@@ -503,6 +508,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
         units="mm",
         source="None",
         observation_timestamp=None,
+        retrieval_timestamp=now_iso,
         limitation_reason="No real-time raingauge telemetry stream connected. Dedicated IMD / AWS sensor integration required."
     )
 
@@ -516,6 +522,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
             units="m",
             source=river_res.data_source,
             observation_timestamp=river_res.observation_timestamp,
+            retrieval_timestamp=now_iso,
             limitation_reason=None if river_res.is_live else "USGS live service temporarily unreachable"
         )
         dimensions["flow_rate"] = DimensionAudit(
@@ -525,6 +532,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
             units="m³/s",
             source=river_res.data_source,
             observation_timestamp=river_res.observation_timestamp,
+            retrieval_timestamp=now_iso,
             limitation_reason=None if river_res.is_live else "USGS live streamflow unavailable"
         )
     elif is_ramamangalam:
@@ -546,6 +554,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
             units="m",
             source="Kerala State Water Resources Department (Kerala SW)",
             observation_timestamp=wl_time,
+            retrieval_timestamp=now_iso,
             limitation_reason=wl_reason
         )
         dimensions["flow_rate"] = DimensionAudit(
@@ -555,6 +564,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
             units="m³/s",
             source="None",
             observation_timestamp=None,
+            retrieval_timestamp=now_iso,
             limitation_reason="No discharge rating curve or flow telemetry sensor installed at this stage gauge."
         )
     else:
@@ -565,6 +575,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
             units="m",
             source=wb.data_source or "Hydrological Database Baseline",
             observation_timestamp=wb.last_updated.isoformat() if wb.last_updated else None,
+            retrieval_timestamp=now_iso,
             limitation_reason="Static reference stage reading from baseline site survey."
         )
         dimensions["flow_rate"] = DimensionAudit(
@@ -574,6 +585,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
             units="m³/s",
             source=wb.data_source or "Hydrological Database Baseline",
             observation_timestamp=wb.last_updated.isoformat() if wb.last_updated else None,
+            retrieval_timestamp=now_iso,
             limitation_reason=None if wb.flow_rate_cms is not None else "No flow sensor at this site"
         )
 
@@ -585,6 +597,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
         units="classification",
         source="AQUORA Monitored Hydrology DB",
         observation_timestamp=wb.last_updated.isoformat() if wb.last_updated else None,
+        retrieval_timestamp=now_iso,
         limitation_reason=None
     )
 
@@ -596,6 +609,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
         units="m MSL",
         source="SRTM Digital Elevation Model / Kerala Water Resources GIS",
         observation_timestamp=None,
+        retrieval_timestamp=now_iso,
         limitation_reason=None if wb.elevation_meters is not None else "Elevation not surveyed for this coordinates"
     )
 
@@ -607,6 +621,7 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
         units="incident_count",
         source="None",
         observation_timestamp=None,
+        retrieval_timestamp=now_iso,
         limitation_reason="No validated public Kerala drowning incident registry is accessible. Drowning incident records are strictly not fabricated."
     )
 
@@ -618,11 +633,14 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
         units="metadata",
         source=wb.data_source or "AQUORA Hydro Registry",
         observation_timestamp=wb.last_updated.isoformat() if wb.last_updated else None,
+        retrieval_timestamp=now_iso,
         limitation_reason=None
     )
 
     avail_count = sum(1 for d in dimensions.values() if d.status != "UNAVAILABLE")
     unavail_count = sum(1 for d in dimensions.values() if d.status == "UNAVAILABLE")
+
+    nearest_station, dist_km = find_nearest_telemetry_station(wb.latitude, wb.longitude)
 
     return EnvironmentalPipelineAuditResponse(
         station_id=wb.id,
@@ -633,6 +651,8 @@ def get_environmental_pipeline_audit(water_body_id: int, db: Session = Depends(g
         longitude=wb.longitude,
         audit_timestamp=datetime.now(timezone.utc),
         data_freshness="Audited pipeline status",
+        nearest_telemetry_station=nearest_station,
+        monitoring_station_distance_km=dist_km,
         dimensions=dimensions,
         available_dimensions_count=avail_count,
         unavailable_dimensions_count=unavail_count,
@@ -1095,3 +1115,24 @@ def get_weather_for_water_body_endpoint(
     db: Session = Depends(get_db)
 ):
     return weather_service.get_weather_for_water_body(water_body_id=water_body_id, db=db)
+
+
+# ==========================================
+# Authority Inspection Prioritization Endpoints
+# ==========================================
+
+@router.get(
+    "/authority/inspection-prioritization",
+    response_model=InspectionPrioritizationResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Authority Decision Support"],
+    summary="Get Risk-Informed Authority Inspection Prioritization",
+    description="Ranks all monitored aquatic locations into actionable inspection priority tiers (CRITICAL, HIGH, MEDIUM, ROUTINE) incorporating environmental hazard, site structural vulnerability, and observational uncertainty penalties."
+)
+def get_inspection_prioritization_endpoint(db: Session = Depends(get_db)):
+    """
+    Evaluates all registered water bodies and returns prioritized site rankings
+    for municipal and district disaster management decision support.
+    """
+    return inspection_service.get_prioritization(db=db)
+

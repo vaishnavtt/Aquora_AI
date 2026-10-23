@@ -244,7 +244,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               <span>Water temp</span>
             </div>
             <span className="text-base font-bold font-mono text-white">
-              {station.water_temp_c.toFixed(1)}°C
+              {station.water_temp_c != null ? `${station.water_temp_c.toFixed(1)}°C` : 'Unavailable'}
             </span>
           </div>
 
@@ -254,7 +254,11 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               <span>Flow speed</span>
             </div>
             <span className="text-base font-bold font-mono text-white">
-              {station.flow_rate_cms.toFixed(1)} m³/s
+              {station.flow_rate_cms != null
+                ? `${station.flow_rate_cms.toFixed(1)} m³/s`
+                : station.discharge_cms != null
+                ? `${station.discharge_cms.toFixed(1)} m³/s`
+                : 'Unavailable'}
             </span>
           </div>
 
@@ -264,7 +268,11 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               <span>Water depth</span>
             </div>
             <span className="text-base font-bold font-mono text-white">
-              {station.depth_meters.toFixed(1)} m
+              {station.depth_meters != null
+                ? `${station.depth_meters.toFixed(1)} m`
+                : station.current_water_level_m != null
+                ? `${station.current_water_level_m.toFixed(1)} m`
+                : 'Unavailable'}
             </span>
           </div>
         </div>
@@ -341,9 +349,9 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                       <div>
                         <div className="font-medium text-slate-200 text-xs">Water level / stage</div>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {pipelineAudit.dimensions.water_level?.status === 'UNAVAILABLE'
+                          {pipelineAudit.dimensions.water_level?.status === 'UNAVAILABLE' || (pipelineAudit.dimensions.water_level?.value == null && station.current_water_level_m == null && station.depth_meters == null)
                             ? 'Not available'
-                            : `${pipelineAudit.dimensions.water_level?.value ?? station.depth_meters} m · Source: ${pipelineAudit.dimensions.water_level?.source || 'Telemetry node'}`}
+                            : `${pipelineAudit.dimensions.water_level?.value ?? station.current_water_level_m ?? station.depth_meters} m · Source: ${pipelineAudit.dimensions.water_level?.source || 'Telemetry node'}`}
                         </p>
                       </div>
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/50 shrink-0">

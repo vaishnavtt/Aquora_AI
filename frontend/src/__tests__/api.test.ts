@@ -461,4 +461,80 @@ describe('AQUORA AI Frontend API Integration & Reliability Suite', () => {
       expect(DEMO_WATER_BODIES.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Authority Inspection Prioritization & Provenance Suite', () => {
+    it('retrieves and parses inspection prioritization response with priority tiers and methodology', async () => {
+      const mockPrioritization = {
+        generated_at: '2026-10-21T12:00:00Z',
+        total_sites_evaluated: 2,
+        critical_count: 1,
+        high_count: 1,
+        medium_count: 0,
+        routine_count: 0,
+        prioritized_sites: [
+          {
+            water_body_id: 1,
+            location_name: 'Pazhassi Dam Quarry',
+            water_body_type: 'quarry',
+            district: 'Kannur',
+            latitude: 11.95,
+            longitude: 75.61,
+            environmental_hazard_score: 74.5,
+            environmental_hazard_category: 'HIGH',
+            composite_risk_score: 82.0,
+            composite_risk_level: 'extreme',
+            top_contributing_factors: ['Vertical wall drop-off', 'Deep thermocline'],
+            data_freshness_status: 'HISTORICAL_BASELINE',
+            relevant_limitations: ['Lacks active telemetry gauge'],
+            nearest_telemetry_station: 'MALAYATTOOR',
+            telemetry_distance_km: 195.4,
+            inspection_priority: 'CRITICAL',
+            priority_rank_score: 85.0,
+            priority_explanation: 'Ranked CRITICAL due to quarry bathymetry and unobserved telemetry uncertainty.',
+            last_inspection_date: null,
+            suggested_inspection_focus: ['Inspect perimeter barrier fencing', 'Check warning signboards'],
+          },
+          {
+            water_body_id: 2,
+            location_name: 'Ramamangalam Bridge',
+            water_body_type: 'river',
+            district: 'Ernakulam',
+            latitude: 9.9482,
+            longitude: 76.5412,
+            environmental_hazard_score: 42.0,
+            environmental_hazard_category: 'MODERATE',
+            composite_risk_score: 51.5,
+            composite_risk_level: 'moderate',
+            top_contributing_factors: ['Seasonal river current'],
+            data_freshness_status: 'RECENT_TELEMETRY',
+            relevant_limitations: [],
+            nearest_telemetry_station: 'RAMAMANGALAM BRIDGE',
+            telemetry_distance_km: 0.0,
+            inspection_priority: 'HIGH',
+            priority_rank_score: 63.5,
+            priority_explanation: 'Ranked HIGH due to moderate river current.',
+            last_inspection_date: null,
+            suggested_inspection_focus: ['Inspect bathing ghat handrails'],
+          },
+        ],
+        priority_scoring_methodology: 'AQUORA Inspection Prioritization Heuristic v1.2',
+        disclaimer: 'Advisory notice: Automated decision support.',
+      };
+
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockPrioritization,
+      });
+
+      const res = await api.getInspectionPrioritization();
+      expect(res.total_sites_evaluated).toBe(2);
+      expect(res.critical_count).toBe(1);
+      expect(res.prioritized_sites.length).toBe(2);
+      expect(res.prioritized_sites[0].inspection_priority).toBe('CRITICAL');
+      expect(res.prioritized_sites[0].last_inspection_date).toBeNull();
+      expect(res.prioritized_sites[0].telemetry_distance_km).toBeGreaterThan(0);
+      expect(res.priority_scoring_methodology).toContain('Prioritization');
+    });
+  });
 });

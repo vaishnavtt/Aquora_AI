@@ -56,7 +56,7 @@ class Settings(BaseModel):
 
     # Official River Telemetry API Configuration
     NWIC_API_KEY: str | None = os.getenv("NWIC_API_KEY", None)
-    NWIC_API_BASE_URL: str = os.getenv("NWIC_API_BASE_URL", "https://nwdp.gov.in/api/v1")
+    NWIC_API_BASE_URL: str = os.getenv("NWIC_API_BASE_URL", "https://nwdp.nwic.gov.in/api/v1")
     USGS_API_BASE_URL: str = os.getenv("USGS_API_BASE_URL", "https://waterservices.usgs.gov/nwis/iv/")
     USGS_DEFAULT_SITE: str = os.getenv("USGS_DEFAULT_SITE", "11164500")
 
