@@ -22,7 +22,7 @@ export function App() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [waterBodies, setWaterBodies] = useState<WaterBody[]>(DEMO_WATER_BODIES);
   const [riskChanges, setRiskChanges] = useState<RiskChangeEvent[]>(DEMO_RISK_CHANGES);
-  const [selectedStation, setSelectedStation] = useState<WaterBody | null>(DEMO_WATER_BODIES[1]); // Default to Cascade Canyon River
+  const [selectedStation, setSelectedStation] = useState<WaterBody | null>(DEMO_WATER_BODIES[0]); // Default to Ramamangalam Bridge (Kerala SW)
   const [sidePanelMode, setSidePanelMode] = useState<'drowning-risk' | 'telemetry'>('drowning-risk');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,11 @@ export function App() {
       setDashboard(dashData);
       if (stationsData && stationsData.length > 0) {
         setWaterBodies(stationsData);
-        setSelectedStation(stationsData[0]);
+        // Prioritize verified Kerala stations over synthetic prototype nodes
+        const defaultKeralaStation = stationsData.find(
+          (wb) => !wb.is_demonstration_data && wb.latitude >= 8.0 && wb.latitude <= 13.0
+        );
+        setSelectedStation(defaultKeralaStation || stationsData[0]);
         setIsUsingDemoData(stationsData.every((wb) => wb.is_demonstration_data === true));
       }
       setRiskChanges(api.getRecentRiskChanges());
@@ -138,6 +142,7 @@ export function App() {
                         waterBodies={filteredWaterBodies}
                         selectedStation={selectedStation}
                         onSelectStation={setSelectedStation}
+                        onSendToSimulator={handleSendToSimulator}
                       />
                     </div>
                     <div className="hidden lg:block lg:col-span-4 space-y-3">
@@ -238,6 +243,7 @@ export function App() {
                         waterBodies={filteredWaterBodies}
                         selectedStation={selectedStation}
                         onSelectStation={setSelectedStation}
+                        onSendToSimulator={handleSendToSimulator}
                       />
                     </div>
                     <div className="lg:col-span-5">
@@ -339,6 +345,7 @@ export function App() {
                         waterBodies={filteredWaterBodies}
                         selectedStation={selectedStation}
                         onSelectStation={setSelectedStation}
+                        onSendToSimulator={handleSendToSimulator}
                       />
                     </div>
                     <div className="hidden lg:block lg:col-span-4">

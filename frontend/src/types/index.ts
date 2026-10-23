@@ -1,4 +1,4 @@
-﻿// API Contract Data Types matching docs/api-contract.md
+// API Contract Data Types matching docs/api-contract.md
 
 export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
 export type RiskCategory = 'LOW' | 'MODERATE' | 'HIGH' | 'VERY HIGH';
@@ -485,5 +485,57 @@ export interface LiveWeatherResponse {
   data_source: string;
   fetched_at: string;
   disclaimer: string;
+}
+
+// Location-Aware River Discovery Types
+export interface NearbyRiverItem {
+  id?: number | null;
+  name: string;
+  type: string;
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+  distance_meters: number;
+  distance_formatted: string;
+  district?: string | null;
+  basin_region?: string | null;
+  is_monitored_station: boolean;
+  has_prediction: boolean;
+  current_risk_level?: RiskLevel | 'no_prediction' | null;
+  risk_category?: RiskCategory | 'NO_PREDICTION' | null;
+  risk_score?: number | null;
+  data_source?: string | null;
+  last_updated?: string | null;
+  description?: string | null;
+  assessment_scope?: string | null;
+}
+
+export interface NearbyRiversResponse {
+  center_latitude: number;
+  center_longitude: number;
+  radius_km: number;
+  total_found: number;
+  monitored_count: number;
+  unmonitored_osm_count: number;
+  rivers: NearbyRiverItem[];
+  disclaimer: string;
+}
+
+export interface RiverSearchResponse {
+  query: string;
+  total_found: number;
+  results: NearbyRiverItem[];
+}
+
+export interface RiskClassificationRuleResponse {
+  scale: string;
+  thresholds: Record<string, {
+    min: number | null;
+    max_exclusive?: number;
+    max_inclusive?: number;
+    label: string;
+    hex: string;
+  }>;
+  scientific_disclaimer: string;
 }
 

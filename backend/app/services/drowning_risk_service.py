@@ -21,6 +21,10 @@ import joblib
 from sqlalchemy.orm import Session
 
 from app.models.water_body import WaterBodyModel
+try:
+    from app.core.risk_classifier import classify_risk_score, is_valid_risk_score
+except ImportError:
+    from backend.app.core.risk_classifier import classify_risk_score, is_valid_risk_score
 from app.schemas.drowning_risk import (
     DrowningRiskAssessmentResponse,
     DrowningRiskAssessRequest,
@@ -46,6 +50,8 @@ BENCHMARK_METRICS_PATH = os.path.join(MODELS_DIR, "hazard_model_evaluation_metri
 AUDIT_SUMMARY_PATH = os.path.join(PROCESSED_DIR, "dataset_audit_summary.json")
 
 # Water Body Type Vulnerability Profiles (Grounded in Kerala mortality studies: NCRB, Kerala Fire & Rescue, DDMA)
+# Calibrated so that nominal ambient baseline reaches evaluate to LOW (< 30.0), while dangerous structures
+# (quarries, aerated waterfall plunge pools, or high-flow rapids) correctly escalate to HIGH or VERY HIGH.
 WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
     "quarry": {
         "label": "Abandoned Stone Quarry",
@@ -73,19 +79,19 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
     },
     "river": {
         "label": "River & Riverbank",
-        "base_vulnerability": 58.0,
-        "exposure_level": "high",
+        "base_vulnerability": 26.0,
+        "exposure_level": "moderate",
         "access_characteristics": "Public bathing ghats, boat jetties, bridge approaches, agricultural banks",
         "site_vulnerability_profile": "Shifting sandbanks, deceptive deep scour holes around bridge pilings and weirs, rapid monsoon currents and debris drift.",
         "bathymetry_hazard_notes": "Non-uniform riverbed bathymetry; sudden drops from 1m to 4m+ depth; strong laminar undercurrents masked by calm surface appearance.",
-        "historical_mortality_context": "Accounts for the single largest gross volume of accidental drownings in Kerala (Periyar, Bharathapuzha, Muvattupuzha, Pamba).",
+        "historical_mortality_context": "Accounts for the single largest gross volume of accidental drownings in Kerala (Periyar, Bharathapuzha, Muvattupuzha, Pamba) due to extensive shoreline exposure.",
         "default_temp_c": 26.5,
         "default_depth_m": 2.8,
         "default_flow_cms": 15.0,
     },
     "reservoir": {
         "label": "Reservoir & Dam Spillway",
-        "base_vulnerability": 64.0,
+        "base_vulnerability": 32.0,
         "exposure_level": "moderate",
         "access_characteristics": "Regulated irrigation/hydroelectric facility; perimeter security varies by sector",
         "site_vulnerability_profile": "Expansive deep water bodies, concealed submerged tree stumps and structures, sudden intake suction, steep riprap embankments.",
@@ -97,7 +103,7 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
     },
     "canal": {
         "label": "Irrigation & Transport Canal",
-        "base_vulnerability": 55.0,
+        "base_vulnerability": 28.0,
         "exposure_level": "moderate",
         "access_characteristics": "Urban waterways and agricultural canals along roadsides and residential zones",
         "site_vulnerability_profile": "Uniform trapezoidal or rectangular cross-section with swift regulated discharge, smooth concrete or masonry walls lacking escape ladders.",
@@ -109,7 +115,7 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
     },
     "lake": {
         "label": "Freshwater Lake & Village Pond",
-        "base_vulnerability": 48.0,
+        "base_vulnerability": 20.0,
         "exposure_level": "moderate",
         "access_characteristics": "Panchayat temple ponds, public village water bodies, tourism lakes",
         "site_vulnerability_profile": "Accumulated thick silt and decaying organic sediment at edges, deceptive boundary depth, unmonitored swimming.",
@@ -118,6 +124,18 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 27.5,
         "default_depth_m": 3.5,
         "default_flow_cms": 0.2,
+    },
+    "coastal": {
+        "label": "Coastal Inlet & Estuary",
+        "base_vulnerability": 28.0,
+        "exposure_level": "moderate",
+        "access_characteristics": "Tidal estuaries, coastal inlets, harbor entrances",
+        "site_vulnerability_profile": "Tidal currents, incoming wave chop, shifting bar sands, salinity gradient.",
+        "bathymetry_hazard_notes": "Deceptive tidal draw with sudden drops beyond sandbars.",
+        "historical_mortality_context": "Coastal recreation mishaps and monsoon sea surges.",
+        "default_temp_c": 25.0,
+        "default_depth_m": 4.0,
+        "default_flow_cms": 2.0,
     },
 }
 
@@ -293,8 +311,12 @@ class DrowningRiskService:
 
         # Monsoon condition factor
         if monsoon:
-            base_hazard += 8.0
-            contributing_factors.append("Active Kerala monsoon season")
+            if r24h >= 15.0 or d1h >= 0.10 or d3h >= 0.15:
+                base_hazard += 8.0
+                contributing_factors.append("Active Kerala monsoon runoff")
+            else:
+                base_hazard += 2.0
+                contributing_factors.append("Kerala monsoon season (nominal catchment baseflow)")
 
         # Blend with calibrated ML probability if available
         if ml_prob is not None:
@@ -307,15 +329,8 @@ class DrowningRiskService:
 
         hazard_score = round(float(np.clip(hazard_score, 0.0, 100.0)), 1)
 
-        # Categorize hazard level
-        if hazard_score < 30.0:
-            h_level = "low"
-        elif hazard_score < 60.0:
-            h_level = "moderate"
-        elif hazard_score < 80.0:
-            h_level = "high"
-        else:
-            h_level = "very_high"
+        # Categorize hazard level using authoritative classifier
+        h_level, _ = classify_risk_score(hazard_score)
 
         if not contributing_factors:
             contributing_factors.append("Nominal baseline environmental conditions")
@@ -387,9 +402,9 @@ class DrowningRiskService:
         elif exposure_scenario == "night_time":
             base_vuln += 12.0
 
-        # Monsoon surge in contextual danger
+        # Monsoon seasonal awareness in contextual profile
         if is_monsoon_season:
-            base_vuln += 6.0
+            base_vuln += 2.0
 
         vulnerability_score = round(float(np.clip(base_vuln, 0.0, 100.0)), 1)
 
@@ -491,15 +506,8 @@ class DrowningRiskService:
 
         combined_score = round(float(np.clip(combined_score, 0.0, 100.0)), 1)
 
-        # Determine Overall Risk Category
-        if combined_score < 30.0:
-            category = "LOW"
-        elif combined_score < 60.0:
-            category = "MODERATE"
-        elif combined_score < 80.0:
-            category = "HIGH"
-        else:
-            category = "VERY HIGH"
+        # Determine Overall Risk Category using Authoritative Classifier
+        risk_level, category = classify_risk_score(combined_score)
 
         # Consolidate Primary Hazards
         all_hazards: List[str] = []

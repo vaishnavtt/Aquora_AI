@@ -26,6 +26,7 @@ from app.schemas.monitoring import (
 )
 from app.schemas.prediction import PredictRequest
 from app.ml.predictor import risk_predictor
+from app.core.risk_classifier import classify_risk_score
 from app.services.river_data_service import river_data_service
 from app.services.alert_service import alert_service
 
@@ -182,7 +183,7 @@ class HazardMonitoringService:
         safe_flow = max(0.0, float(flow_cms)) if flow_cms is not None else 1.0
         pred_req = PredictRequest(
             water_body_id=None,
-            water_temp_c=14.0,  # Ambient default if unmetered
+            water_temp_c=26.5,  # Ambient tropical water temperature default if unmetered (prevents false cold-shock spike)
             flow_rate_cms=safe_flow,
             depth_meters=safe_depth,
             rainfall_last_24h_mm=25.0 if triggers else 5.0,
@@ -192,7 +193,7 @@ class HazardMonitoringService:
         )
         prediction = risk_predictor.predict(pred_req)
         risk_score = prediction.risk_score
-        risk_level = prediction.risk_level
+        risk_level, _ = classify_risk_score(risk_score)
 
         if risk_score >= self.risk_threshold:
             triggers.append(

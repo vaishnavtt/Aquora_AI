@@ -17,9 +17,11 @@ from typing import List, Optional
 try:
     from app.schemas.prediction import PredictRequest, PredictResponse
     from app.ml.base import BaseRiskPredictor
+    from app.core.risk_classifier import classify_risk_score
 except ImportError:
     from backend.app.schemas.prediction import PredictRequest, PredictResponse
     from backend.app.ml.base import BaseRiskPredictor
+    from backend.app.core.risk_classifier import classify_risk_score
 
 logger = logging.getLogger(__name__)
 
@@ -100,21 +102,18 @@ class BaselineHeuristicPredictor(BaseRiskPredictor):
         # Bound score between 0 and 100
         risk_score = round(min(100.0, max(0.0, score)), 1)
 
-        # Categorize risk level
-        if risk_score < 30.0:
-            risk_level = "low"
+        # Categorize risk level using authoritative classification
+        risk_level, _ = classify_risk_score(risk_score)
+        if risk_level == "low":
             if not recommendations:
                 recommendations.append("Standard water safety precautions apply. Enjoy responsibly.")
-        elif risk_score < 60.0:
-            risk_level = "moderate"
+        elif risk_level == "moderate":
             if not recommendations:
                 recommendations.append("Exercise increased awareness; supervise children and inexperienced swimmers.")
-        elif risk_score < 80.0:
-            risk_level = "high"
+        elif risk_level == "high":
             if not recommendations:
                 recommendations.append("Swimming prohibited for non-experts; all vessel operators must wear lifejackets.")
         else:
-            risk_level = "extreme"
             if not recommendations:
                 recommendations.append("Emergency conditions: Total access restriction advised.")
 
