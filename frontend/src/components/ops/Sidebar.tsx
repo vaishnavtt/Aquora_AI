@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   LayoutDashboard,
   ShieldAlert,
-  Send,
+  AlertCircle,
   MapPin,
   Sliders,
   TrendingUp,
   Table,
   Waves,
   Database,
-  Info,
   CheckCircle2,
+  Info,
+  X,
 } from 'lucide-react';
 
 export type OpsNavSection =
@@ -27,141 +28,187 @@ export type OpsNavSection =
 interface OpsSidebarProps {
   activeSection: OpsNavSection;
   onSelectSection: (section: OpsNavSection) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export const OpsSidebar: React.FC<OpsSidebarProps> = ({
   activeSection,
   onSelectSection,
+  isOpen,
+  onClose,
 }) => {
+  // Close drawer on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const navItems: Array<{
     id: OpsNavSection;
     label: string;
-    sub: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+    badge?: string;
   }> = [
     {
       id: 'overview',
       label: 'Overview',
-      sub: 'Summary & live hazard feed',
       icon: LayoutDashboard,
     },
     {
       id: 'exposure-risk',
-      label: 'Exposure Risk Assessment',
-      sub: 'Kerala hydrology engine',
+      label: 'Risk assessment',
       icon: ShieldAlert,
     },
     {
       id: 'incident-actions',
-      label: 'Incident Actions',
-      sub: 'Review sites & issue notices',
-      icon: Send,
+      label: 'Incidents',
+      icon: AlertCircle,
+      badge: '3',
     },
     {
       id: 'map',
       label: 'Map',
-      sub: 'Interactive location map',
       icon: MapPin,
     },
     {
       id: 'what-if',
-      label: 'Operational What-If',
-      sub: 'Simulate flood & weather conditions',
+      label: 'What-if',
       icon: Sliders,
     },
     {
-      id: 'risk-history',
-      label: 'Risk History',
-      sub: 'Past 24h & 12h forecast',
-      icon: TrendingUp,
-    },
-    {
-      id: 'all-locations',
-      label: 'All Locations',
-      sub: 'Full monitored directory',
-      icon: Table,
-    },
-    {
       id: 'river-forecast',
-      label: 'River Level Forecast',
-      sub: 'Ramamangalam · 1h ahead',
+      label: 'Forecast',
       icon: Waves,
     },
     {
+      id: 'all-locations',
+      label: 'Locations',
+      icon: Table,
+    },
+    {
       id: 'provenance',
-      label: 'Data & Model Provenance',
-      sub: 'Raw data & benchmark',
+      label: 'Data & models',
       icon: Database,
     },
   ];
 
   return (
-    <aside className="w-full lg:w-64 bg-[#1A1F22] border-b lg:border-b-0 lg:border-r border-[#384145] flex flex-col justify-between shrink-0">
-      {/* Top Nav Rail */}
-      <div className="p-3">
-        <div className="text-[10px] font-mono uppercase text-[#9BA5A5] px-2 py-1 tracking-wider font-semibold hidden lg:block">
-          Operations Rail
+    <>
+      {/* Dark backdrop overlay */}
+      <div
+        className={`fixed inset-0 bg-[#082536]/50 backdrop-blur-xs z-40 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Slide-out Navigation Drawer */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[#16587B] border-r border-[#124967] shadow-2xl flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-label="Navigation drawer"
+      >
+        {/* Drawer Header */}
+        <div className="p-4 border-b border-[#124967] flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#124967] flex items-center justify-center text-[#F5EEDD] shrink-0">
+              <Waves className="w-4 h-4 text-[#F5EEDD]" />
+            </div>
+            <div>
+              <span className="font-sans font-semibold text-[15px] tracking-tight text-[#F5EEDD] block leading-tight">
+                AQUORA
+              </span>
+              <span className="font-mono text-[10px] text-[#D6E3EA] block">
+                Kerala Operations Desk
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close navigation"
+            className="p-1.5 rounded-lg text-[#D6E3EA] hover:text-[#F5EEDD] hover:bg-[#124967] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F5EEDD]"
+          >
+            <X className="w-5 h-5" style={{ strokeWidth: 1.5 }} />
+          </button>
         </div>
 
-        {/* Desktop Rail / Mobile Horizontal Bar */}
-        <nav className="flex lg:flex-col overflow-x-auto lg:overflow-visible gap-1 pb-1 lg:pb-0 scrollbar-thin">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
+        {/* Navigation List */}
+        <div className="p-3 flex-1 overflow-y-auto scrollbar-thin">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-[#D6E3EA] px-3 py-1.5 font-semibold">
+            Navigation
+          </div>
+          <nav className="flex flex-col gap-1" aria-label="Main navigation">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelectSection(item.id)}
-                className={`shrink-0 min-w-[200px] lg:min-w-0 lg:w-full text-left px-2.5 py-2 rounded text-xs transition-colors flex items-start space-x-2.5 border cursor-pointer ${
-                  isActive
-                    ? 'bg-[#23292C] border-[#3D8F91] text-[#3D8F91] font-semibold'
-                    : 'bg-transparent border-transparent text-[#E8E5DC] hover:bg-[#23292C] hover:text-[#3D8F91]'
-                }`}
-              >
-                <Icon
-                  className={`w-4 h-4 mt-0.5 shrink-0 ${
-                    isActive ? 'text-[#3D8F91]' : 'text-[#9BA5A5]'
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onSelectSection(item.id);
+                    onClose();
+                  }}
+                  aria-label={item.label}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-[13px] transition-colors flex items-center space-x-2.5 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#F5EEDD] text-[#16587B] font-medium shadow-xs'
+                      : 'bg-transparent text-[#D6E3EA] hover:bg-[#124967] hover:text-[#F5EEDD]'
                   }`}
-                />
-                <div className="min-w-0 truncate">
-                  <div className="text-xs truncate leading-snug">{item.label}</div>
-                  <div className="text-[10px] text-[#9BA5A5] font-normal truncate">
-                    {item.sub}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+                >
+                  <Icon
+                    className={`w-5 h-5 shrink-0 ${
+                      isActive ? 'text-[#16587B]' : 'text-[#D6E3EA]'
+                    }`}
+                    style={{ strokeWidth: 1.5 }}
+                  />
+                  <span className="truncate leading-snug">{item.label}</span>
+                  {item.badge && (
+                    <span className="ml-auto shrink-0 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-[#0B2C40] text-[#FF8F9B] text-[10px] font-mono font-semibold px-1">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-      {/* Bottom Operational Notices */}
-      <div className="p-3 border-t border-[#384145] space-y-2.5 hidden lg:block bg-[#111417]">
-        {/* Prototype notice */}
-        <div className="p-2.5 rounded bg-[#1A1F22] border border-[#384145] text-[11px] text-[#E8E5DC] space-y-1">
-          <div className="flex items-center space-x-1.5 font-semibold text-[#C5A66A]">
-            <Info className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-[10px] font-mono uppercase tracking-wider">
-              Prototype notice
+        {/* Bottom Operational Notices */}
+        <div className="p-3 border-t border-[#124967] space-y-2.5 bg-[#124967]">
+          {/* Prototype notice */}
+          <div className="p-2.5 rounded-lg bg-[#0E3F5C] text-[11px] text-[#F5EEDD] space-y-1">
+            <div className="flex items-center space-x-1.5 font-semibold text-[#F4CD6B]">
+              <Info className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-[10px] font-mono uppercase tracking-wider">
+                Prototype notice
+              </span>
+            </div>
+            <p className="text-[10px] text-[#D6E3EA] leading-relaxed">
+              Baseline telemetry is simulated for this pilot surface.
+            </p>
+          </div>
+
+          {/* Operating status & time standard */}
+          <div className="p-2 rounded-lg bg-[#0E3F5C] flex flex-col space-y-1">
+            <div className="flex items-center space-x-1.5 text-[10px] text-[#5FDDB4] font-medium">
+              <CheckCircle2 className="w-3 h-3 shrink-0" />
+              <span className="truncate">Telemetry within expected range</span>
+            </div>
+            <span className="font-mono text-[9px] text-[#D6E3EA]">
+              UTC+05:30 · Indian Standard Time
             </span>
           </div>
-          <p className="text-[10px] text-[#9BA5A5] leading-relaxed">
-            Baseline telemetry is simulated for this pilot surface.
-          </p>
         </div>
-
-        {/* Operating status & time standard */}
-        <div className="p-2 rounded bg-[#23292C] border border-[#384145] flex flex-col space-y-1">
-          <div className="flex items-center space-x-1.5 text-[10px] text-[#5C9B72] font-medium">
-            <CheckCircle2 className="w-3 h-3 shrink-0" />
-            <span className="truncate">Telemetry within expected range</span>
-          </div>
-          <span className="font-mono text-[9px] text-[#9BA5A5]">
-            UTC+05:30 · Indian Standard Time
-          </span>
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
