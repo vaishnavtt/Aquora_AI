@@ -43,6 +43,15 @@ try:
         SiteInspectionPriorityItem,
         InspectionPrioritizationResponse,
     )
+    from app.schemas.waterbody_gis import (
+        GeoJSONGeometry,
+        WaterbodyFeatureSchema,
+        WaterbodyViewportResponse,
+        HazardAssessmentResponse,
+        WaterbodyStatsResponse,
+        WaterbodySearchResponse,
+        WaterbodyObservationItem,
+    )
 except ImportError:
     from backend.app.schemas.common import (
         RiskLevelEnum,
@@ -88,6 +97,15 @@ except ImportError:
         SiteInspectionPriorityItem,
         InspectionPrioritizationResponse,
     )
+    from backend.app.schemas.waterbody_gis import (
+        GeoJSONGeometry,
+        WaterbodyFeatureSchema,
+        WaterbodyViewportResponse,
+        HazardAssessmentResponse,
+        WaterbodyStatsResponse,
+        WaterbodySearchResponse,
+        WaterbodyObservationItem,
+    )
 
 
 __all__ = [
@@ -124,5 +142,12 @@ __all__ = [
     "HazardMonitoringStatusResponse",
     "SiteInspectionPriorityItem",
     "InspectionPrioritizationResponse",
+    "GeoJSONGeometry",
+    "WaterbodyFeatureSchema",
+    "WaterbodyViewportResponse",
+    "HazardAssessmentResponse",
+    "WaterbodyStatsResponse",
+    "WaterbodySearchResponse",
+    "WaterbodyObservationItem",
 ]
 

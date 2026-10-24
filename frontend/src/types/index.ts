@@ -620,4 +620,93 @@ export interface InspectionPrioritizationResponse {
   disclaimer: string;
 }
 
+// Kerala-Wide Waterbody Geospatial & Transparent Hazard Assessment Types
+export type HazardCategoryType =
+  | 'HIGH_HAZARD'
+  | 'MODERATE_HAZARD'
+  | 'LOW_OBSERVED_HAZARD'
+  | 'INSUFFICIENT_DATA'
+  | 'STALE_DATA';
+
+export interface WaterbodyFeature {
+  id: number;
+  external_id: string;
+  name: string;
+  type: string;
+  geometry_type: string;
+  geometry: {
+    type: string;
+    coordinates: any;
+  };
+  district?: string | null;
+  basin_region?: string | null;
+  centroid_lat: number;
+  centroid_lon: number;
+  bbox: [number, number, number, number];
+  length_km?: number | null;
+  area_sqkm?: number | null;
+  data_source: string;
+  license: string;
+  data_quality: string;
+  is_monitored_station: boolean;
+  hazard_category: HazardCategoryType;
+  contributing_indicators: string[];
+  missing_factors: string[];
+  rule_summary?: string | null;
+  description?: string | null;
+  last_assessed?: string | null;
+  disclaimer: string;
+}
+
+export interface ContributingIndicatorDetail {
+  indicator: string;
+  value: number;
+  unit: string;
+  severity: 'HIGH' | 'MODERATE' | 'LOW';
+  source: string;
+  observed_at: string;
+  description: string;
+}
+
+export interface HazardAssessmentResult {
+  waterbody_id: number;
+  external_id: string;
+  waterbody_name: string;
+  type: string;
+  district?: string | null;
+  hazard_category: HazardCategoryType;
+  hazard_badge_color: string;
+  contributing_indicators: ContributingIndicatorDetail[];
+  missing_factors: string[];
+  stale_factors: string[];
+  evaluation_rules_applied: string[];
+  rule_summary: string;
+  assessment_timestamp: string;
+  data_source: string;
+  license: string;
+  physical_limitations: string;
+  scientific_disclaimer: string;
+}
+
+export interface WaterbodyViewportResponse {
+  total_features: number;
+  returned_features: number;
+  bbox: [number, number, number, number];
+  features: WaterbodyFeature[];
+  dataset_attribution: string;
+  coverage_notes: string;
+}
+
+export interface WaterbodyStatsResponse {
+  total_waterbodies: number;
+  counts_by_type: Record<string, number>;
+  counts_by_district: Record<string, number>;
+  counts_by_hazard_category: Record<string, number>;
+  counts_by_geometry_type: Record<string, number>;
+  data_sources: string[];
+  known_omissions_and_gaps: string[];
+  last_ingestion_date?: string | null;
+}
+
+
 
