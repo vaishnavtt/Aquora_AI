@@ -248,42 +248,138 @@ class HazardAssessmentService:
         else:
             missing.append("local_rainfall_telemetry_absent")
 
-        # 3. Determine Overall Evidence-Based Category
-        if has_severe_structural_hazard or high_stage_triggered or high_flow_triggered or high_rain_triggered:
-            category = HAZARD_CATEGORY_HIGH
-            rule_summary = (
-                "Heightened hydrodynamic caution: Verified evidence of structural hazards, "
-                "rapid flow velocity (>25 cms), high water stage, or intense catchment rainfall."
-            )
-        elif moderate_stage_triggered or moderate_flow_triggered or moderate_rain_triggered:
-            category = HAZARD_CATEGORY_MODERATE
-            rule_summary = (
-                "Elevated caution: Moderate flow velocity or elevated stage observations are present. "
-                "Conditions require heightened vigilance."
-            )
-        elif not waterbody.is_monitored_station and len(contributing) == 0:
-            category = HAZARD_CATEGORY_INSUFFICIENT
-            rule_summary = (
-                "Insufficient empirical data: This waterbody reach has no active hydrological telemetry station, "
-                "depth sounding, or flow sensor installed. Unassessed features are strictly NOT labeled low risk."
-            )
-        elif is_stale_data and len(stale) > 0:
-            category = HAZARD_CATEGORY_STALE
-            rule_summary = (
-                "Stale observation alert: Available telemetry records are historical archives older than 60 days. "
-                "Current real-time hydrodynamic hazard cannot be verified."
-            )
-        elif len(contributing) > 0 and all(c.severity == "LOW" for c in contributing):
-            category = HAZARD_CATEGORY_LOW
-            rule_summary = (
-                "Low observed hydrodynamic hazard: Available telemetry indicates calm nominal stage and low discharge velocity. "
-                "IMPORTANT: This does NOT guarantee swimming or personal safety."
-            )
+        # 3. Determine Overall Evidence-Based Category & Basis
+        has_telemetry = stage_obs is not None or discharge_obs is not None or rainfall_obs is not None
+        is_monitored = waterbody.is_monitored_station or has_telemetry
+
+        if is_monitored and has_telemetry:
+            # Verified observations are available
+            is_provisional = False
+            assessment_basis = "SUPPORTED_BY_VERIFIED_OBSERVATIONS"
+            assessment_basis_label = "Supported by verified observations"
+
+            if high_stage_triggered or high_flow_triggered or high_rain_triggered:
+                category = HAZARD_CATEGORY_HIGH
+                rule_summary = (
+                    "Heightened hydrodynamic risk: Measured streamgage sensors indicate rapid flow velocity (>25 cms), "
+                    "elevated flood stage (>5.0m), or intense catchment rainfall (>50mm)."
+                )
+            elif moderate_stage_triggered or moderate_flow_triggered or moderate_rain_triggered:
+                category = HAZARD_CATEGORY_MODERATE
+                rule_summary = (
+                    "Elevated hydrodynamic caution: Measured streamgage observations indicate moderate discharge (10-25 cms) "
+                    "or elevated seasonal water stage (2.5m - 5.0m)."
+                )
+            elif is_stale_data and len(stale) > 0:
+                category = HAZARD_CATEGORY_STALE
+                rule_summary = (
+                    "Stale observation alert: Available telemetry records are historical archives older than 60 days. "
+                    "Current real-time hydrodynamic hazard cannot be verified."
+                )
+            else:
+                category = HAZARD_CATEGORY_LOW
+                rule_summary = (
+                    "Low observed hydrodynamic hazard: Active streamgage telemetry indicates calm nominal stage and low discharge velocity (<10 cms). "
+                    "NOTICE: Does NOT guarantee swimming safety."
+                )
         else:
-            category = HAZARD_CATEGORY_INSUFFICIENT
-            rule_summary = (
-                "Insufficient telemetry: Critical environmental factors (depth, flow velocity) are unmeasured at this reach."
-            )
+            # Rule-based evaluation for unmonitored / non-telemetry waterbodies
+            desc_text = (waterbody.description or "").lower()
+            name_text = (waterbody.name or "").lower()
+            dist_text = (waterbody.district or "").lower()
+            hazard_tags = " ".join(structural_hazards).lower()
+            combined_info = f"{name_text} {desc_text} {hazard_tags} {dist_text}"
+
+            # Check 1: Severe structural / geomorphic hazards -> HIGH RISK (Red #DC2626)
+            if has_severe_structural_hazard or any(k in combined_info for k in [
+                "quarry", "waterfall", "spillway", "dam_discharge", "sluice_gate",
+                "undertow", "barrage", "gorge", "rapids", "flash_surge", "steep_riverbed_gradient"
+            ]):
+                category = HAZARD_CATEGORY_HIGH
+                is_provisional = True
+                assessment_basis = "PROVISIONAL_ESTIMATE"
+                assessment_basis_label = "Provisional estimate (rule-based assumption)"
+                if wb_type == "quarry":
+                    reason = "deep abandoned quarry with sheer vertical drop-offs, cold thermocline, and absence of egress footholds"
+                    rules_applied.append("RULE_PROVISIONAL_QUARRY_HIGH_HAZARD")
+                elif wb_type == "waterfall":
+                    reason = "active cascade with violent hydraulic plunge pool, severe downward undertow, and wet slippery bedrock"
+                    rules_applied.append("RULE_PROVISIONAL_WATERFALL_HIGH_HAZARD")
+                elif any(k in combined_info for k in ["dam", "spillway", "barrage", "sluice"]):
+                    reason = "downstream reach near dam/barrage structure subject to sudden unannounced discharge surges and gate undertows"
+                    rules_applied.append("RULE_PROVISIONAL_DAM_SURGE_HIGH_HAZARD")
+                elif any(k in combined_info for k in ["gorge", "rapids", "steep_riverbed_gradient", "flash"]):
+                    reason = "high-gradient highland mountain gorge with steep bed slope, rapid flow velocity, and flash flood propensity"
+                    rules_applied.append("RULE_PROVISIONAL_MOUNTAIN_GORGE_HIGH_HAZARD")
+                else:
+                    reason = "known physical structural features creating dangerous undertow, entrapment, or steep drop-offs"
+                    rules_applied.append("RULE_PROVISIONAL_STRUCTURAL_HIGH_HAZARD")
+                rule_summary = f"Provisional estimate: High risk assigned due to {reason}."
+
+            # Check 2: Major perennial rivers, reservoirs, estuarine reaches -> MODERATE RISK (Yellow/Amber #F59E0B)
+            elif wb_type == "river" and (len(desc_text.strip()) > 0 or len(structural_hazards) > 0):
+                category = HAZARD_CATEGORY_MODERATE
+                is_provisional = True
+                assessment_basis = "PROVISIONAL_ESTIMATE"
+                assessment_basis_label = "Provisional estimate (rule-based assumption)"
+                rules_applied.append("RULE_PROVISIONAL_MAINSTEM_RIVER_MODERATE_HAZARD")
+                rule_summary = (
+                    "Provisional estimate: Moderate risk assigned due to major perennial river flow, "
+                    "variable depth across scour pools, and seasonal current fluctuations."
+                )
+
+            elif wb_type == "reservoir" and (len(desc_text.strip()) > 0 or len(structural_hazards) > 0):
+                category = HAZARD_CATEGORY_MODERATE
+                is_provisional = True
+                assessment_basis = "PROVISIONAL_ESTIMATE"
+                assessment_basis_label = "Provisional estimate (rule-based assumption)"
+                rules_applied.append("RULE_PROVISIONAL_RESERVOIR_MODERATE_HAZARD")
+                rule_summary = (
+                    "Provisional estimate: Moderate risk assigned due to deep artificial reservoir impoundment with substantial depth and soft silt sedimentation."
+                )
+
+            elif any(k in combined_info for k in ["tidal", "estuary", "mudflats"]):
+                category = HAZARD_CATEGORY_MODERATE
+                is_provisional = True
+                assessment_basis = "PROVISIONAL_ESTIMATE"
+                assessment_basis_label = "Provisional estimate (rule-based assumption)"
+                rules_applied.append("RULE_PROVISIONAL_ESTUARY_MODERATE_HAZARD")
+                rule_summary = (
+                    "Provisional estimate: Moderate risk assigned due to tidal estuarine channel with bidirectional currents and shifting underwater mudflats."
+                )
+
+            # Check 3: Regulated canals, sheltered lowland lakes, calm lowland streams -> LOW RISK (Green #16A34A)
+            elif wb_type == "canal":
+                category = HAZARD_CATEGORY_LOW
+                is_provisional = True
+                assessment_basis = "PROVISIONAL_ESTIMATE"
+                assessment_basis_label = "Provisional estimate (rule-based assumption)"
+                rules_applied.append("RULE_PROVISIONAL_REGULATED_CANAL_LOW_HAZARD")
+                rule_summary = (
+                    "Provisional estimate: Low risk assigned due to regulated artificial canal with controlled gradient, shallow baseline depth (< 1.5m), and negligible flow velocity."
+                )
+
+            elif wb_type in ("lake", "pond") and not has_severe_structural_hazard:
+                category = HAZARD_CATEGORY_LOW
+                is_provisional = True
+                assessment_basis = "PROVISIONAL_ESTIMATE"
+                assessment_basis_label = "Provisional estimate (rule-based assumption)"
+                rules_applied.append("RULE_PROVISIONAL_SHELTERED_LAKE_LOW_HAZARD")
+                rule_summary = (
+                    "Provisional estimate: Low risk assigned due to calm sheltered waterbody in flat lowland terrain without steep hydraulic drop-offs or rapid flow currents."
+                )
+
+            # Check 4: Uncharacterized or genuinely insufficient data -> INSUFFICIENT DATA (Grey #94A3B8)
+            else:
+                category = HAZARD_CATEGORY_INSUFFICIENT
+                is_provisional = False
+                assessment_basis = "INSUFFICIENT_DATA"
+                assessment_basis_label = "Insufficient empirical data"
+                rules_applied.append("RULE_INSUFFICIENT_DATA_UNCHARACTERIZED")
+                rule_summary = (
+                    "Insufficient empirical data: This waterbody reach has no active hydrological telemetry station, "
+                    "depth sounding, or flow sensor installed. Unassessed features are strictly NOT labeled low risk."
+                )
 
         badge_color = BADGE_COLORS.get(category, "#64748B")
 
@@ -301,6 +397,9 @@ class HazardAssessmentService:
             district=waterbody.district,
             hazard_category=category,
             hazard_badge_color=badge_color,
+            is_provisional=is_provisional,
+            assessment_basis=assessment_basis,
+            assessment_basis_label=assessment_basis_label,
             contributing_indicators=contributing,
             missing_factors=missing,
             stale_factors=stale,

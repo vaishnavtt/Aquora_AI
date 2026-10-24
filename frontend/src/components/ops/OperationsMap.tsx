@@ -69,7 +69,7 @@ export const RISK_CONFIG: Record<
   { label: string; hex: string; bgHex: string; textHex: string; borderHex: string; desc: string }
 > = {
   LOW_OBSERVED_HAZARD: {
-    label: 'Low Risk',
+    label: 'LOW RISK',
     hex: '#16A34A',
     bgHex: '#DCFCE7',
     textHex: '#166534',
@@ -77,31 +77,31 @@ export const RISK_CONFIG: Record<
     desc: 'Available evidence indicates lower observed hazard. MANDATORY NOTICE: Does NOT mean safe for swimming.',
   },
   MODERATE_HAZARD: {
-    label: 'Moderate Hazard',
+    label: 'MODERATE RISK',
     hex: '#F59E0B',
     bgHex: '#FEF3C7',
     textHex: '#92400E',
     borderHex: '#F59E0B',
-    desc: 'Available evidence indicates some hazard factors (moderate flow velocity or elevated stage).',
+    desc: 'Available evidence indicates moderate hydrodynamic hazard (perennial river flow, variable depth, or reservoir impoundment).',
   },
   HIGH_HAZARD: {
-    label: 'High Hazard',
+    label: 'HIGH RISK',
     hex: '#DC2626',
     bgHex: '#FEE2E2',
     textHex: '#991B1B',
     borderHex: '#DC2626',
-    desc: 'Reliable evidence indicates substantial hazard (rapid current, extreme stage, waterfall or quarry).',
+    desc: 'Evidence indicates substantial hazard (rapid current, extreme stage, dam/spillway discharge, gorge, waterfall or quarry).',
   },
   INSUFFICIENT_DATA: {
-    label: 'Insufficient Data',
+    label: 'INSUFFICIENT DATA',
     hex: '#94A3B8',
     bgHex: '#F1F5F9',
     textHex: '#475569',
     borderHex: '#94A3B8',
-    desc: 'Evidence is missing, invalid, or unmonitored. Strictly NOT labeled low risk.',
+    desc: 'Evidence is missing, unmeasured, or unmonitored at this reach. Strictly NOT assumed low risk.',
   },
   STALE_DATA: {
-    label: 'Insufficient Data',
+    label: 'INSUFFICIENT DATA',
     hex: '#94A3B8',
     bgHex: '#F1F5F9',
     textHex: '#475569',
@@ -109,6 +109,99 @@ export const RISK_CONFIG: Record<
     desc: 'Telemetry is outdated (>60 days old). Evidence insufficient for live hazard verification.',
   },
 };
+
+export function createDotPopupHtml(
+  feat: WaterbodyFeature,
+  assessment?: HazardAssessmentResult | null
+): string {
+  const config = RISK_CONFIG[feat.hazard_category] || RISK_CONFIG.INSUFFICIENT_DATA;
+  const lat = feat.centroid_lat;
+  const lon = feat.centroid_lon;
+  const districtText = feat.district
+    ? `${feat.district} District`
+    : feat.basin_region
+    ? `${feat.basin_region} Basin`
+    : 'Kerala';
+
+  // Short explanation of available evidence behind classification
+  let explanation = assessment?.rule_summary || feat.rule_summary;
+  if (!explanation) {
+    if (feat.hazard_category === 'LOW_OBSERVED_HAZARD') {
+      explanation = 'Available streamgage telemetry indicates nominal water level and low discharge velocity (<10 m³/s). NOTICE: Does NOT guarantee swimming safety.';
+    } else if (feat.hazard_category === 'MODERATE_HAZARD') {
+      explanation = 'Moderate risk assigned due to major perennial river flow, depth variation across scour pools, or reservoir impoundment.';
+    } else if (feat.hazard_category === 'HIGH_HAZARD') {
+      explanation = 'High risk assigned due to active cascade, steep gradient gorge, quarry drop-off, dam/spillway discharge zone, or rapid flow currents.';
+    } else {
+      explanation = 'Insufficient empirical data: No active telemetry streamgage, depth sounding, or flow sensor installed at this reach. Unassessed reaches are strictly NOT assumed low risk.';
+    }
+  }
+
+  const isProvisional = assessment?.is_provisional ?? feat.is_provisional ?? true;
+  const basisLabel = assessment?.assessment_basis_label || feat.assessment_basis_label || (
+    isProvisional ? 'Provisional estimate (rule-based heuristic)' : 'Verified streamgage observation'
+  );
+
+  const lowRiskNotice =
+    feat.hazard_category === 'LOW_OBSERVED_HAZARD'
+      ? `
+      <div style="margin-top: 6px; padding: 5px 8px; background-color: #DCFCE7; border-left: 3px solid #16A34A; border-radius: 4px; font-size: 10px; color: #166534; line-height: 1.35; font-weight: 600;">
+        ⚠️ MANDATORY NOTICE: LOW RISK reflects observed baseline indicators; it does NOT mean safe for swimming.
+      </div>
+    `
+      : '';
+
+  return `
+    <div class="aquora-waterbody-popup" data-waterbody-id="${feat.id}" data-risk-category="${feat.hazard_category}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4; color: #082536; min-width: 240px; max-width: 320px; background-color: #F5EEDD; padding: 12px; border-radius: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+        <span style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #134059; font-weight: 700;">
+          ${feat.type.toUpperCase()} · ${districtText}
+        </span>
+        <span style="
+          background-color: ${config.bgHex};
+          color: ${config.textHex};
+          border: 1px solid ${config.borderHex};
+          padding: 2px 8px;
+          border-radius: 9999px;
+          font-size: 10px;
+          font-family: monospace;
+          font-weight: 800;
+          text-transform: uppercase;
+          white-space: nowrap;
+        ">
+          ${config.label}
+        </span>
+      </div>
+
+      <div style="font-weight: 800; font-size: 15px; color: #0B3F5A; margin-bottom: 3px; line-height: 1.25;">
+        ${feat.name}
+      </div>
+
+      <div style="font-family: monospace; font-size: 11px; color: #134059; margin-bottom: 7px; display: flex; align-items: center; gap: 6px;">
+        <span>📍 ${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E</span>
+        ${feat.district ? `<span style="color: #6A9AB6;">•</span><span>${feat.district}</span>` : ''}
+      </div>
+
+      <div style="border-top: 1px solid #DDD2B8; padding-top: 6px; font-size: 11px; color: #082536; line-height: 1.35; margin-bottom: 6px;">
+        <div style="font-size: 9px; font-family: monospace; font-weight: 700; text-transform: uppercase; color: #16587B; margin-bottom: 2px;">
+          Evidence &amp; Assessment:
+        </div>
+        ${explanation}
+      </div>
+
+      <div style="font-size: 9px; font-family: monospace; color: #5B7586; margin-bottom: 4px;">
+        Assessment Basis: ${basisLabel}
+      </div>
+
+      ${lowRiskNotice}
+
+      <div style="border-top: 1px solid #DDD2B8; padding-top: 6px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 10px; font-family: monospace; color: #134059;">
+        <span>Source: ${(feat.data_source || 'OSM').split(' ')[0]}</span>
+        <span style="font-weight: 700; color: #16587B;">ID: #${feat.id}</span>
+      </div>
+    </div>
+  `;
+}
 
 export const KERALA_DISTRICTS: Record<string, [number, number, number]> = {
   'All Districts': [10.5, 76.5, 8],
@@ -179,6 +272,8 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
 
   const userLocationMarkerRef = useRef<L.Marker | null>(null);
   const userLocationCircleRef = useRef<L.Circle | null>(null);
+  const markersByIdRef = useRef<Map<number, L.Layer>>(new Map());
+  const selectedMarkerRef = useRef<L.Layer | null>(null);
 
   // 1. Initialize Leaflet Map Centered on Kerala, India
   useEffect(() => {
@@ -220,6 +315,8 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
       map.remove();
       leafletMapRef.current = null;
       dotsLayerGroupRef.current = null;
+      markersByIdRef.current.clear();
+      selectedMarkerRef.current = null;
     };
   }, []);
 
@@ -297,9 +394,38 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
 
       setSelectedFeature(feat);
       setIsLoadingAssessment(true);
+
+      // Immediately highlight marker and open its popup
+      const marker = markersByIdRef.current.get(feat.id);
+      if (marker) {
+        if (selectedMarkerRef.current && selectedMarkerRef.current !== marker) {
+          if (typeof (selectedMarkerRef.current as any).setStyle === 'function') {
+            (selectedMarkerRef.current as any).setStyle({
+              radius: 8.5,
+              color: '#FFFFFF',
+              weight: 2,
+            });
+          }
+        }
+        selectedMarkerRef.current = marker;
+        if (typeof (marker as any).setStyle === 'function') {
+          (marker as any).setStyle({
+            radius: 12,
+            color: '#082536',
+            weight: 3.5,
+          });
+        }
+        if ('openPopup' in marker && typeof (marker as any).openPopup === 'function') {
+          (marker as any).openPopup();
+        }
+      }
+
       try {
         const assessment = await fetchHazardAssessment(feat.id);
         setAssessmentResult(assessment);
+        if (marker && 'setPopupContent' in marker && typeof (marker as any).setPopupContent === 'function') {
+          (marker as any).setPopupContent(createDotPopupHtml(feat, assessment));
+        }
       } catch (err) {
         console.warn('Failed loading assessment for dot:', err);
       } finally {
@@ -313,6 +439,9 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
       if (matched) {
         onSelectStation(matched);
       } else {
+        const isHigh = feat.hazard_category === 'HIGH_HAZARD';
+        const isMod = feat.hazard_category === 'MODERATE_HAZARD';
+        const isLow = feat.hazard_category === 'LOW_OBSERVED_HAZARD';
         const virtualStation: WaterBody = {
           id: feat.id,
           name: feat.name,
@@ -322,15 +451,16 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
           elevation_m: 15,
           elevation_meters: 15,
           water_temp_c: 26.5,
-          current_risk_level:
-            feat.hazard_category === 'HIGH_HAZARD'
-              ? 'high'
-              : feat.hazard_category === 'MODERATE_HAZARD'
-              ? 'moderate'
-              : 'low',
-          current_risk_score: feat.hazard_category === 'HIGH_HAZARD' ? 75 : 20,
+          current_risk_level: isHigh
+            ? 'high'
+            : isMod
+            ? 'moderate'
+            : isLow
+            ? 'low'
+            : ('no_prediction' as any),
+          current_risk_score: isHigh ? 75 : isMod ? 45 : isLow ? 20 : null,
           is_demonstration_data: false,
-          risk_score: feat.hazard_category === 'HIGH_HAZARD' ? 75 : 20,
+          risk_score: isHigh ? 75 : isMod ? 45 : isLow ? 20 : 0,
           flow_rate_cms: 2.5,
           depth_meters: 2.0,
           last_updated: feat.last_assessed || new Date().toISOString(),
@@ -344,11 +474,23 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
     [waterBodies, onSelectStation]
   );
 
+  // Synchronize incoming selectedStation prop with selectedFeature and marker
+  useEffect(() => {
+    if (!selectedStation) return;
+    const match = waterbodyFeatures.find(
+      (f) => f.name.toLowerCase() === selectedStation.name.toLowerCase() || f.id === selectedStation.id
+    );
+    if (match && match.id !== selectedFeature?.id) {
+      handleSelectDot(match);
+    }
+  }, [selectedStation, waterbodyFeatures, selectedFeature, handleSelectDot]);
+
   // 5. Render Circular Dots (Leaflet circleMarker)
   useEffect(() => {
     if (!leafletMapRef.current || !dotsLayerGroupRef.current) return;
     const group = dotsLayerGroupRef.current;
     group.clearLayers();
+    markersByIdRef.current.clear();
 
     // Filter by district, type, risk
     const filtered = waterbodyFeatures.filter((feat) => {
@@ -393,53 +535,18 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
         dotMarker = L.marker([lat, lon]);
       }
 
-      // Interactive Popup for Dot
-      const popupHtml = `
-        <div style="font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; line-height: 1.4; color: #082536; min-width: 230px; background-color: #F5EEDD; padding: 10px; border-radius: 8px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
-            <span style="font-size: 9px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; color: #134059; font-weight: 600;">
-              ${feat.type.toUpperCase()} · ${feat.district || 'KERALA'}
-            </span>
-            <span style="
-              background-color: ${config.bgHex};
-              color: ${config.textHex};
-              border: 1px solid ${config.borderHex};
-              padding: 1px 7px;
-              border-radius: 9999px;
-              font-size: 9px;
-              font-family: 'IBM Plex Mono', monospace;
-              font-weight: 700;
-              text-transform: uppercase;
-            ">
-              ${config.label}
-            </span>
-          </div>
-
-          <div style="font-weight: 700; font-size: 14px; color: #0B3F5A; margin-bottom: 2px;">
-            ${feat.name}
-          </div>
-
-          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #134059; margin-bottom: 6px;">
-            ${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E
-          </div>
-
-          <div style="border-top: 1px solid #DDD2B8; padding-top: 6px; font-size: 11px; color: #082536; line-height: 1.35; margin-bottom: 8px;">
-            ${feat.rule_summary || config.desc}
-          </div>
-
-          <div style="border-top: 1px solid #DDD2B8; padding-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: #134059;">
-              Source: ${feat.data_source.split(' ')[0]}
-            </span>
-            <span style="font-size: 10px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #0B3F5A;">
-              Click to Assess
-            </span>
-          </div>
-        </div>
-      `;
+      // Interactive Popup for Dot using createDotPopupHtml
+      const popupHtml = createDotPopupHtml(feat, isSelected ? assessmentResult : null);
 
       if ('bindPopup' in dotMarker && typeof (dotMarker as any).bindPopup === 'function') {
-        (dotMarker as any).bindPopup(popupHtml);
+        (dotMarker as any).bindPopup(popupHtml, {
+          maxWidth: 320,
+          minWidth: 240,
+          autoPan: true,
+          autoPanPadding: [25, 25],
+          closeButton: true,
+          className: 'aquora-waterbody-popup-container',
+        });
       }
 
       if ('on' in dotMarker && typeof (dotMarker as any).on === 'function') {
@@ -449,8 +556,16 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
       }
 
       dotMarker.addTo(group);
+      markersByIdRef.current.set(feat.id, dotMarker);
+
+      if (isSelected) {
+        selectedMarkerRef.current = dotMarker;
+        if ('openPopup' in dotMarker && typeof (dotMarker as any).openPopup === 'function') {
+          (dotMarker as any).openPopup();
+        }
+      }
     });
-  }, [waterbodyFeatures, selectedFeature, comparedFeature, selectedDistrict, selectedType, selectedRiskFilter, handleSelectDot]);
+  }, [waterbodyFeatures, selectedDistrict, selectedType, selectedRiskFilter, handleSelectDot]);
 
   // 6. District Fly-To
   const handleDistrictChange = (dist: string) => {
@@ -953,8 +1068,8 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
             {/* Assessment Grid: Single Card or Side-by-Side Comparison */}
             <div className={`grid grid-cols-1 ${isComparing && comparedFeature ? 'lg:grid-cols-2' : ''} gap-4`}>
               {/* Primary Location Card */}
-              {assessmentResult && (
-                <div className="bg-[#84B3CE]/20 border border-[#6A9AB6] rounded-xl p-3.5 space-y-3">
+              {selectedFeature && (
+                <div className="bg-[#84B3CE]/20 border border-[#6A9AB6] rounded-xl p-3.5 space-y-3" data-testid="primary-waterbody-card">
                   <div className="flex items-center justify-between border-b border-[#6A9AB6]/40 pb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-bold text-[#0B3F5A]">Primary Location:</span>
@@ -962,22 +1077,22 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
                     </div>
                     <span
                       style={{
-                        backgroundColor: RISK_CONFIG[assessmentResult.hazard_category]?.bgHex || '#F1F5F9',
-                        color: RISK_CONFIG[assessmentResult.hazard_category]?.textHex || '#475569',
-                        borderColor: RISK_CONFIG[assessmentResult.hazard_category]?.borderHex || '#94A3B8',
+                        backgroundColor: RISK_CONFIG[assessmentResult?.hazard_category || selectedFeature.hazard_category]?.bgHex || '#F1F5F9',
+                        color: RISK_CONFIG[assessmentResult?.hazard_category || selectedFeature.hazard_category]?.textHex || '#475569',
+                        borderColor: RISK_CONFIG[assessmentResult?.hazard_category || selectedFeature.hazard_category]?.borderHex || '#94A3B8',
                       }}
                       className="px-3 py-0.5 rounded-full text-xs font-mono font-bold border uppercase tracking-wider flex items-center gap-1.5"
                     >
                       <span
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: RISK_CONFIG[assessmentResult.hazard_category]?.hex || '#94A3B8' }}
+                        style={{ backgroundColor: RISK_CONFIG[assessmentResult?.hazard_category || selectedFeature.hazard_category]?.hex || '#94A3B8' }}
                       />
-                      <span>{RISK_CONFIG[assessmentResult.hazard_category]?.label || assessmentResult.hazard_category}</span>
+                      <span>{RISK_CONFIG[assessmentResult?.hazard_category || selectedFeature.hazard_category]?.label}</span>
                     </span>
                   </div>
 
                   <div className="text-xs font-sans text-[#082536] leading-relaxed">
-                    <strong>Rule Explanation:</strong> {assessmentResult.rule_summary}
+                    <strong>Rule Explanation:</strong> {assessmentResult?.rule_summary || selectedFeature.rule_summary || RISK_CONFIG[selectedFeature.hazard_category]?.desc}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
@@ -985,9 +1100,9 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
                     <div className="bg-[#F5EEDD] p-2.5 rounded-lg border border-[#DDD2B8] space-y-1.5">
                       <div className="font-mono font-semibold text-xs text-[#0B3F5A] flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Available Indicators ({assessmentResult.contributing_indicators.length})</span>
+                        <span>Available Indicators ({(assessmentResult?.contributing_indicators || []).length})</span>
                       </div>
-                      {assessmentResult.contributing_indicators.length > 0 ? (
+                      {assessmentResult && assessmentResult.contributing_indicators.length > 0 ? (
                         <div className="space-y-1">
                           {assessmentResult.contributing_indicators.map((ind, i) => (
                             <div key={i} className="p-1.5 rounded bg-[#84B3CE]/15 text-[11px]">
@@ -1001,7 +1116,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
                         </div>
                       ) : (
                         <div className="text-[11px] text-[#134059] italic py-1">
-                          No active sensor telemetry available at this reach.
+                          {isLoadingAssessment ? 'Loading telemetry...' : 'No active sensor telemetry available at this reach.'}
                         </div>
                       )}
                     </div>
@@ -1012,19 +1127,23 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
                         <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
                         <span>Missing or Unmonitored Data</span>
                       </div>
-                      {assessmentResult.missing_factors.length > 0 ? (
+                      {assessmentResult && assessmentResult.missing_factors.length > 0 ? (
                         <ul className="list-disc list-inside space-y-0.5 text-[11px] text-[#134059] font-mono">
                           {assessmentResult.missing_factors.map((m, i) => (
                             <li key={i}>{m.replace(/_/g, ' ')}</li>
                           ))}
                         </ul>
                       ) : (
-                        <div className="text-[11px] text-emerald-700 italic">
-                          All standard telemetry parameters monitored.
+                        <div className="text-[11px] text-[#134059] italic py-1">
+                          {isLoadingAssessment ? 'Evaluating factors...' : (selectedFeature.missing_factors?.length ? selectedFeature.missing_factors.join(', ') : 'Telemetry parameters unmonitored at this point.')}
                         </div>
                       )}
                       <div className="text-[10px] font-mono text-[#134059] border-t border-[#DDD2B8] pt-1 mt-1">
-                        Assessed: {new Date(assessmentResult.assessment_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {assessmentResult.data_source}
+                        {assessmentResult ? (
+                          <>Assessed: {new Date(assessmentResult.assessment_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {assessmentResult.data_source}</>
+                        ) : (
+                          <>Source: {selectedFeature.data_source}</>
+                        )}
                       </div>
                     </div>
                   </div>

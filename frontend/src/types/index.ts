@@ -649,6 +649,9 @@ export interface WaterbodyFeature {
   license: string;
   data_quality: string;
   is_monitored_station: boolean;
+  is_provisional?: boolean;
+  assessment_basis?: string;
+  assessment_basis_label?: string;
   hazard_category: HazardCategoryType;
   contributing_indicators: string[];
   missing_factors: string[];
@@ -676,6 +679,9 @@ export interface HazardAssessmentResult {
   district?: string | null;
   hazard_category: HazardCategoryType;
   hazard_badge_color: string;
+  is_provisional?: boolean;
+  assessment_basis?: string;
+  assessment_basis_label?: string;
   contributing_indicators: ContributingIndicatorDetail[];
   missing_factors: string[];
   stale_factors: string[];

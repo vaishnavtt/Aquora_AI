@@ -261,8 +261,12 @@ class WaterbodyIngestionService:
             wb.data_source = feat.get("data_source", "OpenStreetMap Contributors")
             wb.license = feat.get("license", "Open Database License (ODbL)")
             wb.data_quality = "verified_spatial_feature"
-            wb.is_monitored_station = feat.get("is_monitored_station", False)
-            wb.description = feat.get("description")
+            raw_desc = feat.get("description", "")
+            hazards_list = feat.get("structural_hazards", [])
+            if hazards_list:
+                wb.description = f"{raw_desc} hazards: {', '.join(hazards_list)}".strip()
+            else:
+                wb.description = raw_desc
             wb.updated_at = now
 
             db.flush()

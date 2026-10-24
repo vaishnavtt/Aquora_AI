@@ -37,14 +37,34 @@ def _model_to_feature_schema(wb: MappedWaterbodyModel) -> WaterbodyFeatureSchema
     contributing = []
     missing = []
     rule_summary = None
+    is_provisional = False
+    assessment_basis = "PROVISIONAL_ESTIMATE"
+    assessment_basis_label = "Provisional estimate (rule-based assumption)"
+    hazard_cat = wb.hazard_category
+
     if wb.hazard_assessment_json:
         try:
             haz_data = json.loads(wb.hazard_assessment_json)
             contributing = [c.get("indicator", "") for c in haz_data.get("contributing_indicators", [])]
             missing = haz_data.get("missing_factors", [])
             rule_summary = haz_data.get("rule_summary")
+            is_provisional = haz_data.get("is_provisional", False)
+            assessment_basis = haz_data.get("assessment_basis", "PROVISIONAL_ESTIMATE")
+            assessment_basis_label = haz_data.get("assessment_basis_label", "Provisional estimate (rule-based assumption)")
+            if not hazard_cat:
+                hazard_cat = haz_data.get("hazard_category")
         except Exception:
             pass
+
+    if not hazard_cat or not rule_summary:
+        assessment = hazard_assessment_service.evaluate_waterbody_hazard(wb)
+        hazard_cat = assessment.hazard_category
+        contributing = [c.indicator for c in assessment.contributing_indicators]
+        missing = assessment.missing_factors
+        rule_summary = assessment.rule_summary
+        is_provisional = assessment.is_provisional
+        assessment_basis = assessment.assessment_basis
+        assessment_basis_label = assessment.assessment_basis_label
 
     return WaterbodyFeatureSchema(
         id=wb.id,
@@ -64,7 +84,10 @@ def _model_to_feature_schema(wb: MappedWaterbodyModel) -> WaterbodyFeatureSchema
         license=wb.license,
         data_quality=wb.data_quality,
         is_monitored_station=wb.is_monitored_station,
-        hazard_category=wb.hazard_category or "INSUFFICIENT_DATA",
+        is_provisional=is_provisional,
+        assessment_basis=assessment_basis,
+        assessment_basis_label=assessment_basis_label,
+        hazard_category=hazard_cat or "INSUFFICIENT_DATA",
         contributing_indicators=contributing,
         missing_factors=missing,
         rule_summary=rule_summary,
