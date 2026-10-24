@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Sliders, RefreshCw, AlertTriangle, ArrowRight, ShieldAlert, Sparkles, CheckCircle2, Info } from 'lucide-react';
+import { Sliders, RefreshCw, ArrowRight, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { WaterBody, RiskLevel } from '../../types';
-import { OpsRiskBadge, RISK_TOKENS } from './RiskBadge';
 
 interface OperationalWhatIfPanelProps {
   selectedStation: WaterBody | null;
@@ -12,11 +11,10 @@ type ExposureScenario = 'Normal Activity' | 'Low Off-Peak' | 'Crowded Holiday/Fe
 export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
   selectedStation,
 }) => {
-  // Scenario simulation controls state
-  const [rainfallInc, setRainfallInc] = useState<number>(35); // 0–150 mm
-  const [stageDelta, setStageDelta] = useState<number>(0.85); // -1.00 m to +3.00 m
-  const [dischargeInc, setDischargeInc] = useState<number>(24); // 0–100 m³/s
-  const [waterTemp, setWaterTemp] = useState<number>(selectedStation?.water_temp_c ?? 24.0); // 10–35 °C
+  const [rainfallInc, setRainfallInc] = useState<number>(35);
+  const [stageDelta, setStageDelta] = useState<number>(0.85);
+  const [dischargeInc, setDischargeInc] = useState<number>(24);
+  const [waterTemp, setWaterTemp] = useState<number>(selectedStation?.water_temp_c ?? 24.0);
   const [exposureScenario, setExposureScenario] = useState<ExposureScenario>('Crowded Holiday/Festival');
 
   useEffect(() => {
@@ -33,7 +31,6 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
   const baselineRisk: number | null = hasBaselineRisk ? Math.round(rawBaselineScore!) : null;
   const baselineLevel: RiskLevel | null = hasBaselineRisk ? selectedStation!.current_risk_level : null;
 
-  // Real-time calculation of simulated risk
   const { simulatedRisk, simulatedLevel, deltaShift, recommendation } = useMemo(() => {
     if (baselineRisk === null) {
       return {
@@ -46,11 +43,10 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
       };
     }
 
-    // Weight factors
     let rainImpact = rainfallInc * 0.22;
     let stageImpact = stageDelta * 14.5;
     let dischargeImpact = dischargeInc * 0.18;
-    let tempFactor = (28 - waterTemp) * 0.4; // cooler water or thermal shock increases hazard
+    let tempFactor = (28 - waterTemp) * 0.4;
 
     let exposureFactor = 0;
     if (exposureScenario === 'Crowded Holiday/Festival') exposureFactor = 12;
@@ -94,44 +90,55 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
     setExposureScenario('Normal Activity');
   };
 
+  const levelColor =
+    simulatedLevel === 'extreme'
+      ? '#DC2626'
+      : simulatedLevel === 'high'
+      ? '#EA580C'
+      : simulatedLevel === 'moderate'
+      ? '#D97706'
+      : '#16A34A';
+
   return (
-    <div className="bg-[#1A1F22] border border-[#384145] rounded p-4 shadow-xs" id="what-if-section">
+    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" id="what-if-section">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#384145] gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 gap-3">
         <div>
           <div className="flex items-center space-x-2">
-            <Sliders className="w-4 h-4 text-[#3D8F91]" />
-            <h3 className="font-sans font-semibold text-[18px] text-[#E8E5DC]">
-              Operational What-If
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#1677D2] flex items-center justify-center">
+              <Sliders className="w-4 h-4" />
+            </div>
+            <h3 className="font-bold text-lg text-[#172B4D]">
+              Operational What-If Simulator
             </h3>
             {selectedStation && (
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#23292C] text-[#3D8F91] border border-[#384145]">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#1677D2] border border-blue-200">
                 {selectedStation.name}
               </span>
             )}
           </div>
-          <p className="text-xs text-[#9BA5A5] font-sans mt-0.5">
-            Review the next-hour operating condition.
+          <p className="text-xs text-slate-500 mt-1">
+            Simulate the operational risk response under sudden rainfall surges, stage rises, or festival crowds.
           </p>
         </div>
 
         <button
           onClick={handleReset}
-          className="inline-flex items-center space-x-1 text-xs font-mono text-[#9BA5A5] hover:text-[#3D8F91] p-1 transition-colors self-start sm:self-auto cursor-pointer"
+          className="btn-secondary text-xs self-start sm:self-auto"
         >
-          <RefreshCw className="w-3 h-3" />
-          <span>Reset simulation</span>
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Reset Simulation</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 items-start">
         {/* Controls Column (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
           {/* 1. Rainfall increment */}
-          <div className="bg-[#23292C] border border-[#384145] rounded p-3">
-            <div className="flex justify-between items-center mb-1 text-xs font-mono">
-              <span className="text-[#E8E5DC] font-semibold">Rainfall increment: 0–150 mm</span>
-              <span className="text-[#3D8F91] font-bold">+{rainfallInc} mm</span>
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 transition-colors hover:border-slate-300">
+            <div className="flex justify-between items-center mb-1.5 text-xs">
+              <span className="text-[#172B4D] font-bold">Rainfall increment: 0–150 mm</span>
+              <span className="font-mono font-bold text-[#1677D2]">+{rainfallInc} mm</span>
             </div>
             <input
               type="range"
@@ -140,44 +147,44 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
               step="1"
               value={rainfallInc}
               onChange={(e) => setRainfallInc(Number(e.target.value))}
-              className="w-full accent-[#3D8F91] cursor-pointer"
+              className="w-full accent-[#1677D2] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] font-mono text-[#9BA5A5] mt-1">
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
               <span>0 mm (dry)</span>
-              <span>75 mm (heavy)</span>
-              <span>150 mm (torrential cloudburst)</span>
+              <span>75 mm (heavy downpour)</span>
+              <span>150 mm (cloudburst)</span>
             </div>
           </div>
 
           {/* 2. River stage delta */}
-          <div className="bg-[#23292C] border border-[#384145] rounded p-3">
-            <div className="flex justify-between items-center mb-1 text-xs font-mono">
-              <span className="text-[#E8E5DC] font-semibold">River stage delta: -1.00 m to +3.00 m</span>
-              <span className="text-[#3D8F91] font-bold">
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 transition-colors hover:border-slate-300">
+            <div className="flex justify-between items-center mb-1.5 text-xs">
+              <span className="text-[#172B4D] font-bold">River stage delta: -1.00 m to +3.00 m</span>
+              <span className="font-mono font-bold text-[#1677D2]">
                 {stageDelta >= 0 ? `+${stageDelta.toFixed(2)}` : stageDelta.toFixed(2)} m
               </span>
             </div>
             <input
               type="range"
-              min="-1.00"
-              max="3.00"
+              min="-1.0"
+              max="3.0"
               step="0.05"
               value={stageDelta}
               onChange={(e) => setStageDelta(Number(e.target.value))}
-              className="w-full accent-[#3D8F91] cursor-pointer"
+              className="w-full accent-[#1677D2] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] font-mono text-[#9BA5A5] mt-1">
-              <span>-1.00 m (drop)</span>
-              <span>0.00 m (stable)</span>
-              <span>+3.00 m (flash surge breach)</span>
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+              <span>-1.00 m (receding)</span>
+              <span>0.00 m (steady gauge)</span>
+              <span>+3.00 m (extreme surge)</span>
             </div>
           </div>
 
-          {/* 3. River discharge increment */}
-          <div className="bg-[#23292C] border border-[#384145] rounded p-3">
-            <div className="flex justify-between items-center mb-1 text-xs font-mono">
-              <span className="text-[#E8E5DC] font-semibold">River discharge increment: 0–100 m³/s</span>
-              <span className="text-[#3D8F91] font-bold">+{dischargeInc} m³/s</span>
+          {/* 3. Discharge increment */}
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 transition-colors hover:border-slate-300">
+            <div className="flex justify-between items-center mb-1.5 text-xs">
+              <span className="text-[#172B4D] font-bold">Discharge increment: 0–100 m³/s</span>
+              <span className="font-mono font-bold text-[#1677D2]">+{dischargeInc} m³/s</span>
             </div>
             <input
               type="range"
@@ -186,20 +193,20 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
               step="1"
               value={dischargeInc}
               onChange={(e) => setDischargeInc(Number(e.target.value))}
-              className="w-full accent-[#3D8F91] cursor-pointer"
+              className="w-full accent-[#1677D2] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] font-mono text-[#9BA5A5] mt-1">
-              <span>0 m³/s</span>
-              <span>50 m³/s</span>
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+              <span>0 m³/s (nominal)</span>
+              <span>50 m³/s (sluice spill)</span>
               <span>100 m³/s (high dam release)</span>
             </div>
           </div>
 
           {/* 4. Water temperature */}
-          <div className="bg-[#23292C] border border-[#384145] rounded p-3">
-            <div className="flex justify-between items-center mb-1 text-xs font-mono">
-              <span className="text-[#E8E5DC] font-semibold">Water temperature: 10–35 °C</span>
-              <span className="text-[#3D8F91] font-bold">{waterTemp.toFixed(1)} °C</span>
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 transition-colors hover:border-slate-300">
+            <div className="flex justify-between items-center mb-1.5 text-xs">
+              <span className="text-[#172B4D] font-bold">Water temperature: 10–35 °C</span>
+              <span className="font-mono font-bold text-[#1677D2]">{waterTemp.toFixed(1)} °C</span>
             </div>
             <input
               type="range"
@@ -208,9 +215,9 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
               step="0.5"
               value={waterTemp}
               onChange={(e) => setWaterTemp(Number(e.target.value))}
-              className="w-full accent-[#3D8F91] cursor-pointer"
+              className="w-full accent-[#1677D2] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] font-mono text-[#9BA5A5] mt-1">
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
               <span>10.0 °C (cold alpine runoff)</span>
               <span>24.0 °C (normal)</span>
               <span>35.0 °C (warm canal)</span>
@@ -218,9 +225,9 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
           </div>
 
           {/* 5. Human exposure scenario */}
-          <div className="bg-[#23292C] border border-[#384145] rounded p-3">
-            <span className="text-xs font-mono text-[#E8E5DC] font-semibold block mb-2">
-              Human exposure scenario:
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
+            <span className="text-xs font-bold text-[#172B4D] block mb-2.5">
+              Human Exposure Scenario:
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {(
@@ -234,10 +241,10 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
                 <button
                   key={scen}
                   onClick={() => setExposureScenario(scen)}
-                  className={`p-2 rounded text-left border text-[11px] font-mono transition-colors cursor-pointer ${
+                  className={`p-2.5 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                     exposureScenario === scen
-                      ? 'bg-[#1A1F22] border-[#3D8F91] text-[#3D8F91] font-semibold'
-                      : 'bg-[#1A1F22] border-[#384145] text-[#9BA5A5] hover:bg-[#2A3236] hover:text-[#E8E5DC]'
+                      ? 'btn-primary'
+                      : 'btn-secondary text-[#24445A]'
                   }`}
                 >
                   {scen}
@@ -248,52 +255,55 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
         </div>
 
         {/* Results & Recommendation Output (5 cols) */}
-        <div className="lg:col-span-5 bg-[#111417] border border-[#384145] rounded p-4 space-y-4">
-          <div className="text-[11px] font-mono uppercase text-[#3D8F91] font-semibold tracking-wider flex items-center space-x-1.5 pb-2 border-b border-[#384145]">
-            <Sparkles className="w-3.5 h-3.5 text-[#3D8F91]" />
+        <div className="lg:col-span-5 bg-slate-50/80 border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
+          <div className="text-xs font-bold uppercase text-[#1677D2] tracking-wider flex items-center space-x-1.5 pb-2.5 border-b border-slate-200">
+            <Sparkles className="w-4 h-4 text-[#1677D2]" />
             <span>Simulation Comparison Output</span>
           </div>
 
-          {/* Comparison readout cards */}
+          {/* Comparison Readout Cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#1A1F22] border border-[#384145] rounded p-3">
-              <span className="text-[10px] font-mono text-[#9BA5A5] uppercase block">
+            <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase block">
                 Baseline risk
               </span>
-              <div className="font-mono text-2xl font-bold text-[#E8E5DC] mt-1">
+              <div className="font-mono text-3xl font-extrabold text-[#172B4D] mt-1">
                 {baselineRisk !== null ? baselineRisk : '—'}
               </div>
-              <span className="text-[10px] font-mono text-[#9BA5A5] uppercase">
+              <span className="text-[11px] font-bold text-slate-500 uppercase mt-0.5 block">
                 {baselineLevel || 'Unrated'}
               </span>
             </div>
 
-            <div className="bg-[#1A1F22] border border-[#384145] rounded p-3 border-l-3 border-l-[#C96A50]">
-              <span className="text-[10px] font-mono text-[#9BA5A5] uppercase block">
+            <div
+              className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs"
+              style={{ borderLeft: `4px solid ${levelColor}` }}
+            >
+              <span className="text-[11px] font-semibold text-slate-400 uppercase block">
                 Simulated risk
               </span>
-              <div className="font-mono text-2xl font-bold text-[#C96A50] mt-1">
+              <div className="font-mono text-3xl font-extrabold mt-1" style={{ color: levelColor }}>
                 {simulatedRisk !== null ? simulatedRisk : '—'}
               </div>
-              <span className="text-[10px] font-mono text-[#C96A50] uppercase font-semibold">
+              <span className="text-[11px] font-bold uppercase mt-0.5 block" style={{ color: levelColor }}>
                 {simulatedLevel || 'Awaiting baseline'}
               </span>
             </div>
           </div>
 
           {/* Delta & Risk Shift Readout */}
-          <div className="bg-[#1A1F22] border border-[#384145] rounded p-3 space-y-2 text-xs font-mono">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs font-medium shadow-2xs">
             <div className="flex justify-between items-center">
-              <span className="text-[#9BA5A5]">Delta shift:</span>
+              <span className="text-slate-500">Delta shift:</span>
               <span
-                className={`font-bold ${
+                className={`font-mono font-bold ${
                   deltaShift === null
-                    ? 'text-[#9BA5A5]'
+                    ? 'text-slate-500'
                     : deltaShift > 0
-                    ? 'text-[#C96A50]'
+                    ? 'text-[#EA580C]'
                     : deltaShift < 0
-                    ? 'text-[#5C9B72]'
-                    : 'text-[#9BA5A5]'
+                    ? 'text-[#16A34A]'
+                    : 'text-slate-600'
                 }`}
               >
                 {deltaShift !== null
@@ -303,22 +313,12 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
                   : 'Unavailable'}
               </span>
             </div>
-            <div className="flex justify-between items-center pt-1.5 border-t border-[#384145]">
-              <span className="text-[#9BA5A5]">Risk shift:</span>
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+              <span className="text-slate-500">Risk shift:</span>
               <div className="flex items-center space-x-1.5 font-bold uppercase">
-                <span className="text-[#9BA5A5]">{baselineLevel || 'Unrated'}</span>
-                <ArrowRight className="w-3 h-3 text-[#3D8F91]" />
-                <span
-                  className={
-                    simulatedRisk === null
-                      ? 'text-[#9BA5A5]'
-                      : simulatedRisk >= 85
-                      ? 'text-[#B74848]'
-                      : simulatedRisk >= 70
-                      ? 'text-[#C96A50]'
-                      : 'text-[#C99A45]'
-                  }
-                >
+                <span className="text-slate-600">{baselineLevel || 'Unrated'}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                <span style={{ color: levelColor }}>
                   {simulatedLevel || 'Awaiting baseline'}
                 </span>
               </div>
@@ -326,19 +326,19 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
           </div>
 
           {/* Plain-Language Operational Recommendation */}
-          <div className="bg-[#1A1F22] border border-[#384145] rounded p-3 space-y-1.5">
-            <div className="flex items-center space-x-1.5 text-[11px] font-sans font-semibold text-[#3D8F91]">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#3D8F91]" />
-              <span>Recommended action</span>
+          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1.5 shadow-2xs">
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-[#1677D2]">
+              <CheckCircle2 className="w-4 h-4 text-[#1677D2]" />
+              <span>Recommended Operational Response</span>
             </div>
-            <p className="text-xs text-[#E8E5DC] leading-relaxed font-sans font-medium">
+            <p className="text-xs text-slate-700 leading-relaxed font-medium">
               {recommendation}
             </p>
           </div>
 
           {/* Operational Guidance note */}
-          <div className="text-[10px] font-mono text-[#9BA5A5] bg-[#23292C] p-2.5 rounded border border-[#384145] leading-relaxed">
-            <span className="text-[#3D8F91] font-semibold block mb-0.5">Experimental Operational Stress-Test Tool</span>
+          <div className="text-[11px] text-slate-500 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed shadow-2xs">
+            <span className="text-[#1677D2] font-bold block mb-1">Experimental Operational Stress-Test Tool</span>
             Real-time sensitivity response based on linear heuristic hydrologic factors (+0.22/mm rain, +14.5/m stage rise, +0.18/m³/s discharge, cold shock factor, and crowd exposure offset; score clamped 5–100). Exploratory scenario simulation tool, not a certified hydrodynamic forecast or individual drowning prediction.
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, AlertOctagon, Flame } from 'lucide-react';
+import { CheckCircle2, CircleDot, AlertTriangle, AlertOctagon } from 'lucide-react';
 import { RiskLevel } from '../../types';
 
 export const RISK_TOKENS: Record<
@@ -10,46 +10,75 @@ export const RISK_TOKENS: Record<
     bgHex: string;
     borderHex: string;
     textHex: string;
+    surfaceColor: string;
     Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   }
 > = {
   low: {
-    label: 'SAFE / LOW',
-    hex: '#5C9B72',
-    bgHex: 'rgba(92, 155, 114, 0.16)',
-    borderHex: 'rgba(92, 155, 114, 0.35)',
-    textHex: '#7DC798',
-    Icon: ShieldCheck,
+    label: 'Safe',
+    hex: '#16A34A',
+    bgHex: '#F0FDF4',
+    borderHex: '#BBF7D0',
+    textHex: '#15803D',
+    surfaceColor: '#16A34A',
+    Icon: CheckCircle2,
   },
   moderate: {
-    label: 'ADVISORY / MODERATE',
-    hex: '#C99A45',
-    bgHex: 'rgba(201, 154, 69, 0.16)',
-    borderHex: 'rgba(201, 154, 69, 0.35)',
-    textHex: '#E5B662',
-    Icon: AlertTriangle,
+    label: 'Watch',
+    hex: '#D97706',
+    bgHex: '#FFFBEB',
+    borderHex: '#FDE68A',
+    textHex: '#B45309',
+    surfaceColor: '#D97706',
+    Icon: CircleDot,
   },
   high: {
-    label: 'HIGH RISK',
-    hex: '#C96A50',
-    bgHex: 'rgba(201, 106, 80, 0.16)',
-    borderHex: 'rgba(201, 106, 80, 0.35)',
-    textHex: '#E68A72',
-    Icon: AlertOctagon,
+    label: 'High',
+    hex: '#EA580C',
+    bgHex: '#FFF7ED',
+    borderHex: '#FED7AA',
+    textHex: '#C2410C',
+    surfaceColor: '#EA580C',
+    Icon: AlertTriangle,
   },
   extreme: {
-    label: 'EXTREME RISK',
-    hex: '#B74848',
-    bgHex: 'rgba(183, 72, 72, 0.16)',
-    borderHex: 'rgba(183, 72, 72, 0.35)',
-    textHex: '#D96B6B',
-    Icon: Flame,
+    label: 'Extreme',
+    hex: '#DC2626',
+    bgHex: '#FEF2F2',
+    borderHex: '#FECACA',
+    textHex: '#B91C1C',
+    surfaceColor: '#DC2626',
+    Icon: AlertOctagon,
   },
 };
 
+export const getRiskToken = (level: string | null | undefined) => {
+  if (!level) {
+    return {
+      label: 'Unrated',
+      hex: '#64748B',
+      bgHex: '#F1F5F9',
+      borderHex: '#E2E8F0',
+      textHex: '#64748B',
+      surfaceColor: '#94A3B8',
+      Icon: CircleDot,
+    };
+  }
+  const normalized = level.toLowerCase() as RiskLevel;
+  return RISK_TOKENS[normalized] || {
+    label: 'Unrated',
+    hex: '#64748B',
+    bgHex: '#F1F5F9',
+    borderHex: '#E2E8F0',
+    textHex: '#64748B',
+    surfaceColor: '#94A3B8',
+    Icon: CircleDot,
+  };
+};
+
 interface OpsRiskBadgeProps {
-  level: RiskLevel;
-  score?: number;
+  level: RiskLevel | string | null | undefined;
+  score?: number | null;
   size?: 'sm' | 'md' | 'lg';
   showScore?: boolean;
   className?: string;
@@ -62,13 +91,13 @@ export const OpsRiskBadge: React.FC<OpsRiskBadgeProps> = ({
   showScore = false,
   className = '',
 }) => {
-  const token = RISK_TOKENS[level] || RISK_TOKENS.low;
+  const token = getRiskToken(level);
   const { Icon } = token;
 
   const sizeClasses = {
-    sm: 'text-[10px] px-1.5 py-0.5 gap-1',
-    md: 'text-[11px] px-2 py-0.5 gap-1.5 font-medium',
-    lg: 'text-xs px-2.5 py-1 gap-2 font-semibold',
+    sm: 'text-[11px] px-2 py-0.5 gap-1',
+    md: 'text-xs px-2.5 py-1 gap-1.5',
+    lg: 'text-xs px-3 py-1.5 gap-2 font-semibold',
   };
 
   const iconSizes = {
@@ -79,24 +108,23 @@ export const OpsRiskBadge: React.FC<OpsRiskBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center rounded border font-mono tracking-tight uppercase ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center rounded-full font-medium border shadow-2xs ${sizeClasses[size]} ${className}`}
       style={{
         backgroundColor: token.bgHex,
         borderColor: token.borderHex,
         color: token.textHex,
       }}
       role="status"
-      aria-label={`Operational Risk Level: ${token.label}`}
+      aria-label={`Risk Level: ${token.label}`}
     >
-      <span
-        className="w-1.5 h-1.5 rounded-full shrink-0"
-        style={{ backgroundColor: token.hex }}
+      <Icon
+        className={`${iconSizes[size]} shrink-0`}
+        style={{ color: token.hex }}
       />
-      <Icon className={`${iconSizes[size]} shrink-0`} style={{ color: token.hex }} />
       <span>{token.label}</span>
-      {showScore && typeof score === 'number' && (
-        <span className="font-mono font-semibold ml-0.5">
-          ({score.toFixed(0)})
+      {showScore && typeof score === 'number' && !isNaN(score) && (
+        <span className="font-mono font-bold text-[11px] opacity-90">
+          ({Math.round(score)})
         </span>
       )}
     </span>

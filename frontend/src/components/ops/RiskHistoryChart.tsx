@@ -1,10 +1,9 @@
 import React from 'react';
-import { TrendingUp, Clock, Calendar, ArrowRight } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import {
   ResponsiveContainer,
   ComposedChart,
   Area,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -25,15 +24,17 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
 
   if (baseScore === null) {
     return (
-      <div className="bg-[#1A1F22] border border-[#384145] rounded p-6 text-center shadow-xs" id="risk-history-section">
-        <div className="flex items-center justify-center space-x-2 text-[#9BA5A5] mb-2">
-          <TrendingUp className="w-5 h-5 text-[#3D8F91]" />
-          <span className="font-mono text-sm uppercase font-semibold">Risk History &amp; 12h Forecast</span>
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-8 text-center shadow-xs" id="risk-history-section">
+        <div className="flex items-center justify-center space-x-2 text-[#172B4D] mb-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1677D2]">
+            <TrendingUp className="w-4 h-4" />
+          </div>
+          <span className="font-mono text-sm uppercase font-bold text-[#172B4D]">Risk History &amp; 12h Forecast</span>
         </div>
-        <p className="text-xs text-[#9BA5A5] font-sans max-w-md mx-auto">
+        <p className="text-xs text-[#64748B] font-sans max-w-md mx-auto leading-relaxed">
           Continuous 24-hour telemetry trajectory is unrated for this station. A calibrated baseline risk calculation is required to plot historic and forecast projections.
         </p>
-        <div className="mt-3 inline-block px-3 py-1 rounded bg-[#23292C] text-[#9BA5A5] text-xs font-mono border border-[#384145]">
+        <div className="mt-4 inline-block px-3.5 py-1.5 rounded-lg bg-[#F8FAFC] text-[#172B4D] text-xs font-mono border border-[#E2E8F0] font-medium shadow-xs">
           Station: {stationName} · Telemetry Pending
         </div>
       </div>
@@ -52,72 +53,74 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
   ];
 
   return (
-    <div className="bg-[#1A1F22] border border-[#384145] rounded p-4 shadow-xs" id="risk-history-section">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#384145] gap-2">
+    <div className="bg-white rounded-2xl p-6 sm:p-7 border border-[#E2E8F0] shadow-xs" id="risk-history-section">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#E2E8F0] gap-3">
         <div>
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4 text-[#3D8F91]" />
-            <h3 className="font-sans font-semibold text-[18px] text-[#E8E5DC]">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1677D2]">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <h3 className="font-sans font-bold text-lg text-[#172B4D] tracking-tight">
               Risk History &amp; 12h Forecast
             </h3>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#23292C] text-[#3D8F91] border border-[#384145]">
+            <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-[#F8FAFC] text-[#172B4D] border border-[#E2E8F0] font-semibold">
               {stationName}
             </span>
           </div>
-          <p className="text-xs text-[#9BA5A5] font-sans mt-0.5">
+          <p className="text-xs text-[#64748B] font-sans mt-1">
             Continuous 24-hour observed composite risk trajectory and forward predictive projection.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3 text-[10px] font-mono">
-          <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#3D8F91]" />
-            <span className="text-[#E8E5DC]">Past 24h Observed</span>
+        <div className="flex items-center space-x-3 text-xs font-mono">
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#1677D2]" />
+            <span className="text-[#172B4D] font-medium">Past 24h Observed</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-[#C96A50]" />
-            <span className="text-[#C96A50]">+12h Model Forecast</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-[#EA580C]" />
+            <span className="text-[#EA580C] font-semibold">+12h Model Forecast</span>
           </div>
         </div>
       </div>
 
-      <div className="w-full h-64 mt-4">
+      <div className="w-full h-72 mt-5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 sm:p-5 shadow-xs">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={trendData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
+          <ComposedChart data={trendData} margin={{ top: 12, right: 15, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3D8F91" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3D8F91" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#1677D2" stopOpacity={0.18} />
+                <stop offset="95%" stopColor="#1677D2" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#23292C" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 10, fill: '#9BA5A5', fontFamily: 'IBM Plex Mono' }}
+              tick={{ fontSize: 10, fill: '#64748B', fontFamily: 'JetBrains Mono, monospace' }}
               tickLine={false}
-              axisLine={{ stroke: '#384145' }}
+              axisLine={{ stroke: '#CBD5E1' }}
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fontSize: 10, fill: '#9BA5A5', fontFamily: 'IBM Plex Mono' }}
+              tick={{ fontSize: 10, fill: '#64748B', fontFamily: 'JetBrains Mono, monospace' }}
               tickLine={false}
-              axisLine={{ stroke: '#384145' }}
+              axisLine={{ stroke: '#CBD5E1' }}
               unit=" pts"
             />
             <Tooltip
-              content={({ active, payload, label }) => {
+              content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const p = payload[0].payload;
                   return (
-                    <div className="bg-[#1A1F22] border border-[#384145] rounded p-2 text-xs font-mono shadow-xs">
-                      <div className="font-semibold text-[#E8E5DC]">{p.label}</div>
-                      <div className="text-[#3D8F91] mt-0.5">
-                        Risk Score: <strong>{p.score} / 100</strong>
+                    <div className="bg-white border border-[#E2E8F0] rounded-xl p-3 text-xs font-mono shadow-lg">
+                      <div className="font-bold text-[#172B4D]">{p.label}</div>
+                      <div className="text-[#1677D2] mt-1 font-bold">
+                        Risk Score: {p.score} / 100
                       </div>
-                      <div className="text-[#9BA5A5]">
+                      <div className="text-[#64748B] mt-0.5">
                         Water Stage: {p.stage != null && !isNaN(Number(p.stage)) ? `${Number(p.stage).toFixed(2)} m` : 'No observation'}
                       </div>
-                      <div className="text-[10px] text-[#C5A66A] mt-1">
+                      <div className="text-[10px] text-[#EAB308] mt-1 font-semibold">
                         {p.isForecast ? '★ Predicted trajectory' : '✓ Verified sensor reading'}
                       </div>
                     </div>
@@ -128,56 +131,52 @@ export const RiskHistoryChart: React.FC<RiskHistoryChartProps> = ({ station }) =
             />
             <ReferenceLine
               y={85}
-              stroke="#B74848"
+              stroke="#DC2626"
               strokeDasharray="3 3"
               label={{
                 value: 'Extreme (85)',
                 position: 'top',
-                fill: '#B74848',
+                fill: '#DC2626',
                 fontSize: 10,
-                fontFamily: 'IBM Plex Mono',
+                fontFamily: 'JetBrains Mono, monospace',
               }}
             />
             <ReferenceLine
               y={70}
-              stroke="#C96A50"
+              stroke="#EA580C"
               strokeDasharray="3 3"
               label={{
                 value: 'High (70)',
                 position: 'top',
-                fill: '#C96A50',
+                fill: '#EA580C',
                 fontSize: 10,
-                fontFamily: 'IBM Plex Mono',
+                fontFamily: 'JetBrains Mono, monospace',
               }}
             />
             <ReferenceLine
               y={40}
-              stroke="#C99A45"
+              stroke="#EAB308"
               strokeDasharray="3 3"
               label={{
                 value: 'Moderate (40)',
                 position: 'top',
-                fill: '#C99A45',
+                fill: '#EAB308',
                 fontSize: 10,
-                fontFamily: 'IBM Plex Mono',
+                fontFamily: 'JetBrains Mono, monospace',
               }}
             />
             <Area
               type="monotone"
               dataKey="score"
-              stroke="#3D8F91"
-              strokeWidth={2}
-              fillOpacity={1}
+              name="Composite Risk"
+              stroke="#1677D2"
+              strokeWidth={2.5}
               fill="url(#riskGradient)"
+              dot={{ r: 3.5, fill: '#1677D2' }}
+              activeDot={{ r: 5 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-[#9BA5A5] pt-2 border-t border-[#384145] mt-2">
-        <span>Sampling interval: 6-hour rolling telemetry aggregation</span>
-        <span>Sensor drift compensation: ±0.04m</span>
-        <span>Confidence band: 94.2%</span>
       </div>
     </div>
   );

@@ -4,16 +4,13 @@ import {
   Radio,
   Mail,
   Smartphone,
-  ShieldAlert,
-  AlertTriangle,
   CheckCircle2,
-  Clock,
   Play,
   Pause,
   RefreshCw,
   Info,
 } from 'lucide-react';
-import { WaterBody, RiskLevel } from '../../types';
+import { WaterBody } from '../../types';
 
 interface IncidentActionsConsoleProps {
   waterBodies: WaterBody[];
@@ -42,7 +39,6 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
   waterBodies,
   selectedStation,
 }) => {
-  // Form State
   const [selectedLocation, setSelectedLocation] = useState<string>(
     selectedStation?.name || waterBodies[0]?.name || 'Athirappilly Falls'
   );
@@ -58,12 +54,10 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
-  // Thresholds & Scheduler State
   const [isSweepActive, setIsSweepActive] = useState<boolean>(true);
   const [lastEvalTime, setLastEvalTime] = useState<string>('13:20:10 IST');
   const [evaluating, setEvaluating] = useState<boolean>(false);
 
-  // Delivery Audit Log State
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([
     {
       id: 'log-1',
@@ -145,62 +139,64 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
   };
 
   return (
-    <div className="bg-[#1A1F22] border border-[#384145] rounded p-4 shadow-xs" id="incident-actions-section">
+    <div className="bg-white rounded-2xl p-6 sm:p-7 border border-[#E2E8F0] shadow-xs" id="incident-actions-section">
       {/* Console Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#384145] gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#E2E8F0] gap-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <Send className="w-4 h-4 text-[#3D8F91]" />
-            <h3 className="font-sans font-semibold text-[18px] text-[#E8E5DC]">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1677D2]">
+              <Send className="w-4 h-4" />
+            </div>
+            <h3 className="font-sans font-bold text-lg text-[#172B4D] tracking-tight">
               Incident Actions Console
             </h3>
           </div>
-          <p className="text-xs text-[#9BA5A5] font-sans mt-0.5">
+          <p className="text-xs text-[#64748B] font-sans mt-1">
             Review monitored telemetry sites and issue multi-channel emergency notices.
           </p>
         </div>
 
         {/* Channel Status Strip */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-          <div className="flex items-center space-x-1.5 px-2 py-1 bg-[#23292C] border border-[#384145] rounded text-[11px]">
-            <Radio className="w-3 h-3 text-[#5C9B72]" />
-            <span className="text-[#9BA5A5]">Webhook:</span>
-            <span className="font-semibold text-[#3D8F91]">ALERT_WEBHOOK_URL</span>
-            <span className="text-[#5C9B72] font-bold">· Active</span>
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[11px]">
+            <Radio className="w-3.5 h-3.5 text-[#16A34A]" />
+            <span className="text-[#64748B]">Webhook:</span>
+            <span className="font-semibold text-[#172B4D]">ALERT_WEBHOOK_URL</span>
+            <span className="text-[#16A34A] font-bold">· Active</span>
           </div>
 
-          <div className="flex items-center space-x-1.5 px-2 py-1 bg-[#23292C] border border-[#384145] rounded text-[11px]">
-            <Mail className="w-3 h-3 text-[#5C9B72]" />
-            <span className="text-[#9BA5A5]">SMTP:</span>
-            <span className="font-semibold text-[#3D8F91]">SMTP_HOST</span>
-            <span className="text-[#5C9B72] font-bold">· Ready</span>
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[11px]">
+            <Mail className="w-3.5 h-3.5 text-[#16A34A]" />
+            <span className="text-[#64748B]">SMTP:</span>
+            <span className="font-semibold text-[#172B4D]">SMTP_HOST</span>
+            <span className="text-[#16A34A] font-bold">· Ready</span>
           </div>
 
-          <div className="flex items-center space-x-1.5 px-2 py-1 bg-[#23292C] border border-[#384145] rounded text-[11px]">
-            <Smartphone className="w-3 h-3 text-[#C99A45]" />
-            <span className="text-[#9BA5A5]">SMS:</span>
-            <span className="font-semibold text-[#3D8F91]">TWILIO GATEWAY</span>
-            <span className="text-[#C99A45] font-bold">· Simulated</span>
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[11px]">
+            <Smartphone className="w-3.5 h-3.5 text-[#EAB308]" />
+            <span className="text-[#64748B]">SMS:</span>
+            <span className="font-semibold text-[#172B4D]">TWILIO GATEWAY</span>
+            <span className="text-[#EAB308] font-bold">· Simulated</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
         {/* Form Column (6 cols) */}
         <div className="lg:col-span-6 space-y-4">
-          <form onSubmit={handleIssueNotice} className="bg-[#23292C] border border-[#384145] rounded p-4 space-y-3">
-            <div className="text-[11px] font-mono uppercase text-[#3D8F91] font-semibold tracking-wider pb-1 border-b border-[#384145]">
-              Emergency Alert Dispatch Form
+          <form onSubmit={handleIssueNotice} className="bg-[#F8FAFC] rounded-xl p-5 sm:p-6 space-y-4 border border-[#E2E8F0]">
+            <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#64748B] pb-2 border-b border-[#E2E8F0]">
+              Emergency alert dispatch form
             </div>
 
             {/* Test Mode Switch & Banner */}
-            <div className="flex items-center justify-between p-2 rounded bg-[#1A1F22] border border-[#384145]">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E2E8F0]">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-sans font-semibold text-[#E8E5DC]">
-                  Test Mode Simulation
+                <span className="text-xs font-sans font-semibold text-[#172B4D]">
+                  Test mode simulation
                 </span>
-                <span className="text-[10px] font-mono text-[#9BA5A5]">
-                  (Safety Interlock)
+                <span className="text-[11px] font-mono text-[#64748B]">
+                  (Safety interlock)
                 </span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -210,14 +206,14 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
                   onChange={(e) => setTestMode(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-[#384145] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3D8F91]"></div>
+                <div className="w-10 h-5.5 bg-[#CBD5E1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1677D2]"></div>
               </label>
             </div>
 
             {testMode && (
-              <div className="p-2.5 rounded bg-[rgba(201,154,69,0.16)] border border-[rgba(201,154,69,0.35)] text-xs text-[#E5B662] flex items-start space-x-2 font-sans">
-                <Info className="w-4 h-4 text-[#C99A45] shrink-0 mt-0.5" />
-                <p className="leading-snug">
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start space-x-2.5 font-sans">
+                <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+                <p className="leading-relaxed">
                   Outbound dispatches will be recorded in the audit trail without triggering real external network alerts.
                 </p>
               </div>
@@ -225,13 +221,13 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
 
             {/* Location selector */}
             <div>
-              <label className="block text-[11px] font-mono uppercase text-[#9BA5A5] mb-1 font-semibold">
-                Location selector
+              <label className="block text-xs font-sans font-semibold text-[#172B4D] mb-1.5">
+                Location
               </label>
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full bg-[#1A1F22] border border-[#384145] rounded px-3 py-1.5 text-xs text-[#E8E5DC] focus:outline-none focus:border-[#3D8F91] font-sans"
+                className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-xs text-[#172B4D] focus:outline-none focus:border-[#1677D2] focus:ring-1 focus:ring-[#1677D2] font-sans transition-colors cursor-pointer"
               >
                 {waterBodies.map((wb) => (
                   <option key={wb.id} value={wb.name}>
@@ -243,25 +239,28 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
 
             {/* Severity Controls */}
             <div>
-              <label className="block text-[11px] font-mono uppercase text-[#9BA5A5] mb-1 font-semibold">
+              <label className="block text-xs font-sans font-semibold text-[#172B4D] mb-1.5">
                 Severity
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {(['Advisory', 'Warning', 'Critical Breach'] as AlertSeverity[]).map((lvl) => {
                   const isSel = severity === lvl;
+                  const activeClasses =
+                    lvl === 'Critical Breach'
+                      ? 'bg-rose-50 text-rose-700 border-rose-300 font-bold shadow-xs'
+                      : lvl === 'Warning'
+                      ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold shadow-xs'
+                      : 'bg-yellow-50 text-yellow-800 border-yellow-300 font-bold shadow-xs';
+
                   return (
                     <button
                       key={lvl}
                       type="button"
                       onClick={() => setSeverity(lvl)}
-                      className={`py-1.5 px-2 rounded text-xs font-mono transition-colors border cursor-pointer ${
+                      className={`py-2 px-2 rounded-lg text-xs font-sans transition-all border cursor-pointer ${
                         isSel
-                          ? lvl === 'Critical Breach'
-                            ? 'bg-[rgba(183,72,72,0.16)] border-[#B74848] text-[#D96B6B] font-bold'
-                            : lvl === 'Warning'
-                            ? 'bg-[rgba(201,106,80,0.16)] border-[#C96A50] text-[#E68A72] font-bold'
-                            : 'bg-[rgba(201,154,69,0.16)] border-[#C99A45] text-[#E5B662] font-bold'
-                          : 'bg-[#1A1F22] border-[#384145] text-[#9BA5A5] hover:bg-[#2A3236] hover:text-[#E8E5DC]'
+                          ? activeClasses
+                          : 'bg-white border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
                       }`}
                     >
                       {lvl}
@@ -273,27 +272,27 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
 
             {/* Alert Title */}
             <div>
-              <label className="block text-[11px] font-mono uppercase text-[#9BA5A5] mb-1 font-semibold">
-                Alert Title
+              <label className="block text-xs font-sans font-semibold text-[#172B4D] mb-1.5">
+                Alert title
               </label>
               <input
                 type="text"
                 value={alertTitle}
                 onChange={(e) => setAlertTitle(e.target.value)}
-                className="w-full bg-[#1A1F22] border border-[#384145] rounded px-3 py-1.5 text-xs text-[#E8E5DC] focus:outline-none focus:border-[#3D8F91] font-sans"
+                className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-xs text-[#172B4D] focus:outline-none focus:border-[#1677D2] focus:ring-1 focus:ring-[#1677D2] font-sans transition-colors"
               />
             </div>
 
             {/* Advisory Message */}
             <div>
-              <label className="block text-[11px] font-mono uppercase text-[#9BA5A5] mb-1 font-semibold">
-                Advisory Message
+              <label className="block text-xs font-sans font-semibold text-[#172B4D] mb-1.5">
+                Advisory message
               </label>
               <textarea
                 rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full bg-[#1A1F22] border border-[#384145] rounded p-2 text-xs text-[#E8E5DC] focus:outline-none focus:border-[#3D8F91] font-sans"
+                className="w-full bg-white border border-[#E2E8F0] rounded-lg p-3 text-xs text-[#172B4D] focus:outline-none focus:border-[#1677D2] focus:ring-1 focus:ring-[#1677D2] font-sans transition-colors resize-none leading-relaxed"
               />
             </div>
 
@@ -301,63 +300,63 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#3D8F91] hover:bg-[#4CA1A3] text-[#111417] text-xs font-sans font-bold py-2 px-4 rounded transition-colors shadow-xs flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+              className="w-full btn-primary text-xs font-bold py-3 px-4 disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{isSubmitting ? 'Dispatching Notice...' : 'Issue incident notice'}</span>
+              <span>{isSubmitting ? 'Dispatching...' : 'Issue incident notice'}</span>
             </button>
 
             {successBanner && (
-              <div className="p-2 rounded bg-[rgba(92,155,114,0.16)] border border-[rgba(92,155,114,0.35)] text-xs text-[#7DC798] flex items-center space-x-1.5 font-mono">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#5C9B72]" />
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center space-x-2 font-mono">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>{successBanner}</span>
               </div>
             )}
           </form>
 
           {/* Threshold Monitoring Block */}
-          <div className="bg-[#23292C] border border-[#384145] rounded p-4 space-y-3">
-            <div className="flex items-center justify-between pb-1 border-b border-[#384145]">
-              <span className="text-[11px] font-mono uppercase text-[#3D8F91] font-semibold tracking-wider">
-                Automated Threshold Monitoring
+          <div className="bg-[#F8FAFC] rounded-xl p-5 space-y-3.5 border border-[#E2E8F0]">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+              <span className="text-xs font-sans font-bold text-[#172B4D]">
+                Automated threshold monitoring
               </span>
               <button
                 type="button"
                 onClick={() => setIsSweepActive(!isSweepActive)}
-                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium border transition-colors cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium transition-all cursor-pointer ${
                   isSweepActive
-                    ? 'bg-[rgba(92,155,114,0.16)] text-[#7DC798] border-[rgba(92,155,114,0.35)]'
-                    : 'bg-[rgba(183,72,72,0.16)] text-[#D96B6B] border-[rgba(183,72,72,0.35)]'
+                    ? 'btn-mint text-[11px]'
+                    : 'btn-coral text-[11px]'
                 }`}
               >
-                {isSweepActive ? <Play className="w-2.5 h-2.5 text-[#5C9B72]" /> : <Pause className="w-2.5 h-2.5 text-[#B74848]" />}
+                {isSweepActive ? <Play className="w-2.5 h-2.5" /> : <Pause className="w-2.5 h-2.5" />}
                 <span>{isSweepActive ? 'Active sweep' : 'Suspended'}</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
-              <div className="bg-[#1A1F22] border border-[#384145] p-2 rounded">
-                <span className="text-[10px] text-[#9BA5A5] block">Surge Limit</span>
-                <span className="text-[#E8E5DC] font-semibold">Stage surge ≥ +0.15 m/h</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
+              <div className="bg-white border border-[#E2E8F0] p-3 rounded-xl shadow-xs">
+                <span className="text-[10px] text-[#64748B] block mb-0.5">Surge limit</span>
+                <span className="text-[#172B4D] font-bold">Stage surge ≥ +0.15 m/h</span>
               </div>
-              <div className="bg-[#1A1F22] border border-[#384145] p-2 rounded">
-                <span className="text-[10px] text-[#9BA5A5] block">Discharge Limit</span>
-                <span className="text-[#E8E5DC] font-semibold">Flow breach ≥ 6.00 m³/s</span>
+              <div className="bg-white border border-[#E2E8F0] p-3 rounded-xl shadow-xs">
+                <span className="text-[10px] text-[#64748B] block mb-0.5">Discharge limit</span>
+                <span className="text-[#172B4D] font-bold">Flow breach ≥ 6.00 m³/s</span>
               </div>
-              <div className="bg-[#1A1F22] border border-[#384145] p-2 rounded">
-                <span className="text-[10px] text-[#9BA5A5] block">Composite Risk</span>
-                <span className="text-[#E8E5DC] font-semibold">Risk score ≥ 60.0</span>
+              <div className="bg-white border border-[#E2E8F0] p-3 rounded-xl shadow-xs">
+                <span className="text-[10px] text-[#64748B] block mb-0.5">Composite risk</span>
+                <span className="text-[#172B4D] font-bold">Risk score ≥ 60.0</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-1 text-xs">
-              <span className="text-[10px] font-mono text-[#9BA5A5]">
+              <span className="font-mono text-[11px] text-[#64748B]">
                 Last evaluation: {lastEvalTime}
               </span>
               <button
                 onClick={handleEvaluateThresholds}
                 disabled={evaluating}
-                className="inline-flex items-center space-x-1.5 px-3 py-1 bg-[#1A1F22] hover:bg-[#2A3236] text-[#3D8F91] border border-[#384145] rounded text-xs font-mono font-medium transition-colors cursor-pointer"
+                className="btn-secondary text-xs"
               >
                 <RefreshCw className={`w-3 h-3 ${evaluating ? 'animate-spin' : ''}`} />
                 <span>Evaluate thresholds</span>
@@ -368,66 +367,68 @@ export const IncidentActionsConsole: React.FC<IncidentActionsConsoleProps> = ({
 
         {/* Audit Log Table Column (6 cols) */}
         <div className="lg:col-span-6 space-y-3">
-          <div className="flex items-center justify-between pb-1 border-b border-[#384145]">
-            <span className="text-[11px] font-mono uppercase text-[#9BA5A5] font-semibold tracking-wider">
-              Delivery Audit Log
+          <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+            <span className="text-xs font-sans font-bold text-[#172B4D]">
+              Delivery audit log
             </span>
-            <span className="text-[10px] font-mono text-[#9BA5A5]">
+            <span className="text-xs font-mono text-[#64748B]">
               {auditLog.length} dispatches logged
             </span>
           </div>
 
-          <div className="overflow-x-auto border border-[#384145] rounded">
+          <div className="overflow-x-auto rounded-xl border border-[#E2E8F0] bg-white shadow-xs">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#23292C] border-b border-[#384145] text-[10px] text-[#9BA5A5] uppercase">
+              <thead className="bg-[#F8FAFC] text-[#64748B] uppercase text-[10px] font-semibold border-b border-[#E2E8F0]">
                 <tr>
-                  <th className="p-2.5">Time</th>
-                  <th className="p-2.5">Location / Severity</th>
-                  <th className="p-2.5">Channel / Status</th>
-                  <th className="p-2.5 text-right">Latency</th>
+                  <th className="p-3">Time</th>
+                  <th className="p-3">Location / Severity</th>
+                  <th className="p-3">Channel / Status</th>
+                  <th className="p-3 text-right">Latency</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#384145] bg-[#1A1F22]">
-                {auditLog.map((log) => (
-                  <tr key={log.id} className="hover:bg-[#23292C] transition-colors">
-                    <td className="p-2.5 text-[#9BA5A5] whitespace-nowrap text-[11px]">
-                      {log.time}
-                    </td>
-                    <td className="p-2.5">
-                      <div className="text-[#E8E5DC] font-semibold">{log.location}</div>
-                      <span
-                        className={`inline-block px-1.5 py-0.2 rounded text-[9px] uppercase border ${
-                          log.severity === 'Critical Breach'
-                            ? 'bg-[rgba(183,72,72,0.16)] text-[#D96B6B] border-[rgba(183,72,72,0.35)]'
-                            : log.severity === 'Warning'
-                            ? 'bg-[rgba(201,106,80,0.16)] text-[#E68A72] border-[rgba(201,106,80,0.35)]'
-                            : 'bg-[rgba(201,154,69,0.16)] text-[#E5B662] border-[rgba(201,154,69,0.35)]'
-                        }`}
-                      >
-                        {log.severity}
-                      </span>
-                    </td>
-                    <td className="p-2.5">
-                      <div className="text-[#9BA5A5] text-[11px]">{log.channel}</div>
-                      <span
-                        className={`inline-block text-[10px] font-bold ${
-                          log.status === 'DELIVERED'
-                            ? 'text-[#5C9B72]'
-                            : log.status === 'ACCEPTED'
-                            ? 'text-[#3D8F91]'
-                            : log.status === 'TEST_MODE_SIMULATED'
-                            ? 'text-[#C99A45]'
-                            : 'text-[#9BA5A5]'
-                        }`}
-                      >
-                        {log.status}
-                      </span>
-                    </td>
-                    <td className="p-2.5 text-right text-[#9BA5A5] text-[11px]">
-                      {log.latency}
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-[#E2E8F0]">
+                {auditLog.map((log) => {
+                  const severityBadge =
+                    log.severity === 'Critical Breach'
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : log.severity === 'Warning'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-yellow-50 text-yellow-800 border border-yellow-200';
+
+                  const statusBadge =
+                    log.status === 'DELIVERED'
+                      ? 'text-[#16A34A] font-bold'
+                      : log.status === 'ACCEPTED'
+                      ? 'text-[#1677D2] font-bold'
+                      : log.status === 'TEST_MODE_SIMULATED'
+                      ? 'text-[#EAB308] font-bold'
+                      : 'text-[#64748B] font-medium';
+
+                  return (
+                    <tr key={log.id} className="hover:bg-[#F8FAFC] transition-colors">
+                      <td className="p-3 text-[#64748B] whitespace-nowrap text-[11px]">
+                        {log.time}
+                      </td>
+                      <td className="p-3">
+                        <div className="text-[#172B4D] font-bold text-xs">{log.location}</div>
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-medium uppercase mt-1 ${severityBadge}`}
+                        >
+                          {log.severity}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-[#64748B] text-[11px]">{log.channel}</div>
+                        <span className={`inline-block text-[10px] mt-0.5 ${statusBadge}`}>
+                          {log.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right text-[#64748B] text-[11px]">
+                        {log.latency}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

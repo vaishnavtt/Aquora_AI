@@ -40,7 +40,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     <>
       {/* Backdrop — click to close */}
       <div
-        className={`fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-xs transition-opacity duration-300 lg:hidden ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -54,7 +54,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         aria-modal="true"
         aria-label={title ?? 'Location details'}
         className={`fixed bottom-0 left-0 right-0 z-50 max-h-[82vh] overflow-y-auto
-          bg-slate-950 border-t border-slate-700 rounded-t-2xl shadow-2xl
+          bg-white border-t border-[#E2E8F0] rounded-t-2xl shadow-2xl
           transition-transform duration-300 ease-out
           lg:hidden
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}
@@ -62,25 +62,25 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-slate-700" aria-hidden="true" />
+          <div className="w-10 h-1 rounded-full bg-[#CBD5E1]" aria-hidden="true" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
-          <span className="text-sm font-semibold text-slate-200 truncate max-w-[80%]">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[#E2E8F0]">
+          <span className="text-sm font-semibold text-[#172B4D] truncate max-w-[80%]">
             {title ?? 'Location Details'}
           </span>
           <button
             onClick={onClose}
             aria-label="Close panel"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-[#64748B] hover:text-[#172B4D] hover:bg-[#F1F5F9] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-4">{children}</div>
+        <div className="p-4 bg-[#F8FAFC]">{children}</div>
       </div>
     </>
   );

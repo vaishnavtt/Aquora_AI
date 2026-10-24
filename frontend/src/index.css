@@ -1,72 +1,351 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+:root {
+  /* =========================================================================
+     AQUORA AI — NATURAL ENVIRONMENTAL LIGHT DESIGN SYSTEM PALETTE
+     ========================================================================= */
+  --color-page-bg: #F1F8FC;
+  --color-page-secondary: #E8F5FA;
+  --color-card-bg: #FFFFFF;
+  --color-pale-blue: #D9F0FF;
+  --color-sky-blue: #8ED7F8;
+  --color-primary-blue: #2387D9;
+  --color-aqua: #59D4D0;
+  --color-natural-teal: #48BFA3;
+  --color-mint-green: #DDF5E8;
+  --color-pale-green: #ECF8E8;
+  --color-soft-yellow: #FFF1C7;
+  --color-soft-coral: #FFE3D9;
+  --color-text-main: #24445A;
+  --color-text-muted: #647D8C;
+  --color-border: #D9E8EF;
 
-  /* AQUORA Operations Desk Color Palette */
-  --color-ops-bg: #111417;          /* Main background: Charcoal-black workspace */
-  --color-ops-panel: #1A1F22;       /* Panel background: Cards and control surfaces */
-  --color-ops-raised: #23292C;      /* Raised panel: Selected or elevated panels */
-  --color-ops-primary: #1A1F22;
-  --color-ops-secondary: #23292C;
-  --color-ops-selected: #253638;
-  --color-ops-text: #E8E5DC;        /* Primary text: Main labels and values */
-  --color-ops-muted: #9BA5A5;       /* Secondary text: Supporting information */
-  --color-ops-faint: #9BA5A5;
-  --color-ops-divider: #384145;     /* Divider: Rules and table lines */
-  --color-ops-teal: #3D8F91;        /* Instrument teal: Links, active controls, water data */
-  --color-ops-deepteal: #3D8F91;
-  --color-ops-sand: #C5A66A;        /* Warm sand: Secondary emphasis and historical data */
-  --color-ops-warm: #C5A66A;
-  --color-ops-safe: #5C9B72;        /* Safe: Normal conditions */
-  --color-ops-advisory: #C99A45;    /* Advisory: Moderate risk */
-  --color-ops-warning: #C96A50;     /* Warning: High risk */
-  --color-ops-high: #C96A50;
-  --color-ops-critical: #B74848;    /* Critical: Extreme risk */
-  --color-ops-extreme: #B74848;
+  /* Semantic Action Colors */
+  --color-primary: #2387D9;
+  --color-primary-hover: #1970B8;
+  --color-teal: #48BFA3;
+  --color-teal-hover: #379F86;
+
+  /* Environmental Status Indicators */
+  --color-safe: #16A34A;
+  --color-safe-bg: #DDF5E8;
+  --color-safe-border: #A7F3D0;
+  --color-safe-text: #14532D;
+
+  --color-watch: #D97706;
+  --color-watch-bg: #FFF1C7;
+  --color-watch-border: #FDE68A;
+  --color-watch-text: #78350F;
+
+  --color-high: #EA580C;
+  --color-high-bg: #FFE3D9;
+  --color-high-border: #FDBA74;
+  --color-high-text: #7C2D12;
+
+  --color-extreme: #DC2626;
+  --color-extreme-bg: #FFE3D9;
+  --color-extreme-border: #FCA5A5;
+  --color-extreme-text: #7F1D1D;
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Shell mapping */
+  --color-topbar-bg: #FFFFFF;
+  --color-sidebar-bg: #FFFFFF;
+  --color-sidebar-text: #24445A;
+  --color-sidebar-text-muted: #647D8C;
+  --color-sidebar-active-bg: #D9F0FF;
+  --color-sidebar-active-text: #2387D9;
+
+  --color-card-item: #FFFFFF;
+  --color-card-divider: #D9E8EF;
+  --color-page-divider: #D9E8EF;
+}
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-page-bg: #F1F8FC;
+  --color-card-bg: #FFFFFF;
+  --color-surface-subtle: #E8F5FA;
+  --color-border: #D9E8EF;
+  --color-text-main: #24445A;
+  --color-text-muted: #647D8C;
+  --color-primary: #2387D9;
+  --color-teal: #48BFA3;
+  --color-aqua: #59D4D0;
 }
 
 @layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #111417;
-    color: #E8E5DC;
+    background-color: var(--color-page-bg);
+    color: var(--color-text-main);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   code, pre, .font-mono {
     font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-primary-blue);
+    outline-offset: 2px;
   }
 }
 
-/* Operational desk panel styling */
-.ops-panel {
-  background-color: #1A1F22;
-  border: 1px solid #384145;
-  border-radius: 6px;
+/* =========================================================================
+   NATURAL, HUMAN-DESIGNED GRADIENT & SURFACE CLASSES
+   ========================================================================= */
+.bg-nature-page {
+  background-color: #F1F8FC;
 }
 
-.ops-panel-sub {
-  background-color: #23292C;
-  border: 1px solid #384145;
-  border-radius: 4px;
+.bg-nature-card {
+  background-color: #FFFFFF;
+  border: 1px solid #D9E8EF;
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(36, 68, 90, 0.05), 0 1px 2px -1px rgba(36, 68, 90, 0.03);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
-/* Subtle operational scrollbar */
+.bg-nature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(36, 68, 90, 0.08), 0 4px 8px -2px rgba(36, 68, 90, 0.03);
+  border-color: #8ED7F8;
+}
+
+/* Natural Organic Gradients */
+.bg-grad-water {
+  background: linear-gradient(135deg, #E0F4FF 0%, #F0FAFF 100%);
+}
+
+.bg-grad-mint {
+  background: linear-gradient(135deg, #D8F8F0 0%, #EFFCF7 100%);
+}
+
+.bg-grad-sky {
+  background: linear-gradient(135deg, #CDEFFF 0%, #E5FAFF 100%);
+}
+
+.bg-grad-eco {
+  background: linear-gradient(135deg, #E8F5FF 0%, #E8F8EF 100%);
+}
+
+.bg-grad-sun {
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFFDF7 100%);
+}
+
+.bg-grad-coral {
+  background: linear-gradient(135deg, #FFF3EE 0%, #FFF9F7 100%);
+}
+
+/* =========================================================================
+   TACTILE & DIMENSIONAL BUTTON SYSTEM (TASK 3)
+   ========================================================================= */
+.aq-btn-primary, .btn-primary {
+  background: linear-gradient(180deg, #36A5E8 0%, #2387D9 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  border-radius: 0.85rem;
+  padding: 0.55rem 1.25rem;
+  box-shadow: 0 2px 4px rgba(35, 135, 217, 0.28), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: 1px solid #1970B8;
+  border-top-color: rgba(255, 255, 255, 0.45);
+  border-bottom-color: #145E9C;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.aq-btn-primary:hover, .btn-primary:hover {
+  background: linear-gradient(180deg, #42AFF2 0%, #1D75C0 100%);
+  box-shadow: 0 5px 12px rgba(35, 135, 217, 0.38), 0 2px 4px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transform: translateY(-1.5px);
+}
+
+.aq-btn-primary:active, .btn-primary:active {
+  transform: translateY(0.5px);
+  box-shadow: 0 1px 2px rgba(35, 135, 217, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.aq-btn-primary:focus-visible, .btn-primary:focus-visible {
+  outline: 2px solid #2387D9;
+  outline-offset: 2px;
+}
+
+.aq-btn-secondary, .btn-secondary {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FCFE 100%);
+  color: #24445A;
+  border: 1px solid #D9E8EF;
+  border-bottom-color: #C5DCE6;
+  font-weight: 600;
+  border-radius: 0.85rem;
+  padding: 0.55rem 1.15rem;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(36, 68, 90, 0.05), 0 1px 1px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  user-select: none;
+}
+
+.aq-btn-secondary:hover, .btn-secondary:hover {
+  background: linear-gradient(180deg, #F1F8FC 0%, #E8F5FA 100%);
+  border-color: #8ED7F8;
+  color: #2387D9;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 8px rgba(35, 135, 217, 0.12), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.aq-btn-secondary:active, .btn-secondary:active {
+  transform: translateY(0.5px);
+  box-shadow: inset 0 1px 2px rgba(36, 68, 90, 0.1);
+}
+
+.aq-btn-mint, .btn-mint, .btn-success {
+  background: linear-gradient(180deg, #ECFDF5 0%, #DDF5E8 100%);
+  color: #14532D;
+  border: 1px solid #A7F3D0;
+  border-bottom-color: #6EE7B7;
+  font-weight: 600;
+  border-radius: 0.85rem;
+  padding: 0.55rem 1.15rem;
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.aq-btn-mint:hover, .btn-mint:hover, .btn-success:hover {
+  background: linear-gradient(180deg, #F0FDF4 0%, #C6F1DA 100%);
+  border-color: #34D399;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+}
+
+.aq-btn-mint:active, .btn-mint:active, .btn-success:active {
+  transform: translateY(0.5px);
+  box-shadow: inset 0 1px 2px rgba(22, 163, 74, 0.15);
+}
+
+.aq-btn-amber, .btn-amber, .btn-warning {
+  background: linear-gradient(180deg, #FFFBEB 0%, #FFF1C7 100%);
+  color: #78350F;
+  border: 1px solid #FDE68A;
+  border-bottom-color: #FCD34D;
+  font-weight: 600;
+  border-radius: 0.85rem;
+  padding: 0.55rem 1.15rem;
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.aq-btn-amber:hover, .btn-amber:hover, .btn-warning:hover {
+  background: linear-gradient(180deg, #FEF3C7 0%, #FEE89D 100%);
+  border-color: #FBBF24;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.22);
+}
+
+.aq-btn-amber:active, .btn-amber:active, .btn-warning:active {
+  transform: translateY(0.5px);
+  box-shadow: inset 0 1px 2px rgba(217, 119, 6, 0.15);
+}
+
+.aq-btn-coral, .btn-coral, .btn-danger {
+  background: linear-gradient(180deg, #FFF1EE 0%, #FFE3D9 100%);
+  color: #7F1D1D;
+  border: 1px solid #FCA5A5;
+  border-bottom-color: #F87171;
+  font-weight: 600;
+  border-radius: 0.85rem;
+  padding: 0.55rem 1.15rem;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.aq-btn-coral:hover, .btn-coral:hover, .btn-danger:hover {
+  background: linear-gradient(180deg, #FFE4DE 0%, #FDD2C5 100%);
+  border-color: #EF4444;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.24);
+}
+
+.aq-btn-coral:active, .btn-coral:active, .btn-danger:active {
+  transform: translateY(0.5px);
+  box-shadow: inset 0 1px 2px rgba(220, 38, 38, 0.15);
+}
+
+/* Natural Icon Container */
+.aq-icon-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  transition: transform 0.2s ease;
+}
+.aq-icon-bubble:hover {
+  transform: scale(1.08);
+}
+
+/* Light Natural Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 7px;
+  height: 7px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #111417;
+  background: #F1F8FC;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #384145;
-  border-radius: 2px;
+  background: #C4DCE6;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9FBECF;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9BA5A5;
+/* Subtle, polished animations */
+@keyframes naturalFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-natural-fade {
+  animation: naturalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

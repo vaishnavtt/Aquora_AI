@@ -16,7 +16,6 @@ import {
   Key,
   Calendar,
   MapPin,
-  ExternalLink,
   Activity
 } from 'lucide-react';
 import { api, HISTORICAL_SAMPLE_SCENARIOS, HistoricalScenario } from '../services/api';
@@ -127,31 +126,31 @@ export const WaterLevelForecastingPanel: React.FC = () => {
     switch (status) {
       case 'LIVE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-emerald-950 text-emerald-400 border border-emerald-700/80 shadow-sm shadow-emerald-950">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 -ml-3" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 -ml-2.5" />
             LIVE TELEMETRY
           </span>
         );
       case 'CACHED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-cyan-950 text-cyan-300 border border-cyan-700/80">
-            <Database className="w-3 h-3 text-cyan-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#EFF6FF] text-[#1677D2] border border-[#BFDBFE]">
+            <Database className="w-3.5 h-3.5 text-[#1677D2]" />
             CACHED TELEMETRY
           </span>
         );
       case 'HISTORICAL':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-amber-950 text-amber-300 border border-amber-700/80">
-            <Calendar className="w-3 h-3 text-amber-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            <Calendar className="w-3.5 h-3.5 text-amber-600" />
             HISTORICAL ARCHIVE
           </span>
         );
       case 'UNAVAILABLE':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold  bg-slate-900 text-rose-300 border border-rose-800/80">
-            <ShieldAlert className="w-3 h-3 text-rose-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
             LIVE FEED UNAVAILABLE
           </span>
         );
@@ -163,26 +162,26 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       {/* ============================================================== */}
       {/* TOP BANNER & ETHICAL NOTICE                                   */}
       {/* ============================================================== */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold  bg-cyan-950 text-cyan-400 border border-cyan-800">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#EFF6FF] text-[#1677D2] border border-[#BFDBFE]">
                 Hydrodynamic Forecasting Engine
               </span>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold  bg-purple-950 text-purple-400 border border-purple-800 flex items-center gap-1">
-                <MapPin className="w-2.5 h-2.5" />
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-purple-600" />
                 Station: RAMAMANGALAM BRIDGE
               </span>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold  bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">
                 District: ERNAKULAM, KERALA
               </span>
             </div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <Waves className="w-6 h-6 text-cyan-400" />
+            <h1 className="text-xl font-bold text-[#172B4D] flex items-center gap-2">
+              <Waves className="w-6 h-6 text-[#1677D2]" />
               River Water-Level Telemetry &amp; AI/ML Forecasting
             </h1>
-            <p className="text-xs text-slate-400 mt-1 max-w-3xl leading-relaxed">
+            <p className="text-xs text-[#64748B] mt-1 max-w-3xl leading-relaxed">
               Official hydrological telemetry integration for Kerala State Water Resources Department (Kerala SW).
               Clearly distinguishes genuine live streams, cached responses, confirmed historical telemetry, and service availability.
             </p>
@@ -191,15 +190,15 @@ export const WaterLevelForecastingPanel: React.FC = () => {
           <button
             onClick={handleRunForecast}
             disabled={loading}
-            className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg ${
+            className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
               loading
-                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 shadow-cyan-500/20 active:scale-95'
+                ? 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
+                : 'bg-[#1677D2] hover:bg-[#125FA8] text-white active:scale-98'
             }`}
           >
             {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Computing Stage Forecast...</span>
               </>
             ) : (
@@ -212,12 +211,12 @@ export const WaterLevelForecastingPanel: React.FC = () => {
         </div>
 
         {/* Mandatory Hydrological & Data Ethics Notice */}
-        <div className="mt-4 p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl flex items-start gap-3">
-          <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-          <div className="text-[11px] text-slate-400 leading-relaxed">
-            <span className="text-cyan-300 font-semibold">Hydrological Scope &amp; Ethical Guardrails:</span>{' '}
-            This pipeline computes an experimental <span className="text-slate-200 font-semibold">1-hour-ahead river water level (stage height in metres)</span> using hydrodynamic momentum features.
-            It does <span className="text-slate-200 font-semibold">NOT predict drowning incidents</span>, does not assess swimmer vulnerability, and does <span className="text-slate-200 font-semibold">NOT issue validated public flood warnings</span>.
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <div className="text-xs text-amber-900 leading-relaxed font-sans">
+            <span className="font-bold text-amber-950">Hydrological Scope &amp; Ethical Guardrails:</span>{' '}
+            This pipeline computes an experimental <span className="font-bold">1-hour-ahead river water level (stage height in metres)</span> using hydrodynamic momentum features.
+            It does <span className="font-bold text-rose-700">NOT predict drowning incidents</span>, does not assess swimmer vulnerability, and does <span className="font-bold text-rose-700">NOT issue validated public flood warnings</span>.
             Sensor readings are never fabricated or relabeled as live telemetry without genuine government telemetry authentication.
           </div>
         </div>
@@ -225,218 +224,198 @@ export const WaterLevelForecastingPanel: React.FC = () => {
 
       {/* ============================================================== */}
       {/* SECTION 1: RIVER TELEMETRY STATUS & CURRENT READING            */}
-      {/* Dedicated endpoint: GET /api/v1/river-data/RAMAMANGALAM-BRIDGE */}
       {/* ============================================================== */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-800">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-[#E2E8F0]">
           <div>
             <div className="flex items-center gap-2">
-              <Radio className="w-4 h-4 text-cyan-400" />
-              <h2 className="text-sm font-bold text-white ">
+              <Radio className="w-4 h-4 text-[#1677D2]" />
+              <h2 className="text-sm font-bold text-[#172B4D]">
                 Station Status: {stationQuery.replace('-', ' ')}
               </h2>
             </div>
-            <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+            <p className="text-[11px] text-[#64748B] font-mono mt-0.5">
               Dedicated Endpoint: GET /api/v1/river-data/{stationQuery}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Multi-Station Selector */}
-            <div className="flex flex-wrap items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px] gap-1">
+            <div className="flex flex-wrap items-center bg-[#F8FAFC] p-1 rounded-xl border border-[#E2E8F0] text-xs gap-1">
               <button
                 onClick={() => setStationQuery('RAMAMANGALAM-BRIDGE')}
-                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                   stationQuery === 'RAMAMANGALAM-BRIDGE'
-                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-800'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#1677D2] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
                 }`}
               >
                 Ramamangalam
               </button>
               <button
                 onClick={() => setStationQuery('PALA')}
-                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                   stationQuery === 'PALA'
-                    ? 'bg-indigo-950 text-indigo-300 border border-indigo-800'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#1677D2] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
                 }`}
               >
-                Pala (Meenachil)
+                Pala
               </button>
               <button
                 onClick={() => setStationQuery('TRINAYAKUDAM')}
-                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                   stationQuery === 'TRINAYAKUDAM'
-                    ? 'bg-purple-950 text-purple-300 border border-purple-800'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#1677D2] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
                 }`}
               >
                 Trinayakudam
               </button>
               <button
-                onClick={() => setStationQuery('USGS-11164500')}
-                className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                  stationQuery === 'USGS-11164500'
-                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                    : 'text-slate-400 hover:text-white'
+                onClick={() => setStationQuery('MANIYAR-DAM')}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                  stationQuery === 'MANIYAR-DAM'
+                    ? 'bg-[#1677D2] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
                 }`}
               >
-                Stanford Creek (USGS)
+                Maniyar Dam
               </button>
               <button
-                onClick={() => setStationQuery('MANIYAR-DAM')}
-                className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                  stationQuery === 'MANIYAR-DAM'
-                    ? 'bg-rose-950 text-rose-300 border border-rose-800'
-                    : 'text-slate-400 hover:text-rose-400'
+                onClick={() => setStationQuery('USGS-11164500')}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                  stationQuery === 'USGS-11164500'
+                    ? 'bg-[#1677D2] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
                 }`}
               >
-                Maniyar Dam (Excluded)
+                USGS Benchmark
               </button>
             </div>
 
-            {/* Mode Selector (applicable to Ramamangalam) */}
-            {stationQuery === 'RAMAMANGALAM-BRIDGE' && (
-              <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
-                <button
-                  onClick={() => setTelemetryMode('auto')}
-                  className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                    telemetryMode === 'auto'
-                      ? 'bg-cyan-950 text-cyan-300 border border-cyan-800'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Live Feed Check
-                </button>
-                <button
-                  onClick={() => setTelemetryMode('historical')}
-                  className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                    telemetryMode === 'historical'
-                      ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Historical Archive
-                </button>
-              </div>
-            )}
-
-            {/* Refresh Button */}
-            <button
-              onClick={() => fetchRiverTelemetry(stationQuery, telemetryMode)}
-              disabled={riverLoading}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition-all active:scale-95 disabled:opacity-50"
-              title="Refresh telemetry status"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${riverLoading ? 'animate-spin text-cyan-400' : ''}`} />
-            </button>
+            {/* Mode Switcher */}
+            <div className="flex items-center bg-[#F8FAFC] p-1 rounded-xl border border-[#E2E8F0] text-xs">
+              <button
+                onClick={() => setTelemetryMode('auto')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                  telemetryMode === 'auto'
+                    ? 'bg-white text-[#1677D2] border border-[#CBD5E1] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
+                }`}
+              >
+                Auto-Detect
+              </button>
+              <button
+                onClick={() => setTelemetryMode('historical')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                  telemetryMode === 'historical'
+                    ? 'bg-white text-[#1677D2] border border-[#CBD5E1] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#172B4D]'
+                }`}
+              >
+                Force Historical
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Telemetry Status Grid */}
         {riverLoading ? (
-          <div className="py-8 flex flex-col items-center justify-center gap-3 text-slate-400">
-            <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-mono">Querying upstream river telemetry provider...</span>
+          <div className="p-8 text-center space-y-2">
+            <RefreshCw className="w-6 h-6 text-[#1677D2] animate-spin mx-auto" />
+            <span className="text-xs text-[#64748B]">Querying station telemetry provider...</span>
           </div>
         ) : riverError ? (
-          <div className="p-4 bg-rose-950/60 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
-            <div>
-              <div className="font-bold">Telemetry Service Failure:</div>
-              <div>{riverError}</div>
-            </div>
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>{riverError}</span>
           </div>
         ) : riverData ? (
           <div className="space-y-4">
-            {/* Top Cards: Status, Current Observed, Time, Agency */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Card 1: Feed Status */}
-              <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-4">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Telemetry Feed Status</span>
+              {/* Card 1: Data Status Pill */}
+              <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+                <span className="text-[10px] text-[#64748B] uppercase font-mono block">Data Stream State</span>
                 <div className="mt-2">{renderStatusBadge(riverData.status)}</div>
-                <span className="text-[11px] text-slate-400 mt-2 block font-mono">
-                  {riverData.data_freshness}
+                <span className="text-[10px] text-[#64748B] mt-2 block font-mono">
+                  Source: {riverData.data_source}
                 </span>
               </div>
 
-              {/* Card 2: Observed Water Level (if genuine) */}
-              <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-4">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Current Observed Stage</span>
-                <div className="mt-1">
-                  {riverData.water_level_m !== null && riverData.water_level_m !== undefined ? (
-                    <div className="text-2xl font-bold font-mono text-emerald-300">
+              {/* Card 2: Current Water Level (Stage) */}
+              <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+                <span className="text-[10px] text-[#64748B] uppercase font-mono block">Current River Stage</span>
+                {riverData.water_level_m !== null && riverData.water_level_m !== undefined ? (
+                  <div className="mt-1">
+                    <div className="text-2xl font-bold font-mono text-[#16A34A]">
                       {riverData.water_level_m.toFixed(3)}{' '}
-                      <span className="text-xs font-normal text-slate-400">m</span>
+                      <span className="text-xs font-normal text-[#64748B]">m</span>
                     </div>
-                  ) : (
-                    <div className="text-2xl font-bold font-mono text-slate-600">
-                      —{' '}
-                      <span className="text-[10px] font-normal text-rose-400/90 font-sans block mt-0.5">
-                        Live stream unavailable
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-500 mt-1 block font-mono">
-                  {riverData.observation_timestamp
-                    ? new Date(riverData.observation_timestamp).toLocaleString([], {
-                        month: 'short',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : 'No real-time ping'}
-                </span>
+                    <span className="text-[10px] text-[#64748B] mt-1 block font-mono">
+                      {riverData.observation_timestamp ? new Date(riverData.observation_timestamp).toLocaleString() : 'Timestamp unrecorded'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <span className="text-xs text-[#CA8A04] block font-mono">
+                      {riverData.notice || 'Unavailable'}
+                    </span>
+                    <span className="text-[10px] text-[#64748B] mt-1 block font-mono">
+                      {riverData.observation_timestamp ? new Date(riverData.observation_timestamp).toLocaleString() : 'Timestamp unrecorded'}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Card 3: Originating Agency */}
-              <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-4">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Originating Agency</span>
-                <div className="text-xs font-bold text-slate-200 mt-2 line-clamp-2">
-                  {riverData.data_source}
+              {/* Card 3: Discharge / Basin Detail */}
+              <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+                <span className="text-[10px] text-[#64748B] uppercase font-mono block">Flow Velocity / Discharge</span>
+                <div className="mt-1">
+                  <div className="text-2xl font-bold font-mono text-[#172B4D]">
+                    {riverData.flow_rate_cms !== null && riverData.flow_rate_cms !== undefined
+                      ? `${riverData.flow_rate_cms.toFixed(2)}`
+                      : '—'}{' '}
+                    <span className="text-xs font-normal text-[#64748B]">m³/s</span>
+                  </div>
+                  <span className="text-[10px] text-[#1677D2] mt-1 block font-mono font-medium">
+                    Basin: Muvattupuzha River
+                  </span>
                 </div>
-                <span className="text-[10px] text-cyan-400/90 mt-1.5 block font-mono">
-                  Basin: Muvattupuzha River
-                </span>
               </div>
 
               {/* Card 4: Confirmed Historical Telemetry Record */}
-              <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-4">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Confirmed Archive Benchmark</span>
+              <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+                <span className="text-[10px] text-[#64748B] uppercase font-mono block">Confirmed Archive Benchmark</span>
                 {riverData.latest_historical_reading ? (
                   <div className="mt-1">
-                    <div className="text-2xl font-bold font-mono text-amber-300">
+                    <div className="text-2xl font-bold font-mono text-amber-700">
                       {riverData.latest_historical_reading.water_level_m.toFixed(3)}{' '}
-                      <span className="text-xs font-normal text-slate-400">m</span>
+                      <span className="text-xs font-normal text-[#64748B]">m</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1 block font-mono">
+                    <span className="text-[10px] text-[#64748B] mt-1 block font-mono">
                       {riverData.latest_historical_reading.timestamp}
                     </span>
                   </div>
                 ) : (
-                  <span className="text-xs text-slate-500 mt-1 block">Archive reference loaded</span>
+                  <span className="text-xs text-[#64748B] mt-1 block">Archive reference loaded</span>
                 )}
               </div>
             </div>
 
             {/* Advisory Notice & Official Access Requirements */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              {/* Telemetry Notice */}
-              <div className="p-3.5 bg-slate-950/60 border border-slate-800/80 rounded-xl flex items-start gap-2.5 text-xs text-slate-400">
-                <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-start gap-2.5 text-xs text-[#64748B]">
+                <Info className="w-4 h-4 text-[#1677D2] shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-slate-300 font-semibold block mb-0.5">Telemetry Provider Advisory:</span>
+                  <span className="text-[#172B4D] font-bold block mb-0.5">Telemetry Provider Advisory:</span>
                   <span>{riverData.notice}</span>
                 </div>
               </div>
 
-              {/* Official Gateway Access Requirements */}
-              <div className="p-3.5 bg-slate-950/60 border border-slate-800/80 rounded-xl flex items-start gap-2.5 text-xs text-slate-400">
-                <Key className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-start gap-2.5 text-xs text-[#64748B]">
+                <Key className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-amber-300 font-semibold block mb-0.5">Official Live Access Requirements:</span>
+                  <span className="text-amber-800 font-bold block mb-0.5">Official Live Access Requirements:</span>
                   <span>
                     {riverData.access_requirements ||
                       'National Water Data Portal (NWDP / NWIC) Ministry of Jal Shakti clearance required for streaming endpoints.'}
@@ -451,18 +430,18 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       {/* ============================================================== */}
       {/* SECTION 2: HISTORICAL DEMONSTRATION SEQUENCES (INPUT DATA)     */}
       {/* ============================================================== */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <span className="text-[10px] font-bold  text-amber-400 font-mono">
+            <span className="text-xs font-bold text-[#172B4D]">
               Historical Telemetry Demonstration Sequences (Kerala SW 2024 Records)
             </span>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-[#64748B] mt-0.5">
               These verified 13-hour historical sequences demonstrate model behavior across rising, falling, and baseflow hydrological regimes.
             </p>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono bg-slate-950 px-2 py-1 rounded border border-slate-800 self-start sm:self-auto">
-            13 Consecutive Hourly Pings ($t-12$ to $t$)
+          <span className="text-xs text-[#64748B] font-mono bg-[#F8FAFC] px-2.5 py-1 rounded-lg border border-[#E2E8F0] self-start sm:self-auto">
+            13 Consecutive Hourly Pings (t-12 to t)
           </span>
         </div>
 
@@ -473,18 +452,18 @@ export const WaterLevelForecastingPanel: React.FC = () => {
               <button
                 key={sc.id}
                 onClick={() => handleScenarioChange(sc)}
-                className={`p-4 rounded-xl border text-left transition-all ${
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-slate-800/90 border-cyan-500/80 shadow-sm shadow-cyan-500/20'
-                    : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700'
+                    ? 'bg-[#EFF6FF] border-[#BFDBFE] shadow-xs'
+                    : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F1F5F9]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">{sc.title}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-400" />}
+                  <span className="text-xs font-bold text-[#172B4D]">{sc.title}</span>
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-[#1677D2]" />}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{sc.description}</p>
-                <div className="mt-2 text-[10px] font-mono text-cyan-400">
+                <p className="text-xs text-[#64748B] mt-1 line-clamp-2 leading-relaxed">{sc.description}</p>
+                <div className="mt-2 text-xs font-mono text-[#1677D2] font-semibold">
                   Range: {sc.readings[0].water_level_m.toFixed(2)}m &rarr;{' '}
                   {sc.readings[sc.readings.length - 1].water_level_m.toFixed(2)}m
                 </div>
@@ -498,16 +477,16 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       {/* SECTION 3: EXPERIMENTAL 1-HOUR-AHEAD FORECAST (OUTPUT)         */}
       {/* ============================================================== */}
       {forecastResult && (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-cyan-500/50 rounded-2xl p-6 shadow-xl shadow-cyan-500/5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-4 border-b border-slate-800">
+        <div className="bg-white border border-[#BFDBFE] rounded-2xl p-6 sm:p-7 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-4 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-              <h2 className="text-sm font-bold text-white ">
+              <CheckCircle2 className="w-5 h-5 text-[#16A34A] shrink-0" />
+              <h2 className="text-base font-bold text-[#172B4D]">
                 1-Hour Water Level Forecast ({forecastResult.forecast_horizon})
               </h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2.5 py-1 rounded-md border border-cyan-800">
+              <span className="text-xs font-mono text-[#1677D2] bg-[#EFF6FF] px-3 py-1 rounded-lg border border-[#BFDBFE] font-bold">
                 Champion Model: {forecastResult.model_type}
               </span>
             </div>
@@ -515,87 +494,87 @@ export const WaterLevelForecastingPanel: React.FC = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Metric 1: Current Level */}
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
-              <span className="text-[10px] text-slate-500 uppercase font-mono block">Current Stage (wl_t)</span>
-              <div className="text-2xl font-bold font-mono text-slate-100 mt-1">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+              <span className="text-[10px] text-[#64748B] uppercase font-mono block">Current Stage (wl_t)</span>
+              <div className="text-2xl font-bold font-mono text-[#172B4D] mt-1">
                 {forecastResult.current_water_level_m.toFixed(3)}{' '}
-                <span className="text-xs font-normal text-slate-400">m</span>
+                <span className="text-xs font-normal text-[#64748B]">m</span>
               </div>
-              <span className="text-[10px] text-slate-500 mt-1 block font-mono">
+              <span className="text-[10px] text-[#64748B] mt-1 block font-mono">
                 Observation: {new Date(forecastResult.latest_observation_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
 
             {/* Metric 2: Persistence Baseline */}
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
-              <span className="text-[10px] text-slate-500 uppercase font-mono block">Persistence Benchmark</span>
-              <div className="text-2xl font-bold font-mono text-slate-300 mt-1">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+              <span className="text-[10px] text-[#64748B] uppercase font-mono block">Persistence Benchmark</span>
+              <div className="text-2xl font-bold font-mono text-[#172B4D] mt-1">
                 {forecastResult.persistence_baseline_m.toFixed(3)}{' '}
-                <span className="text-xs font-normal text-slate-400">m</span>
+                <span className="text-xs font-normal text-[#64748B]">m</span>
               </div>
-              <span className="text-[10px] text-slate-500 mt-1 block">Naive persistence (wl_t+1 = wl_t)</span>
+              <span className="text-[10px] text-[#64748B] mt-1 block">Naive persistence (wl_t+1 = wl_t)</span>
             </div>
 
             {/* Metric 3: ML Forecasted Level */}
-            <div className="bg-gradient-to-br from-cyan-950/50 to-blue-950/50 border border-cyan-600/70 rounded-xl p-4">
-              <span className="text-[10px] text-cyan-400 uppercase font-mono block font-bold">
+            <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4 shadow-xs">
+              <span className="text-[10px] text-[#1677D2] uppercase font-mono block font-bold">
                 Forecasted Next Hour (t+1)
               </span>
-              <div className="text-2xl font-bold font-mono text-cyan-300 mt-1">
+              <div className="text-2xl font-bold font-mono text-[#1677D2] mt-1">
                 {forecastResult.forecasted_water_level_m.toFixed(3)}{' '}
-                <span className="text-xs font-normal text-cyan-400">m</span>
+                <span className="text-xs font-normal text-[#1677D2]">m</span>
               </div>
-              <span className="text-[10px] text-cyan-400/90 mt-1 block font-mono">
+              <span className="text-[10px] text-[#1677D2] mt-1 block font-mono font-medium">
                 Target: {new Date(forecastResult.forecast_target_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
 
             {/* Metric 4: Predicted Delta / Trend */}
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
-              <span className="text-[10px] text-slate-500 uppercase font-mono block">Predicted Hourly Rate</span>
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+              <span className="text-[10px] text-[#64748B] uppercase font-mono block">Predicted Hourly Rate</span>
               <div className="flex items-center gap-1.5 mt-1">
                 {forecastResult.rate_of_change_trend === 'rising' ? (
-                  <TrendingUp className="w-5 h-5 text-amber-400 shrink-0" />
+                  <TrendingUp className="w-5 h-5 text-amber-600 shrink-0" />
                 ) : forecastResult.rate_of_change_trend === 'falling' ? (
-                  <TrendingDown className="w-5 h-5 text-cyan-400 shrink-0" />
+                  <TrendingDown className="w-5 h-5 text-[#1677D2] shrink-0" />
                 ) : (
-                  <Minus className="w-5 h-5 text-slate-400 shrink-0" />
+                  <Minus className="w-5 h-5 text-[#64748B] shrink-0" />
                 )}
                 <div
                   className={`text-2xl font-bold font-mono ${
                     forecastResult.rate_of_change_trend === 'rising'
-                      ? 'text-amber-400'
+                      ? 'text-amber-700'
                       : forecastResult.rate_of_change_trend === 'falling'
-                      ? 'text-cyan-400'
-                      : 'text-slate-300'
+                      ? 'text-[#1677D2]'
+                      : 'text-[#172B4D]'
                   }`}
                 >
                   {forecastResult.predicted_delta_m >= 0 ? '+' : ''}
                   {(forecastResult.predicted_delta_m * 100).toFixed(1)}{' '}
-                  <span className="text-xs font-normal text-slate-400">cm</span>
+                  <span className="text-xs font-normal text-[#64748B]">cm</span>
                 </div>
               </div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 mt-1 block tracking-wider font-mono">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] mt-1 block tracking-wider font-mono">
                 Trend: {forecastResult.rate_of_change_trend}
               </span>
             </div>
           </div>
 
           {/* Model Accuracy Benchmark Strip */}
-          <div className="mt-4 p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-400 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="mt-4 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-xs text-[#64748B] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Activity className="w-4 h-4 text-[#16A34A] shrink-0" />
               <span>
-                <strong className="text-slate-200">Test Set Benchmark (2024 Monsoon):</strong> MAE = 1.04 cm vs Persistence 1.71 cm (39.1% error reduction) | RMSE = 1.45 cm (48.3% error reduction).
+                <strong className="text-[#172B4D]">Test Set Benchmark (2024 Monsoon):</strong> MAE = 1.04 cm vs Persistence 1.71 cm (39.1% error reduction) | RMSE = 1.45 cm (48.3% error reduction).
               </span>
             </div>
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 self-start md:self-auto shrink-0">
+            <span className="text-[10px] font-mono text-[#16A34A] bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 self-start md:self-auto shrink-0 font-bold">
               Zero Lookahead Leakage
             </span>
           </div>
 
-          <div className="mt-2.5 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-slate-500 shrink-0" />
+          <div className="mt-2.5 p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-xs text-[#64748B] flex items-center gap-2 shadow-xs">
+            <Info className="w-4 h-4 text-[#64748B] shrink-0" />
             <span>{forecastResult.notice}</span>
           </div>
         </div>
@@ -603,8 +582,8 @@ export const WaterLevelForecastingPanel: React.FC = () => {
 
       {/* Error Message if API fails */}
       {errorMsg && (
-        <div className="p-4 bg-rose-950/60 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0 text-rose-600" />
           <div>
             <div className="font-bold">Forecast Inference Error:</div>
             <div>{errorMsg}</div>
@@ -616,66 +595,66 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       {/* SECTION 4: GROUND-TRUTH EVALUATION: FORECAST VS ACTUAL         */}
       {/* ============================================================== */}
       {forecastVsObs?.model_name === 'EXCLUDED_DAM_BARRAGE' && (
-        <div className="bg-slate-900/80 border border-amber-800/80 rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-3 text-amber-400">
-            <ShieldAlert className="w-5 h-5 shrink-0" />
-            <h3 className="text-sm font-bold ">
+        <div className="bg-white border border-amber-200 rounded-2xl p-6 sm:p-7 shadow-xs">
+          <div className="flex items-center gap-3 mb-3 text-amber-800">
+            <ShieldAlert className="w-5 h-5 shrink-0 text-amber-600" />
+            <h3 className="text-sm font-bold">
               Dam &amp; Reservoir Station Excluded: {forecastVsObs.station_name}
             </h3>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed font-mono">
+          <p className="text-xs text-[#64748B] leading-relaxed font-mono">
             {forecastVsObs.disclaimer}
           </p>
-          <div className="mt-3 text-[11px] text-amber-400/90 bg-amber-950/40 border border-amber-900/60 p-2.5 rounded-lg font-mono">
+          <div className="mt-3 text-xs text-amber-900 bg-amber-50 border border-amber-200 p-3 rounded-xl font-mono">
             Empirical Benchmark: Kinematic delta modeling yielded negative R² (-8.53) on MANIYAR DAM due to unmonitored crest gate and spillway operations. Modeling is mathematically unsuitable until operational dam telemetry is integrated.
           </div>
         </div>
       )}
 
       {forecastVsObs && forecastVsObs.comparisons && forecastVsObs.comparisons.length > 0 && (
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-[#E2E8F0]">
             <div>
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white ">
+                <Activity className="w-5 h-5 text-[#16A34A]" />
+                <h3 className="text-sm font-bold text-[#172B4D]">
                   Model Accuracy: Forecast vs. Actual Observation
                 </h3>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#64748B] mt-0.5">
                 Evaluates the calibrated Ridge hydrodynamic delta model against consecutive ground-truth observations (wl_t+1) recorded at {forecastVsObs.station_name}.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-emerald-950 text-emerald-300 border border-emerald-800">
+              <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                 Model MAE: {(forecastVsObs.model_mae_m * 1000).toFixed(1)} mm
               </span>
-              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">
                 Persistence MAE: {(forecastVsObs.baseline_persistence_mae_m * 1000).toFixed(1)} mm
               </span>
-              <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold  bg-cyan-950 text-cyan-300 border border-cyan-800">
+              <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-[#EFF6FF] text-[#1677D2] border border-[#BFDBFE]">
                 Error Reduction: {forecastVsObs.mae_reduction_percent.toFixed(1)}%
               </span>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
             <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="border-b border-slate-800 text-[10px] text-slate-400 ">
-                  <th className="py-2.5 px-3">Target Time</th>
-                  <th className="py-2.5 px-3">Actual (wl_t+1)</th>
-                  <th className="py-2.5 px-3">Ridge Forecast (t+1)</th>
-                  <th className="py-2.5 px-3">Persistence (wl_t)</th>
-                  <th className="py-2.5 px-3">Model Error</th>
-                  <th className="py-2.5 px-3">Persistence Error</th>
-                  <th className="py-2.5 px-3 text-right">Performance</th>
+              <thead className="bg-[#F8FAFC]">
+                <tr className="border-b border-[#E2E8F0] text-[10px] text-[#64748B] uppercase font-bold">
+                  <th className="py-3 px-3.5">Target Time</th>
+                  <th className="py-3 px-3.5">Actual (wl_t+1)</th>
+                  <th className="py-3 px-3.5">Ridge Forecast (t+1)</th>
+                  <th className="py-3 px-3.5">Persistence (wl_t)</th>
+                  <th className="py-3 px-3.5">Model Error</th>
+                  <th className="py-3 px-3.5">Persistence Error</th>
+                  <th className="py-3 px-3.5 text-right">Performance</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-[11px]">
+              <tbody className="divide-y divide-[#E2E8F0] bg-white text-xs">
                 {forecastVsObs.comparisons.map((pt, idx) => (
-                  <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-2.5 px-3 text-slate-300">
+                  <tr key={idx} className="hover:bg-[#F8FAFC] transition-colors">
+                    <td className="py-3 px-3.5 text-[#64748B]">
                       {new Date(pt.target_timestamp).toLocaleString([], {
                         month: 'short',
                         day: '2-digit',
@@ -683,29 +662,29 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="py-2.5 px-3 font-bold text-emerald-300">
+                    <td className="py-3 px-3.5 font-bold text-[#16A34A]">
                       {pt.actual_water_level_1h.toFixed(3)} m
                     </td>
-                    <td className="py-2.5 px-3 font-bold text-cyan-300">
+                    <td className="py-3 px-3.5 font-bold text-[#1677D2]">
                       {pt.forecasted_water_level_1h.toFixed(3)} m
                     </td>
-                    <td className="py-2.5 px-3 text-slate-400">
+                    <td className="py-3 px-3.5 text-[#64748B]">
                       {pt.water_level_t.toFixed(3)} m
                     </td>
-                    <td className="py-2.5 px-3 text-slate-200">
+                    <td className="py-3 px-3.5 text-[#172B4D] font-medium">
                       {(pt.absolute_error_m * 1000).toFixed(1)} mm
                     </td>
-                    <td className="py-2.5 px-3 text-slate-400">
+                    <td className="py-3 px-3.5 text-[#64748B]">
                       {(pt.baseline_persistence_error_m * 1000).toFixed(1)} mm
                     </td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-3 px-3.5 text-right">
                       {pt.model_beat_persistence ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                          <CheckCircle2 className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           Outperformed
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">
                           <Minus className="w-3 h-3" />
                           Par
                         </span>
@@ -717,7 +696,7 @@ export const WaterLevelForecastingPanel: React.FC = () => {
             </table>
           </div>
 
-          <div className="mt-3 text-[10px] text-slate-500 font-mono flex items-center justify-between border-t border-slate-800/80 pt-2">
+          <div className="mt-3.5 text-xs text-[#64748B] font-mono flex items-center justify-between border-t border-[#E2E8F0] pt-3">
             <span>Basis: {forecastVsObs.evaluation_dataset}</span>
             <span>Evaluated: {forecastVsObs.comparisons.length} ground-truth intervals</span>
           </div>
@@ -734,50 +713,50 @@ export const WaterLevelForecastingPanel: React.FC = () => {
         const avgStage = levels.reduce((a, b) => a + b, 0) / levels.length;
 
         return (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-[#E2E8F0]">
               <div>
                 <div className="flex items-center gap-2">
-                  <Database className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-sm font-bold text-white ">
+                  <Database className="w-5 h-5 text-amber-600" />
+                  <h3 className="text-sm font-bold text-[#172B4D]">
                     Water Level &amp; Flow History
                   </h3>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[#64748B] mt-0.5">
                   Official hydrological records from {historySeries.data_source} ({historySeries.total_records} hourly data points).
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">
                   Min Stage: {minStage.toFixed(3)} m
                 </span>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">
                   Max Stage: {maxStage.toFixed(3)} m
                 </span>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800">
+                <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
                   Avg Stage: {avgStage.toFixed(3)} m
                 </span>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
               <table className="w-full text-left text-xs font-mono">
-                <thead>
-                  <tr className="border-b border-slate-800 text-[10px] text-slate-400 ">
-                    <th className="py-2 px-3">Timestamp</th>
-                    <th className="py-2 px-3">Water Level (m)</th>
-                    <th className="py-2 px-3">Discharge (m³/s)</th>
-                    <th className="py-2 px-3">Source Provider</th>
-                    <th className="py-2 px-3 text-right">Stage Delta</th>
+                <thead className="bg-[#F8FAFC]">
+                  <tr className="border-b border-[#E2E8F0] text-[10px] text-[#64748B] uppercase font-bold">
+                    <th className="py-3 px-3.5">Timestamp</th>
+                    <th className="py-3 px-3.5">Water Level (m)</th>
+                    <th className="py-3 px-3.5">Discharge (m³/s)</th>
+                    <th className="py-3 px-3.5">Source Provider</th>
+                    <th className="py-3 px-3.5 text-right">Stage Delta</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                <tbody className="divide-y divide-[#E2E8F0] bg-white text-xs">
                   {historySeries.readings.map((item, idx) => {
                     const prevLevel = idx > 0 ? historySeries.readings[idx - 1].water_level_m : item.water_level_m;
                     const delta = item.water_level_m - prevLevel;
                     return (
-                      <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-2 px-3 text-slate-300">
+                      <tr key={idx} className="hover:bg-[#F8FAFC] transition-colors">
+                        <td className="py-3 px-3.5 text-[#64748B]">
                           {new Date(item.timestamp).toLocaleString([], {
                             month: 'short',
                             day: '2-digit',
@@ -785,22 +764,22 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                             minute: '2-digit',
                           })}
                         </td>
-                        <td className="py-2 px-3 font-bold text-amber-300">
+                        <td className="py-3 px-3.5 font-bold text-amber-700">
                           {item.water_level_m.toFixed(3)} m
                         </td>
-                        <td className="py-2 px-3 text-slate-300">
+                        <td className="py-3 px-3.5 text-[#172B4D]">
                           {item.flow_rate_cms !== null && item.flow_rate_cms !== undefined
                             ? `${item.flow_rate_cms.toFixed(2)} m³/s`
                             : '—'}
                         </td>
-                        <td className="py-2 px-3 text-slate-400 text-[10px]">
+                        <td className="py-3 px-3.5 text-[#64748B] text-xs">
                           {item.source}
                         </td>
-                        <td className="py-2 px-3 text-right">
+                        <td className="py-3 px-3.5 text-right">
                           {idx === 0 ? (
-                            <span className="text-slate-600">—</span>
+                            <span className="text-[#94A3B8]">—</span>
                           ) : (
-                            <span className={delta > 0 ? 'text-amber-400' : delta < 0 ? 'text-cyan-400' : 'text-slate-500'}>
+                            <span className={delta > 0 ? 'text-amber-700 font-bold' : delta < 0 ? 'text-[#1677D2] font-bold' : 'text-[#64748B]'}>
                               {delta >= 0 ? '+' : ''}{(delta * 100).toFixed(1)} cm
                             </span>
                           )}
@@ -818,34 +797,34 @@ export const WaterLevelForecastingPanel: React.FC = () => {
       {/* ============================================================== */}
       {/* OBSERVATIONS INPUT SEQUENCE TABLE                              */}
       {/* ============================================================== */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-xs font-bold text-white  flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-xs font-bold text-[#172B4D] flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#1677D2]" />
               Hourly Observation Sequence ({readings.length} Observations)
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              These 13 readings compute 25 lagged, rolling, and kinematic features ($t-12$ to $t$).
+            <p className="text-xs text-[#64748B] mt-0.5">
+              These 13 readings compute 25 lagged, rolling, and kinematic features (t-12 to t).
             </p>
           </div>
-          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-800/60 self-start sm:self-auto">
+          <span className="text-xs font-mono text-[#1677D2] bg-[#EFF6FF] px-3 py-1 rounded-lg border border-[#BFDBFE] self-start sm:self-auto font-bold">
             Station: {selectedScenario.station_name}
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
           <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-800 text-[10px] font-mono text-slate-400 uppercase">
-                <th className="py-2 px-3">Step</th>
-                <th className="py-2 px-3">Observation Time (UTC)</th>
-                <th className="py-2 px-3">Water Level (m)</th>
-                <th className="py-2 px-3">Lag Role</th>
-                <th className="py-2 px-3 text-right">Hourly Delta</th>
+            <thead className="bg-[#F8FAFC]">
+              <tr className="border-b border-[#E2E8F0] text-[10px] font-mono text-[#64748B] uppercase font-bold">
+                <th className="py-3 px-3.5">Step</th>
+                <th className="py-3 px-3.5">Observation Time (UTC)</th>
+                <th className="py-3 px-3.5">Water Level (m)</th>
+                <th className="py-3 px-3.5">Lag Role</th>
+                <th className="py-3 px-3.5 text-right">Hourly Delta</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+            <tbody className="divide-y divide-[#E2E8F0] font-mono text-xs bg-white">
               {readings.map((r, i) => {
                 const prev = i > 0 ? readings[i - 1].water_level_m : r.water_level_m;
                 const diff = r.water_level_m - prev;
@@ -853,14 +832,14 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                 return (
                   <tr
                     key={r.timestamp}
-                    className={isCurrent ? 'bg-cyan-950/30 text-cyan-200 font-bold' : 'text-slate-300 hover:bg-slate-800/40'}
+                    className={isCurrent ? 'bg-[#EFF6FF] text-[#1677D2] font-bold' : 'text-[#172B4D] hover:bg-[#F8FAFC]'}
                   >
-                    <td className="py-2 px-3 text-slate-500">{i + 1}</td>
-                    <td className="py-2 px-3 text-slate-300">{r.timestamp}</td>
-                    <td className="py-2 px-3 text-white font-bold">{r.water_level_m.toFixed(3)} m</td>
-                    <td className="py-2 px-3 text-slate-400">
+                    <td className="py-3 px-3.5 text-[#64748B]">{i + 1}</td>
+                    <td className="py-3 px-3.5 text-[#64748B]">{r.timestamp}</td>
+                    <td className="py-3 px-3.5 text-[#172B4D] font-bold">{r.water_level_m.toFixed(3)} m</td>
+                    <td className="py-3 px-3.5 text-[#64748B]">
                       {isCurrent ? (
-                        <span className="text-cyan-400 bg-cyan-950 px-1.5 py-0.5 rounded text-[10px] border border-cyan-800">
+                        <span className="text-[#1677D2] bg-white px-2 py-0.5 rounded text-[10px] border border-[#BFDBFE] font-bold">
                           Current (wl_t)
                         </span>
                       ) : i === readings.length - 2 ? (
@@ -877,11 +856,11 @@ export const WaterLevelForecastingPanel: React.FC = () => {
                         `t-${readings.length - 1 - i}h`
                       )}
                     </td>
-                    <td className="py-2 px-3 text-right">
+                    <td className="py-3 px-3.5 text-right">
                       {i === 0 ? (
-                        <span className="text-slate-600">—</span>
+                        <span className="text-[#94A3B8]">—</span>
                       ) : (
-                        <span className={diff > 0 ? 'text-amber-400' : diff < 0 ? 'text-cyan-400' : 'text-slate-500'}>
+                        <span className={diff > 0 ? 'text-amber-700 font-bold' : diff < 0 ? 'text-[#1677D2] font-bold' : 'text-[#64748B]'}>
                           {diff >= 0 ? '+' : ''}
                           {(diff * 100).toFixed(1)} cm
                         </span>

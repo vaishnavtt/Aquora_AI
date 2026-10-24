@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { TrendingUp, Clock, Calendar, Sparkles, Droplets, CloudRain } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { WaterBody, TrendDataPoint } from '../types';
 import { api } from '../services/api';
-import { DemoBadge } from './common/DemoBadge';
 
 interface RiskTrendChartProps {
   station: WaterBody | null;
@@ -58,55 +57,55 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
   } Z`;
 
   return (
-    <div className="rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md p-5 space-y-4">
+    <div className="rounded-2xl bg-white border border-[#E2E8F0] shadow-xs p-6 space-y-4">
       {/* Chart Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-2">
-          <div className="p-1.5 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800/40">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#1677D2] border border-[#BFDBFE] flex items-center justify-center">
             <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-              Risk Score � Past 24h &amp; 12h Forecast
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/40 font-semibold uppercase">
+            <h3 className="text-sm font-bold text-[#172B4D] flex items-center gap-2 flex-wrap">
+              Risk Score - Past 24h &amp; 12h Forecast
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold uppercase">
                 Demo data
               </span>
             </h3>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-[#64748B]">
               Estimated risk over time based on rainfall, flow speed and water temperature.
             </p>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center space-x-4 text-[11px] font-mono text-slate-400">
+        <div className="flex items-center space-x-4 text-xs font-mono text-[#64748B]">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-cyan-400 rounded-full" />
-            <span>24h Historical</span>
+            <span className="w-3 h-1 bg-[#1677D2] rounded-full" />
+            <span className="text-[#172B4D] font-medium">24h Historical</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 border-t-2 border-dashed border-blue-400" />
-            <span className="text-blue-300">12h Forecast</span>
+            <span className="w-3 h-0.5 border-t-2 border-dashed border-[#EA580C]" />
+            <span className="text-[#EA580C] font-semibold">12h Forecast</span>
           </div>
         </div>
       </div>
 
       {/* SVG Chart Container */}
-      <div className="relative w-full overflow-x-auto bg-slate-950/60 rounded-xl border border-slate-800/80 p-2">
+      <div className="relative w-full overflow-x-auto bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 shadow-xs">
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className="w-full h-auto min-w-[600px] select-none"
         >
           <defs>
             {/* Area gradient */}
-            <linearGradient id="riskAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
+            <linearGradient id="riskAreaGradLight" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1677D2" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#1677D2" stopOpacity="0.0" />
             </linearGradient>
 
             {/* Threshold line pattern */}
-            <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" strokeWidth="0.5" />
+            <pattern id="gridPatternLight" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E2E8F0" strokeWidth="0.8" />
             </pattern>
           </defs>
 
@@ -116,44 +115,40 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
             y={padding.top}
             width={graphWidth}
             height={graphHeight}
-            fill="url(#gridPattern)"
+            fill="url(#gridPatternLight)"
           />
 
           {/* Danger Zone Horizontal Bands */}
-          {/* Extreme (>80) */}
           <rect
             x={padding.left}
             y={padding.top}
             width={graphWidth}
             height={graphHeight * 0.2}
-            fill="#e11d48"
-            fillOpacity="0.06"
+            fill="#DC2626"
+            fillOpacity="0.05"
           />
-          {/* High (60 - 80) */}
           <rect
             x={padding.left}
             y={padding.top + graphHeight * 0.2}
             width={graphWidth}
             height={graphHeight * 0.2}
-            fill="#f43f5e"
+            fill="#EA580C"
             fillOpacity="0.04"
           />
-          {/* Moderate (30 - 60) */}
           <rect
             x={padding.left}
             y={padding.top + graphHeight * 0.4}
             width={graphWidth}
             height={graphHeight * 0.3}
-            fill="#f59e0b"
+            fill="#EAB308"
             fillOpacity="0.03"
           />
-          {/* Low (<30) */}
           <rect
             x={padding.left}
             y={padding.top + graphHeight * 0.7}
             width={graphWidth}
             height={graphHeight * 0.3}
-            fill="#10b981"
+            fill="#16A34A"
             fillOpacity="0.04"
           />
 
@@ -167,7 +162,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                   y1={y}
                   x2={padding.left + graphWidth}
                   y2={y}
-                  stroke="#334155"
+                  stroke="#CBD5E1"
                   strokeWidth="0.5"
                   strokeDasharray="2 4"
                 />
@@ -176,8 +171,8 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                   y={y + 3}
                   textAnchor="end"
                   fontSize="10"
-                  fill="#64748b"
-                  fontFamily="monospace"
+                  fill="#64748B"
+                  fontFamily="JetBrains Mono, monospace"
                 >
                   {val}
                 </text>
@@ -193,7 +188,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                 y1={padding.top}
                 x2={historicalCoords[nowIndex].x}
                 y2={padding.top + graphHeight}
-                stroke="#06b6d4"
+                stroke="#1677D2"
                 strokeWidth="1.5"
                 strokeDasharray="3 3"
                 className="opacity-70"
@@ -203,9 +198,9 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                 y={padding.top - 8}
                 textAnchor="middle"
                 fontSize="9"
-                fill="#22d3ee"
+                fill="#1677D2"
                 fontWeight="bold"
-                fontFamily="monospace"
+                fontFamily="JetBrains Mono, monospace"
               >
                 Now
               </text>
@@ -213,23 +208,23 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
           )}
 
           {/* Historical Filled Area */}
-          <path d={areaPath} fill="url(#riskAreaGrad)" />
+          <path d={areaPath} fill="url(#riskAreaGradLight)" />
 
-          {/* Historical Trend Line (Solid Cyan) */}
+          {/* Historical Trend Line (Solid Blue) */}
           <path
             d={historicalPath}
             fill="none"
-            stroke="#06b6d4"
+            stroke="#1677D2"
             strokeWidth="2.5"
             strokeLinecap="round"
           />
 
-          {/* Forecast Trend Line (Dashed Blue) */}
+          {/* Forecast Trend Line (Dashed Orange) */}
           <path
             d={forecastPath}
             fill="none"
-            stroke="#60a5fa"
-            strokeWidth="2"
+            stroke="#EA580C"
+            strokeWidth="2.2"
             strokeDasharray="4 4"
             strokeLinecap="round"
           />
@@ -248,11 +243,10 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
                 r={activePoint?.timestamp === pt.timestamp ? 6 : 4}
                 className={`transition-all ${
                   pt.isForecast
-                    ? 'fill-blue-500 stroke-blue-200 stroke-2'
-                    : 'fill-cyan-400 stroke-slate-900 stroke-2'
+                    ? 'fill-[#EA580C] stroke-white stroke-2'
+                    : 'fill-[#1677D2] stroke-white stroke-2'
                 }`}
               />
-              {/* Invisible larger hover hitbox */}
               <circle cx={pt.x} cy={pt.y} r={14} fill="transparent" />
             </g>
           ))}
@@ -265,9 +259,9 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
               y={padding.top + graphHeight + 20}
               textAnchor="middle"
               fontSize="10"
-              fill={pt.isForecast ? '#93c5fd' : '#94a3b8'}
+              fill={pt.isForecast ? '#EA580C' : '#64748B'}
               fontWeight={pt.timeLabel === 'Now' ? 'bold' : 'normal'}
-              fontFamily="monospace"
+              fontFamily="JetBrains Mono, monospace"
             >
               {pt.timeLabel}
             </text>
@@ -276,20 +270,20 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ station }) => {
 
         {/* Hovered Point Tooltip */}
         {activePoint && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/80 shadow-xl text-xs text-white flex items-center space-x-4 pointer-events-none z-30 font-mono">
-            <span className="font-bold text-cyan-300">{activePoint.timeLabel}</span>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] shadow-xl text-xs text-[#172B4D] flex items-center space-x-4 pointer-events-none z-30 font-mono">
+            <span className="font-bold text-[#1677D2]">{activePoint.timeLabel}</span>
             <span>
               Risk Score:{' '}
-              <strong className="text-white">{activePoint.riskScore}</strong> / 100
+              <strong className="text-[#172B4D]">{activePoint.riskScore}</strong> / 100
             </span>
-            <span className="text-slate-400">
-              Flow: <strong className="text-slate-200">{activePoint.flowRate} m³/s</strong>
+            <span className="text-[#64748B]">
+              Flow: <strong className="text-[#172B4D]">{activePoint.flowRate} m³/s</strong>
             </span>
-            <span className="text-slate-400">
-              Rain: <strong className="text-slate-200">{activePoint.rainfall} mm</strong>
+            <span className="text-[#64748B]">
+              Rain: <strong className="text-[#172B4D]">{activePoint.rainfall} mm</strong>
             </span>
             {activePoint.isForecast && (
-              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-blue-950 text-blue-300 border border-blue-800">
+              <span className="text-[9px] uppercase px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200 font-bold">
                 AI Forecast
               </span>
             )}

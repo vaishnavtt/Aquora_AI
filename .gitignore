@@ -63,3 +63,4 @@ Thumbs.db
 
 *.tsbuildinfo
 backend/aquora.db
+scratch/

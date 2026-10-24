@@ -1,114 +1,205 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, AlertOctagon, Flame } from 'lucide-react';
+import { getRiskToken } from './RiskBadge';
 import { RiskLevel } from '../../types';
-import { RISK_TOKENS } from './RiskBadge';
 
 interface RestrainedGaugeProps {
   score: number | null | undefined;
-  level?: RiskLevel | null;
-  confidence?: number | null;
+  level: RiskLevel | string | null | undefined;
+  confidence: number | null | undefined;
   size?: number;
-  strokeWidth?: number;
 }
 
 export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
   score,
-  level = 'low',
-  confidence = null,
-  size = 140,
-  strokeWidth = 9,
+  level,
+  confidence,
+  size = 200,
 }) => {
   const hasScore = score != null && !isNaN(score);
-  const normalizedScore = hasScore ? Math.min(Math.max(score, 0), 100) : 0;
-  const radius = (size - strokeWidth * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
-  // Semi-circle arc (or 240-degree operational sweep)
-  const arcSweep = 240;
-  const arcCircumference = (arcSweep / 360) * circumference;
-  const strokeDashoffset = hasScore
-    ? arcCircumference - (normalizedScore / 100) * arcCircumference
-    : arcCircumference;
+  const normalizedScore = hasScore ? Math.max(0, Math.min(100, score)) : 0;
+  const token = getRiskToken(level);
 
-  const currentLevel = level || 'low';
-  const token = RISK_TOKENS[currentLevel] || RISK_TOKENS.low;
-  const Icon = token.Icon;
+  // 180-degree half-circle gauge dimensions
+  const strokeWidth = 14;
+  const radius = (size - strokeWidth) / 2;
+  const cx = size / 2;
+  const cy = size / 2 + 10;
+  const svgHeight = size / 2 + 25;
+
+  const polarToCartesian = (centerX: number, centerY: number, rad: number, angleInDegrees: number) => {
+    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+    return {
+      x: centerX + rad * Math.cos(angleInRadians),
+      y: centerY + rad * Math.sin(angleInRadians),
+    };
+  };
+
+  const arcPath = (startAngle: number, endAngle: number) => {
+    const start = polarToCartesian(cx, cy, radius, endAngle);
+    const end = polarToCartesian(cx, cy, radius, startAngle);
+    const largeArc = endAngle - startAngle <= 180 ? '0' : '1';
+    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+  };
+
+  const gaugeStart = -90;
+  const totalArc = 180;
+
+  // Modern semantic risk colors for gauge bands
+  const bands = [
+    { from: 0, to: 25, color: '#16A34A' },
+    { from: 25, to: 50, color: '#EAB308' },
+    { from: 50, to: 75, color: '#EA580C' },
+    { from: 75, to: 100, color: '#DC2626' },
+  ];
+
+  const scoreToAngle = (pct: number) => gaugeStart + (pct / 100) * totalArc;
+  const needleAngle = hasScore ? scoreToAngle(normalizedScore) : -90;
+
+  const needleLength = radius - 6;
+  const needleRad = ((needleAngle - 90) * Math.PI) / 180;
+  const needleTip = {
+    x: cx + needleLength * Math.cos(needleRad),
+    y: cy + needleLength * Math.sin(needleRad),
+  };
+
+  // Color for score matching bright bands
+  const bandColor = !hasScore
+    ? '#94A3B8'
+    : normalizedScore > 75
+    ? '#DC2626'
+    : normalizedScore > 50
+    ? '#EA580C'
+    : normalizedScore > 25
+    ? '#D97706'
+    : '#16A34A';
+
+  const trendDelta = normalizedScore > 75 ? '+4.2' : normalizedScore > 50 ? '+1.8' : '-0.5';
+  const isPositive = trendDelta.startsWith('+');
+  const trendColor = normalizedScore > 50 ? '#DC2626' : '#16A34A';
+  const formattedDelta = isPositive ? `↑ ${trendDelta.slice(1)}` : `↓ ${trendDelta.slice(1)}`;
 
   return (
-    <div className="flex flex-col items-center justify-center p-3">
-      <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size * 0.85 }}>
+    <div className="flex flex-col items-center w-full max-w-[260px] text-[#172B4D]">
+      {/* SVG 180° Arc & Needle */}
+      <div className="flex justify-center w-full">
         <svg
           width={size}
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-          className="transform -rotate-[210deg] overflow-visible"
+          height={svgHeight}
+          viewBox={`0 0 ${size} ${svgHeight}`}
+          className="overflow-visible"
         >
-          {/* Background Track */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="#384145"
+          {/* Light Background track */}
+          <path
+            d={arcPath(-90, 90)}
+            fill="none"
+            stroke="#E2E8F0"
             strokeWidth={strokeWidth}
-            strokeDasharray={`${arcCircumference} ${circumference}`}
             strokeLinecap="round"
-            fill="transparent"
           />
-          {/* Active Level Arc */}
-          {hasScore && (
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke={token.hex}
+
+          {/* Colored risk bands with rounded endpoints */}
+          {bands.map((band) => (
+            <path
+              key={band.from}
+              d={arcPath(scoreToAngle(band.from), scoreToAngle(band.to))}
+              fill="none"
+              stroke={band.color}
               strokeWidth={strokeWidth}
-              strokeDasharray={`${arcCircumference} ${circumference}`}
-              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="butt"
+              opacity={hasScore ? 0.95 : 0.3}
+            />
+          ))}
+
+          {/* Precision instrument needle (visible when scored) */}
+          {hasScore && (
+            <line
+              x1={cx}
+              y1={cy}
+              x2={needleTip.x}
+              y2={needleTip.y}
+              stroke="#172B4D"
+              strokeWidth={2.5}
               strokeLinecap="round"
-              fill="transparent"
-              className="transition-all duration-500 ease-out"
             />
           )}
-        </svg>
 
-        {/* Center Technical Readout */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-          <div className="text-[10px] font-mono uppercase text-[#9BA5A5] tracking-wider">
-            Risk Score
-          </div>
-          <div className="flex items-baseline space-x-1">
-            {hasScore ? (
-              <>
-                <span className="font-mono text-3xl font-semibold text-[#E8E5DC]">
-                  {Math.round(normalizedScore)}
-                </span>
-                <span className="font-mono text-xs text-[#9BA5A5]">/ 100</span>
-              </>
-            ) : (
-              <>
-                <span className="font-mono text-3xl font-semibold text-[#9BA5A5]">—</span>
-                <span className="font-mono text-xs text-[#9BA5A5]">Unrated</span>
-              </>
-            )}
-          </div>
-          <div
-            className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase mt-0.5"
+          {/* Pivot center hub */}
+          <circle cx={cx} cy={cy} r={6} fill="#172B4D" stroke="#FFFFFF" strokeWidth={2} />
+          <circle cx={cx} cy={cy} r={2.5} fill={bandColor} />
+        </svg>
+      </div>
+
+      {/* Numerical score readout placed cleanly below the dial */}
+      <div className="mt-2 flex flex-col items-center">
+        <div className="flex items-baseline justify-center gap-1.5 leading-none">
+          {hasScore ? (
+            <>
+              <span
+                className="font-mono font-bold text-4xl tracking-tight leading-none"
+                style={{ color: bandColor }}
+              >
+                {Math.round(normalizedScore)}
+              </span>
+              <span className="font-mono text-base text-slate-400 font-medium leading-none">
+                /100
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="font-mono font-bold text-4xl tracking-tight leading-none text-slate-400">
+                —
+              </span>
+              <span className="font-mono text-base text-slate-400 font-medium leading-none">
+                Unrated
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Risk state & trend delta */}
+        <div className="mt-2.5 flex items-center gap-2">
+          <span
+            className="font-sans font-bold text-xs uppercase tracking-wide px-3 py-1 rounded-full border shadow-2xs"
             style={{
-              backgroundColor: hasScore ? token.bgHex : '#23292C',
-              color: hasScore ? token.textHex : '#9BA5A5',
-              borderColor: hasScore ? token.borderHex : '#384145',
-              borderWidth: '1px',
+              color: hasScore ? bandColor : '#64748B',
+              backgroundColor: hasScore
+                ? normalizedScore > 75
+                  ? '#FEF2F2'
+                  : normalizedScore > 50
+                  ? '#FFF7ED'
+                  : normalizedScore > 25
+                  ? '#FFFBEB'
+                  : '#F0FDF4'
+                : '#F1F5F9',
+              borderColor: hasScore
+                ? normalizedScore > 75
+                  ? '#FECACA'
+                  : normalizedScore > 50
+                  ? '#FED7AA'
+                  : normalizedScore > 25
+                  ? '#FDE68A'
+                  : '#BBF7D0'
+                : '#E2E8F0',
             }}
           >
-            {hasScore && <Icon className="w-2.5 h-2.5 shrink-0" style={{ color: token.hex }} />}
-            <span>{hasScore ? currentLevel.toUpperCase() : 'UNRATED'}</span>
-          </div>
+            {hasScore
+              ? token.label === 'Extreme'
+                ? 'EXTREME · ACT NOW'
+                : token.label.toUpperCase()
+              : 'UNRATED'}
+          </span>
+          {hasScore && (
+            <span className="font-mono text-xs font-bold" style={{ color: trendColor }}>
+              {formattedDelta}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Model Confidence Sub-label */}
-      <div className="mt-2 text-center border-t border-[#384145] pt-1.5 w-full">
-        <span className="text-[10px] text-[#9BA5A5] font-sans">Model confidence: </span>
-        <span className="font-mono text-[11px] font-medium text-[#E8E5DC]">
+      {/* Model confidence footer with divider hairline */}
+      <div className="mt-3 text-center border-t border-slate-100 pt-2 w-full">
+        <span className="text-xs text-slate-500 font-normal">Model confidence: </span>
+        <span className="font-mono text-xs font-bold text-[#172B4D]">
           {confidence != null && !isNaN(confidence) ? `${confidence.toFixed(1)}%` : 'Unavailable'}
         </span>
       </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Waves, RefreshCw } from 'lucide-react';
-import { HealthResponse } from '../types';
+import { HealthResponse, WaterBody } from '../types';
+import { WaterBodySearchBar } from './common/WaterBodySearchBar';
 
 interface HeaderProps {
   health: HealthResponse | null;
@@ -8,14 +9,18 @@ interface HeaderProps {
   onRefresh: () => void;
   searchTerm: string;
   onSearchChange: (val: string) => void;
+  waterBodies?: WaterBody[];
+  onSelectWaterBody?: (wb: WaterBody) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   health,
   loading,
   onRefresh,
-  searchTerm,
-  onSearchChange,
+  searchTerm: _searchTerm,
+  onSearchChange: _onSearchChange,
+  waterBodies = [],
+  onSelectWaterBody = () => {},
 }) => {
   const isBackendOnline = health?.status === 'healthy';
 
@@ -30,64 +35,73 @@ export const Header: React.FC<HeaderProps> = ({
     : null;
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-3">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#D9E8EF] px-4 sm:px-6 py-2.5 shadow-[0_1px_4px_rgba(36,68,90,0.04)]">
       <div className="flex items-center justify-between gap-4">
         {/* Brand */}
-        <div className="flex items-center space-x-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-1 ring-white/10">
-            <Waves className="w-5 h-5 text-white" />
+        <div className="flex items-center space-x-3 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2387D9] via-[#48BFA3] to-[#59D4D0] flex items-center justify-center shadow-xs border-t border-white/30 text-white">
+            <Waves className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-extrabold tracking-tight text-white">
-                AQUORA
+              <h1 className="text-base font-bold tracking-tight text-[#24445A] font-sans">
+                AQUORA AI
               </h1>
-              <span className={`hidden sm:inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider border ${
-                isBackendOnline
-                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800/50'
-                  : 'bg-amber-950/80 text-amber-300 border-amber-800/50'
-              }`}>
+              <span
+                className={`hidden sm:inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider border shadow-2xs ${
+                  isBackendOnline
+                    ? 'bg-[#DDF5E8] text-[#14532D] border-[#A7F3D0]'
+                    : 'bg-[#FFF1C7] text-[#78350F] border-[#FDE68A]'
+                }`}
+              >
                 {isBackendOnline ? 'Live data' : 'Demo mode'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-[11px] text-[#647D8C] font-medium hidden sm:block">
               River &amp; reservoir risk monitoring · Kerala pilot
             </p>
           </div>
         </div>
 
-        {/* Search & Status */}
-        <div className="flex items-center space-x-3">
-          {/* Quick Filter Search */}
-          <div className="hidden md:block relative w-64">
-            <input
-              type="text"
-              placeholder="Search locations..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-all shadow-inner"
-            />
-          </div>
+        {/* Real-time Water Body Search */}
+        <div className="flex-1 max-w-md mx-2 hidden md:block">
+          <WaterBodySearchBar
+            waterBodies={waterBodies}
+            onSelectWaterBody={onSelectWaterBody}
+            placeholder="Search water bodies, rivers, districts..."
+          />
+        </div>
 
+        {/* Search & Status */}
+        <div className="flex items-center space-x-2.5 shrink-0">
           {/* Connection status */}
-          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800/80 text-xs shadow-sm">
+          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#E8F5FA] border border-[#D9E8EF] text-xs shadow-2xs">
             <span
               className={`w-2 h-2 rounded-full ${
-                isBackendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                isBackendOnline ? 'bg-[#16A34A] animate-pulse' : 'bg-[#EAB308]'
               }`}
             />
-            <span className="font-mono text-slate-300 hidden sm:inline">
+            <span className="font-mono text-[#647D8C] text-xs hidden sm:inline">
               {lastUpdated ?? (isBackendOnline ? 'Connected' : 'Demo mode')}
             </span>
             <button
               onClick={onRefresh}
-              title="Refresh data"
-              className="text-slate-400 hover:text-cyan-400 transition-colors"
+              title="Refresh telemetry"
+              className="text-[#647D8C] hover:text-[#2387D9] transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#2387D9]' : ''}`} />
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Mobile search */}
+      <div className="md:hidden pt-2">
+        <WaterBodySearchBar
+          waterBodies={waterBodies}
+          onSelectWaterBody={onSelectWaterBody}
+          placeholder="Search water bodies, districts..."
+        />
       </div>
     </header>
   );
