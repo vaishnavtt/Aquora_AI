@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   OperationsMap,
   createDotPopupHtml,
+  isStationFeatureMatch,
   RISK_CONFIG,
   RISK_DOT_COLORS,
 } from '../components/ops/OperationsMap';
@@ -600,5 +601,61 @@ describe('OperationsMap — Clickable Waterbody Risk Dots Test Suite', () => {
 
       expect(container?.textContent).not.toContain('Primary Location:');
     });
+
+    it('prevents cross-dataset integer ID collisions between pilot stations (1-8) and OSM features (1-59)', async () => {
+      const collidingPilotStation: WaterBody = {
+        id: 101, // same ID as mockViewportFeatures[0]
+        name: 'Completely Unrelated Station',
+        type: 'reservoir',
+        latitude: 8.5241, // in Thiruvananthapuram, far away
+        longitude: 76.9366,
+        elevation_m: 10,
+        current_risk_level: 'extreme',
+        current_risk_score: 95,
+        is_demonstration_data: false,
+        risk_score: 95,
+        flow_rate_cms: 0,
+        depth_meters: 5,
+        water_temp_c: 26.5,
+        last_updated: new Date().toISOString(),
+      };
+
+      // 1. isStationFeatureMatch must return false for ID collision with mismatched name/coords
+      expect(isStationFeatureMatch(collidingPilotStation, mockViewportFeatures[0])).toBe(false);
+
+      const onSelectStation = vi.fn();
+
+      await act(async () => {
+        root!.render(
+          <OperationsMap
+            waterBodies={[collidingPilotStation]}
+            selectedStation={null}
+            onSelectStation={onSelectStation}
+          />
+        );
+      });
+
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 50));
+      });
+
+      // 2. Click the green marker (Aluva Canal, ID 101)
+      await act(async () => {
+        createdMarkers[0]._trigger('click');
+      });
+
+      // 3. Must NOT select "Completely Unrelated Station" even though IDs collide
+      expect(onSelectStation).not.toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Completely Unrelated Station' })
+      );
+
+      // 4. Must select the actual clicked waterbody
+      expect(onSelectStation).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Aluva Periyar Regulated Canal' })
+      );
+      expect(container?.textContent).toContain('Aluva Periyar Regulated Canal');
+      expect(container?.textContent).not.toContain('Completely Unrelated Station');
+    });
   });
 });
+

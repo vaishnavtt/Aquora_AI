@@ -221,6 +221,58 @@ export const KERALA_DISTRICTS: Record<string, [number, number, number]> = {
   Wayanad: [11.6854, 76.1320, 11],
 };
 
+/**
+ * Robust cross-dataset matcher to avoid ID collisions between pilot stations (IDs 1-8)
+ * and OSM mapped waterbody features (IDs 1-59).
+ */
+export function isStationFeatureMatch(st: WaterBody, f: WaterbodyFeature): boolean {
+  // 1. Exact name match (case-insensitive)
+  if (st.name.trim().toLowerCase() === f.name.trim().toLowerCase()) return true;
+
+  // 2. Station code match
+  if (st.station_code && f.station_code && st.station_code.toLowerCase() === f.station_code.toLowerCase()) {
+    return true;
+  }
+
+  // 3. Significant token match if length >= 4
+  const normSt = st.name.toLowerCase().replace(/[^a-z0-9]/g, ' ');
+  const normF = f.name.toLowerCase().replace(/[^a-z0-9]/g, ' ');
+  const keywords = [
+    'athirappilly',
+    'ramamangalam',
+    'malankara',
+    'aranmula',
+    'shoranur',
+    'aluva',
+    'meenachil',
+    'alappuzha',
+    'chalakudy',
+    'periyar',
+    'pampa',
+    'bharathappuzha',
+  ];
+  for (const kw of keywords) {
+    if (normSt.includes(kw) && normF.includes(kw)) {
+      return true;
+    }
+  }
+
+  // 4. Exact ID match ONLY if name/type also has strong correspondence (prevents pilot station 1-8 colliding with OSM 1-8)
+  if (st.id === f.id && (normSt.includes(normF) || normF.includes(normSt))) {
+    return true;
+  }
+
+  // 5. Geographic proximity within ~3 km (0.03 degrees)
+  if (
+    Math.abs(st.latitude - f.centroid_lat) < 0.03 &&
+    Math.abs(st.longitude - f.centroid_lon) < 0.03
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 interface OperationsMapProps {
   waterBodies: WaterBody[];
   selectedStation: WaterBody | null;
@@ -274,8 +326,51 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
   const userLocationCircleRef = useRef<L.Circle | null>(null);
   const markersByIdRef = useRef<Map<number, L.Layer>>(new Map());
   const selectedMarkerRef = useRef<L.Layer | null>(null);
+  const currentRequestIdRef = useRef<number>(0);
 
-  // 1. Initialize Leaflet Map Centered on Kerala, India
+  // 1. Viewport-Based Feature Loading
+  const loadFeaturesForViewport = useCallback(async (mapInstance?: L.Map) => {
+    const map = mapInstance || leafletMapRef.current;
+    if (!map) return;
+
+    setIsLoadingViewport(true);
+    try {
+      const bounds = map.getBounds();
+      const south = Math.max(bounds.getSouth(), 8.10);
+      const north = Math.min(bounds.getNorth(), 12.95);
+      const west = Math.max(bounds.getWest(), 74.70);
+      const east = Math.min(bounds.getEast(), 77.65);
+
+      const resp = await fetchWaterbodiesInViewport({
+        min_lat: south,
+        min_lon: west,
+        max_lat: north,
+        max_lon: east,
+        district: selectedDistrict !== 'All Districts' ? selectedDistrict : undefined,
+        types: selectedType !== 'all' ? selectedType : undefined,
+        limit: 300,
+      });
+
+      if (resp && resp.features) {
+        setWaterbodyFeatures((prev) => {
+          if (prev.length === resp.features.length) {
+            const isIdentical = prev.every((f, idx) => f.id === resp.features[idx].id);
+            if (isIdentical) return prev;
+          }
+          return resp.features;
+        });
+      }
+    } catch (err) {
+      console.warn('Viewport dots load error:', err);
+    } finally {
+      setIsLoadingViewport(false);
+    }
+  }, [selectedDistrict, selectedType]);
+
+  const loadFeaturesForViewportRef = useRef(loadFeaturesForViewport);
+  loadFeaturesForViewportRef.current = loadFeaturesForViewport;
+
+  // 2. Initialize Leaflet Map Centered on Kerala, India
   useEffect(() => {
     if (!mapContainerRef.current || leafletMapRef.current) return;
 
@@ -300,7 +395,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
     const handleMoveEnd = () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        loadFeaturesForViewport();
+        loadFeaturesForViewportRef.current();
       }, 300);
     };
 
@@ -320,7 +415,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
     };
   }, []);
 
-  // 2. Base Tile Layer
+  // 3. Base Tile Layer
   useEffect(() => {
     if (!leafletMapRef.current) return;
     const map = leafletMapRef.current;
@@ -344,39 +439,6 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
     L.tileLayer(tileUrl, { maxZoom }).addTo(map);
   }, [layer]);
 
-  // 3. Viewport-Based Feature Loading
-  const loadFeaturesForViewport = useCallback(async (mapInstance?: L.Map) => {
-    const map = mapInstance || leafletMapRef.current;
-    if (!map) return;
-
-    setIsLoadingViewport(true);
-    try {
-      const bounds = map.getBounds();
-      const south = Math.max(bounds.getSouth(), 8.10);
-      const north = Math.min(bounds.getNorth(), 12.95);
-      const west = Math.max(bounds.getWest(), 74.70);
-      const east = Math.min(bounds.getEast(), 77.65);
-
-      const resp = await fetchWaterbodiesInViewport({
-        min_lat: south,
-        min_lon: west,
-        max_lat: north,
-        max_lon: east,
-        district: selectedDistrict !== 'All Districts' ? selectedDistrict : undefined,
-        types: selectedType !== 'all' ? selectedType : undefined,
-        limit: 300,
-      });
-
-      if (resp && resp.features) {
-        setWaterbodyFeatures(resp.features);
-      }
-    } catch (err) {
-      console.warn('Viewport dots load error:', err);
-    } finally {
-      setIsLoadingViewport(false);
-    }
-  }, [selectedDistrict, selectedType]);
-
   // 4. Dot Selection Handler
   const handleSelectDot = useCallback(
     async (feat: WaterbodyFeature, asComparison = false) => {
@@ -394,6 +456,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
 
       setSelectedFeature(feat);
       setIsLoadingAssessment(true);
+      const reqId = ++currentRequestIdRef.current;
 
       // Immediately highlight marker and open its popup
       const marker = markersByIdRef.current.get(feat.id);
@@ -422,20 +485,22 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
 
       try {
         const assessment = await fetchHazardAssessment(feat.id);
-        setAssessmentResult(assessment);
-        if (marker && 'setPopupContent' in marker && typeof (marker as any).setPopupContent === 'function') {
-          (marker as any).setPopupContent(createDotPopupHtml(feat, assessment));
+        if (currentRequestIdRef.current === reqId) {
+          setAssessmentResult(assessment);
+          if (marker && 'setPopupContent' in marker && typeof (marker as any).setPopupContent === 'function') {
+            (marker as any).setPopupContent(createDotPopupHtml(feat, assessment));
+          }
         }
       } catch (err) {
         console.warn('Failed loading assessment for dot:', err);
       } finally {
-        setIsLoadingAssessment(false);
+        if (currentRequestIdRef.current === reqId) {
+          setIsLoadingAssessment(false);
+        }
       }
 
-      // Synchronize with external selectedStation
-      const matched = waterBodies.find(
-        (st) => st.name.toLowerCase() === feat.name.toLowerCase() || st.id === feat.id
-      );
+      // Synchronize with external selectedStation without ID collision
+      const matched = waterBodies.find((st) => isStationFeatureMatch(st, feat));
       if (matched) {
         onSelectStation(matched);
       } else {
@@ -464,7 +529,7 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
           flow_rate_cms: 2.5,
           depth_meters: 2.0,
           last_updated: feat.last_assessed || new Date().toISOString(),
-          basin_region: feat.basin_region,
+          basin_region: feat.basin_region || feat.district,
           data_source: feat.data_source,
           description: feat.description,
         };
@@ -477,20 +542,16 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
   // Synchronize incoming selectedStation prop with selectedFeature and marker
   useEffect(() => {
     if (!selectedStation) return;
-    const match = waterbodyFeatures.find(
-      (f) => f.name.toLowerCase() === selectedStation.name.toLowerCase() || f.id === selectedStation.id
-    );
+    const match = waterbodyFeatures.find((f) => isStationFeatureMatch(selectedStation, f));
     if (match && match.id !== selectedFeature?.id) {
       handleSelectDot(match);
     }
   }, [selectedStation, waterbodyFeatures, selectedFeature, handleSelectDot]);
 
-  // 5. Render Circular Dots (Leaflet circleMarker)
+  // 5. Render Circular Dots (Leaflet circleMarker) with incremental updates (avoids wiping active popups)
   useEffect(() => {
     if (!leafletMapRef.current || !dotsLayerGroupRef.current) return;
     const group = dotsLayerGroupRef.current;
-    group.clearLayers();
-    markersByIdRef.current.clear();
 
     // Filter by district, type, risk
     const filtered = waterbodyFeatures.filter((feat) => {
@@ -509,6 +570,18 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
       return true;
     });
 
+    const activeIds = new Set(filtered.map((f) => f.id));
+
+    // Remove markers that are no longer in filtered set
+    markersByIdRef.current.forEach((marker, id) => {
+      if (!activeIds.has(id)) {
+        if (typeof (group as any).removeLayer === 'function') {
+          group.removeLayer(marker);
+        }
+        markersByIdRef.current.delete(id);
+      }
+    });
+
     filtered.forEach((feat) => {
       const isSelected = selectedFeature?.id === feat.id;
       const isCompared = comparedFeature?.id === feat.id;
@@ -520,52 +593,66 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
       const lat = feat.centroid_lat;
       const lon = feat.centroid_lon;
 
-      // Safe Leaflet circleMarker instantiation
-      let dotMarker: L.Layer;
-      if (typeof L.circleMarker === 'function') {
-        dotMarker = L.circleMarker([lat, lon], {
-          radius: isSelected ? 12 : isCompared ? 11 : 8.5,
-          fillColor: dotColor,
-          color: isSelected ? '#082536' : isCompared ? '#2563EB' : '#FFFFFF',
-          weight: isSelected ? 3.5 : isCompared ? 3 : 2,
-          opacity: 1.0,
-          fillOpacity: 0.95,
-        });
+      const currentRadius = isSelected ? 12 : isCompared ? 11 : 8.5;
+      const currentBorderColor = isSelected ? '#082536' : isCompared ? '#2563EB' : '#FFFFFF';
+      const currentWeight = isSelected ? 3.5 : isCompared ? 3 : 2;
+
+      let dotMarker = markersByIdRef.current.get(feat.id);
+
+      if (!dotMarker) {
+        // Safe Leaflet circleMarker instantiation
+        if (typeof L.circleMarker === 'function') {
+          dotMarker = L.circleMarker([lat, lon], {
+            radius: currentRadius,
+            fillColor: dotColor,
+            color: currentBorderColor,
+            weight: currentWeight,
+            opacity: 1.0,
+            fillOpacity: 0.95,
+          });
+        } else {
+          dotMarker = L.marker([lat, lon]);
+        }
+
+        // Interactive Popup for Dot using createDotPopupHtml
+        const popupHtml = createDotPopupHtml(feat, isSelected ? assessmentResult : null);
+
+        if ('bindPopup' in dotMarker && typeof (dotMarker as any).bindPopup === 'function') {
+          (dotMarker as any).bindPopup(popupHtml, {
+            maxWidth: 320,
+            minWidth: 240,
+            autoPan: true,
+            autoPanPadding: [25, 25],
+            closeButton: true,
+            className: 'aquora-waterbody-popup-container',
+          });
+        }
+
+        if ('on' in dotMarker && typeof (dotMarker as any).on === 'function') {
+          (dotMarker as any).on('click', () => {
+            handleSelectDot(feat);
+          });
+        }
+
+        dotMarker.addTo(group);
+        markersByIdRef.current.set(feat.id, dotMarker);
       } else {
-        dotMarker = L.marker([lat, lon]);
+        // Existing marker: update style without destroying DOM element or closing popup
+        if (typeof (dotMarker as any).setStyle === 'function') {
+          (dotMarker as any).setStyle({
+            radius: currentRadius,
+            fillColor: dotColor,
+            color: currentBorderColor,
+            weight: currentWeight,
+          });
+        }
       }
-
-      // Interactive Popup for Dot using createDotPopupHtml
-      const popupHtml = createDotPopupHtml(feat, isSelected ? assessmentResult : null);
-
-      if ('bindPopup' in dotMarker && typeof (dotMarker as any).bindPopup === 'function') {
-        (dotMarker as any).bindPopup(popupHtml, {
-          maxWidth: 320,
-          minWidth: 240,
-          autoPan: true,
-          autoPanPadding: [25, 25],
-          closeButton: true,
-          className: 'aquora-waterbody-popup-container',
-        });
-      }
-
-      if ('on' in dotMarker && typeof (dotMarker as any).on === 'function') {
-        (dotMarker as any).on('click', () => {
-          handleSelectDot(feat);
-        });
-      }
-
-      dotMarker.addTo(group);
-      markersByIdRef.current.set(feat.id, dotMarker);
 
       if (isSelected) {
         selectedMarkerRef.current = dotMarker;
-        if ('openPopup' in dotMarker && typeof (dotMarker as any).openPopup === 'function') {
-          (dotMarker as any).openPopup();
-        }
       }
     });
-  }, [waterbodyFeatures, selectedDistrict, selectedType, selectedRiskFilter, handleSelectDot]);
+  }, [waterbodyFeatures, selectedDistrict, selectedType, selectedRiskFilter, handleSelectDot, selectedFeature, comparedFeature]);
 
   // 6. District Fly-To
   const handleDistrictChange = (dist: string) => {

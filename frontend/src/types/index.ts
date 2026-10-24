@@ -649,6 +649,7 @@ export interface WaterbodyFeature {
   license: string;
   data_quality: string;
   is_monitored_station: boolean;
+  station_code?: string | null;
   is_provisional?: boolean;
   assessment_basis?: string;
   assessment_basis_label?: string;
