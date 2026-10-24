@@ -97,7 +97,7 @@ export function getRiskStyle(level?: string | null): RiskStyleInfo {
         borderClass: 'border-amber-500',
         textClass: 'text-amber-300',
         pulseClass: 'bg-amber-500',
-        label: 'MEDIUM RISK',
+        label: 'MODERATE RISK',
       };
     case 'HIGH':
       return {
@@ -591,7 +591,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
       layerGroup.addLayer(marker);
       markersMapRef.current.set(station.id, marker);
     });
-  }, [filteredStations, selectedStation, showRings, isMapReady, onSelectStation, onSendToSimulator]);
+  }, [filteredStations, showRings, isMapReady, onSelectStation, onSendToSimulator]);
 
   // Objective 1.A: Blue User Location Marker + Accuracy Ring on Map
   useEffect(() => {
@@ -777,10 +777,14 @@ export const MapSection: React.FC<MapSectionProps> = ({
     if (!selectedStation || !mapInstanceRef.current || !isMapReady) return;
     if (!isValidCoordinate(selectedStation.latitude, selectedStation.longitude)) return;
 
-    mapInstanceRef.current.panTo([selectedStation.latitude, selectedStation.longitude], {
-      animate: true,
-      duration: 0.6,
-    });
+    // Only pan if station coordinate is outside current visible bounds
+    const bounds = typeof mapInstanceRef.current.getBounds === 'function' ? mapInstanceRef.current.getBounds() : null;
+    if (!bounds || typeof bounds.contains !== 'function' || !bounds.contains([selectedStation.latitude, selectedStation.longitude])) {
+      mapInstanceRef.current.panTo([selectedStation.latitude, selectedStation.longitude], {
+        animate: true,
+        duration: 0.6,
+      });
+    }
     const marker = markersMapRef.current.get(selectedStation.id);
     if (marker && !marker.isPopupOpen()) {
       marker.openPopup();

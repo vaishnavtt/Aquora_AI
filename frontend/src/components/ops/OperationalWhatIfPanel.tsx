@@ -43,6 +43,7 @@ export const OperationalWhatIfPanel: React.FC<OperationalWhatIfPanelProps> = ({
       };
     }
 
+    // Weight factors
     let rainImpact = rainfallInc * 0.22;
     let stageImpact = stageDelta * 14.5;
     let dischargeImpact = dischargeInc * 0.18;

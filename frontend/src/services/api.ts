@@ -32,6 +32,10 @@ import {
   RiskClassificationRuleResponse,
   InspectionPrioritizationResponse,
   SiteInspectionPriorityItem,
+  WaterbodyFeature,
+  WaterbodyViewportResponse,
+  HazardAssessmentResult,
+  WaterbodyStatsResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -1041,5 +1045,106 @@ export const HISTORICAL_SAMPLE_SCENARIOS: HistoricalScenario[] = [
     ],
   },
 ];
+
+// =========================================================================
+// Kerala-Wide Waterbody GIS & Evidence-Based Hazard Assessment API
+// =========================================================================
+
+export async function fetchWaterbodiesInViewport(params: {
+  min_lat?: number;
+  min_lon?: number;
+  max_lat?: number;
+  max_lon?: number;
+  types?: string;
+  district?: string;
+  limit?: number;
+}): Promise<WaterbodyViewportResponse> {
+  const query = new URLSearchParams();
+  if (params.min_lat !== undefined) query.set('min_lat', params.min_lat.toString());
+  if (params.min_lon !== undefined) query.set('min_lon', params.min_lon.toString());
+  if (params.max_lat !== undefined) query.set('max_lat', params.max_lat.toString());
+  if (params.max_lon !== undefined) query.set('max_lon', params.max_lon.toString());
+  if (params.types) query.set('types', params.types);
+  if (params.district && params.district !== 'all') query.set('district', params.district);
+  if (params.limit !== undefined) query.set('limit', params.limit.toString());
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/waterbodies/viewport?${query.toString()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Fallback to local viewport waterbodies:', err);
+    return {
+      total_features: 0,
+      returned_features: 0,
+      bbox: [params.min_lat || 8.15, params.min_lon || 74.75, params.max_lat || 12.90, params.max_lon || 77.60],
+      features: [],
+      dataset_attribution: 'OpenStreetMap Contributors (ODbL), Central Water Commission (CWC)',
+      coverage_notes: 'Offline or fallback state.',
+    };
+  }
+}
+
+export async function searchWaterbodyFeatures(
+  q: string,
+  district?: string,
+  type?: string,
+  limit: number = 30
+): Promise<WaterbodyFeature[]> {
+  const query = new URLSearchParams({ q, limit: limit.toString() });
+  if (district && district !== 'all') query.set('district', district);
+  if (type && type !== 'all') query.set('type', type);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/waterbodies/search?${query.toString()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.warn('Search fallback:', err);
+    return [];
+  }
+}
+
+export async function fetchWaterbodyFeatureById(id: number): Promise<WaterbodyFeature | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/waterbodies/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchHazardAssessment(id: number): Promise<HazardAssessmentResult | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/waterbodies/${id}/assessment`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function triggerHazardAssessment(id: number): Promise<HazardAssessmentResult | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/waterbodies/${id}/assessment`, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchWaterbodyStats(): Promise<WaterbodyStatsResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/waterbodies/stats`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 
 

@@ -22,6 +22,8 @@ from app.db.session import engine, Base, SessionLocal
 from app.models.water_body import WaterBodyModel
 from app.models.alert import AlertModel
 from app.models.alert_delivery import AlertDeliveryModel
+from app.models.mapped_waterbody import MappedWaterbodyModel, WaterbodyObservationModel
+from app.services.waterbody_ingestion_service import waterbody_ingestion_service
 
 def get_demonstration_water_bodies() -> list[WaterBodyModel]:
     """Returns the standardized demonstration and authentic Kerala water bodies covering all 6 aquatic types."""
@@ -511,6 +513,12 @@ def init_database():
                 if not existing:
                     db.add(site)
             db.commit()
+
+            # Ingest and validate comprehensive mapped Kerala waterbodies & vector geometries
+            try:
+                waterbody_ingestion_service.ingest_seed_dataset(db)
+            except Exception as e:
+                print(f"Notice: Initial waterbody dataset sync note: {e}")
     finally:
         db.close()
 

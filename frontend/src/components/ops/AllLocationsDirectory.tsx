@@ -1,32 +1,35 @@
 import React from 'react';
-import { Table, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Table } from 'lucide-react';
 import { WaterBody } from '../../types';
 import { OpsRiskBadge, RISK_TOKENS } from './RiskBadge';
 
 interface AllLocationsDirectoryProps {
-  waterBodies: WaterBody[];
+  stations?: WaterBody[];
+  waterBodies?: WaterBody[];
   selectedStation: WaterBody | null;
   onSelectStation: (station: WaterBody) => void;
 }
 
 export const AllLocationsDirectory: React.FC<AllLocationsDirectoryProps> = ({
-  waterBodies = [],
+  stations: stationsProp,
+  waterBodies,
   selectedStation,
   onSelectStation,
 }) => {
-  const stations = waterBodies || [];
+  const stations = stationsProp || waterBodies || [];
   const handleRowClick = (station: WaterBody) => {
     onSelectStation(station);
-    const el = document.getElementById('exposure-risk-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Smooth scroll to exposure risk panel if in view
+    const target = document.getElementById('exposure-risk-section');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 sm:p-7 border border-[#E2E8F0] shadow-xs" id="locations-section">
+    <div className="bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-xs">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#E2E8F0] gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1677D2]">
             <Table className="w-4 h-4" />

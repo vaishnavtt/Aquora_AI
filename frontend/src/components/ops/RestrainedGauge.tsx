@@ -11,8 +11,8 @@ interface RestrainedGaugeProps {
 
 export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
   score,
-  level,
-  confidence,
+  level = 'low',
+  confidence = null,
   size = 200,
 }) => {
   const hasScore = score != null && !isNaN(score);

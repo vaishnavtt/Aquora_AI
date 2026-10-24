@@ -152,6 +152,13 @@ except ImportError:
 
 router = APIRouter()
 
+try:
+    from app.api.waterbody_routes import router as waterbody_router
+except ImportError:
+    from backend.app.api.waterbody_routes import router as waterbody_router
+
+router.include_router(waterbody_router)
+
 # Instantiate forecasting pipeline singleton
 try:
     water_level_forecaster = WaterLevelForecaster()
