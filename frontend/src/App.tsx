@@ -647,6 +647,7 @@ export function App() {
                             waterBodies={filteredStations}
                             selectedStation={selectedStation}
                             onSelectStation={(wb) => setSelectedStation(wb)}
+                            onSendToSimulator={handleSendToSimulator}
                           />
                         </div>
                         <div className="hidden lg:block lg:col-span-4 space-y-3">
@@ -744,6 +745,7 @@ export function App() {
                             waterBodies={filteredStations}
                             selectedStation={selectedStation}
                             onSelectStation={(wb) => setSelectedStation(wb)}
+                            onSendToSimulator={handleSendToSimulator}
                           />
                         </div>
                         <div className="lg:col-span-5">
@@ -782,6 +784,7 @@ export function App() {
                             waterBodies={filteredStations}
                             selectedStation={selectedStation}
                             onSelectStation={(wb) => setSelectedStation(wb)}
+                            onSendToSimulator={handleSendToSimulator}
                           />
                         </div>
                         <div className="hidden lg:block lg:col-span-4">

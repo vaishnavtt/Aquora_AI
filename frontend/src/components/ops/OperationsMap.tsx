@@ -1,9 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Map as MapIcon, Globe, Layers, Filter } from 'lucide-react';
-import { WaterBody, RiskLevel } from '../../types';
-import { RISK_TOKENS } from './RiskBadge';
+import {
+  MapPin,
+  Layers,
+  Compass,
+  Radio,
+  Eye,
+  Activity,
+  Maximize2,
+  Info,
+  Map as MapIcon,
+  Globe,
+  Navigation,
+  Crosshair,
+  Filter,
+} from 'lucide-react';
+import { WaterBody, RiskLevel, WaterBodyType } from '../../types';
+import { RISK_TOKENS, OpsRiskBadge } from './RiskBadge';
+
+function computeDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 interface OperationsMapProps {
   waterBodies: WaterBody[];
@@ -19,11 +45,29 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const userLocationMarkerRef = useRef<L.Marker | null>(null);
+  const userLocationCircleRef = useRef<L.Circle | null>(null);
 
   const [engine, setEngine] = useState<'leaflet' | 'google'>('leaflet');
   const [layer, setLayer] = useState<'osm' | 'voyager' | 'satellite'>('osm');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [showPulseRings, setShowPulseRings] = useState<boolean>(true);
+
+  // Live User Location State
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  } | null>(null);
+  const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Filter stations by water body type
+  const filteredStations = waterBodies.filter((wb) => {
+    if (selectedType === 'all') return true;
+    return wb.type === selectedType;
+  });
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -202,6 +246,114 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
     }
   }, [selectedStation]);
 
+  // Objective: Live User Location Marker + Accuracy Ring on Operations Map
+  useEffect(() => {
+    if (!leafletMapRef.current) return;
+    const map = leafletMapRef.current;
+
+    if (userLocationMarkerRef.current) {
+      map.removeLayer(userLocationMarkerRef.current);
+      userLocationMarkerRef.current = null;
+    }
+    if (userLocationCircleRef.current) {
+      map.removeLayer(userLocationCircleRef.current);
+      userLocationCircleRef.current = null;
+    }
+
+    if (userLocation) {
+      try {
+        userLocationCircleRef.current = L.circle([userLocation.latitude, userLocation.longitude], {
+          radius: Math.max(userLocation.accuracy, 25),
+          color: '#3b82f6',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.16,
+          weight: 2,
+        }).addTo(map);
+      } catch {
+        // Safe mock fallback
+      }
+
+      const userHtml = `
+        <div class="relative flex items-center justify-center cursor-pointer" style="transform: translate(-50%, -50%);" role="button" aria-label="Live GPS Location">
+          <span class="absolute w-8 h-8 rounded-full bg-blue-500 opacity-60 animate-ping"></span>
+          <div class="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-xl flex items-center justify-center">
+            <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+          </div>
+          <div class="absolute top-7 px-2 py-0.5 rounded bg-blue-950 text-blue-200 border border-blue-700 text-[10px] font-bold whitespace-nowrap shadow-md">
+            Live Location (±${Math.round(userLocation.accuracy)}m)
+          </div>
+        </div>
+      `;
+
+      const userIcon = L.divIcon({
+        className: 'aquora-user-location-marker',
+        html: userHtml,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      userLocationMarkerRef.current = L.marker([userLocation.latitude, userLocation.longitude], { icon: userIcon })
+        .addTo(map)
+        .bindPopup(`
+          <div class="p-3 text-xs font-sans text-slate-100 space-y-1">
+            <div class="font-bold text-blue-400 flex items-center gap-1.5">
+              <span>● Your Current Live Location</span>
+            </div>
+            <div class="text-[11px] text-slate-300 font-mono">
+              GPS Accuracy: ±${Math.round(userLocation.accuracy)} meters
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">
+              Coordinates: ${userLocation.latitude.toFixed(5)}°N, ${userLocation.longitude.toFixed(5)}°E
+            </div>
+          </div>
+        `);
+    }
+  }, [userLocation]);
+
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy || 20;
+        setUserLocation({ latitude: lat, longitude: lon, accuracy });
+        setIsLocating(false);
+        if (leafletMapRef.current) {
+          leafletMapRef.current.setView([lat, lon], 12, { animate: true });
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        let msg = 'Unable to acquire GPS location.';
+        if (err.code === 1) msg = 'Location permission denied by browser.';
+        else if (err.code === 2) msg = 'GPS signal unavailable.';
+        else if (err.code === 3) msg = 'Location request timed out.';
+        setLocationError(msg);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  };
+
+  const nearestStationInfo = React.useMemo(() => {
+    if (!userLocation || waterBodies.length === 0) return null;
+    let closest: WaterBody | null = null;
+    let minDist = Infinity;
+    for (const wb of waterBodies) {
+      const d = computeDistanceKm(userLocation.latitude, userLocation.longitude, wb.latitude, wb.longitude);
+      if (d < minDist) {
+        minDist = d;
+        closest = wb;
+      }
+    }
+    return closest ? { name: closest.name, distanceKm: minDist, station: closest } : null;
+  }, [userLocation, waterBodies]);
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]" id="map-section">
       {/* Map Control Bar */}
@@ -281,12 +433,82 @@ export const OperationsMap: React.FC<OperationsMapProps> = ({
             />
             <span>Hazard Rings</span>
           </label>
+
+          {/* Live Location Button */}
+          <button
+            onClick={handleLocateMe}
+            disabled={isLocating}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer border ${
+              userLocation
+                ? 'bg-[#D9F0FF] text-[#2387D9] border-[#2387D9] shadow-xs'
+                : 'bg-white text-[#24445A] hover:bg-[#F1F8FC] border-[#D9E8EF]'
+            }`}
+            title="Detect your live GPS position and plot on the map"
+          >
+            <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin text-[#2387D9]' : userLocation ? 'text-[#2387D9]' : 'text-[#647D8C]'}`} />
+            <span>{isLocating ? 'Acquiring GPS...' : userLocation ? 'Live GPS Active' : 'Live Location'}</span>
+          </button>
         </div>
       </div>
 
       {/* Map Surface */}
       <div className="relative w-full h-[500px] bg-slate-50">
-        <div ref={mapContainerRef} className="w-full h-full z-10" />
+        {/* Live Location Overlay HUD - Natural Light Theme */}
+        {userLocation && (
+          <div className="absolute top-3 left-3 z-20 bg-white/95 border border-[#2387D9]/40 backdrop-blur-md rounded-2xl p-2.5 shadow-lg text-xs font-mono text-[#24445A] flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 text-[#2387D9] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#2387D9] animate-ping" />
+              <span>Live GPS</span>
+            </div>
+            <div className="text-[11px] text-[#24445A]">
+              <span>{userLocation.latitude.toFixed(4)}°N, {userLocation.longitude.toFixed(4)}°E</span>
+              <span className="text-[#647D8C] ml-1">(±{Math.round(userLocation.accuracy)}m)</span>
+            </div>
+            {nearestStationInfo && (
+              <div className="text-[10px] text-[#2387D9] bg-[#D9F0FF] border border-[#8ED7F8] px-2 py-0.5 rounded-lg flex items-center gap-1 font-sans">
+                <span>Nearest: {nearestStationInfo.name}</span>
+                <span className="font-bold">({nearestStationInfo.distanceKm < 1 ? `${Math.round(nearestStationInfo.distanceKm * 1000)}m` : `${nearestStationInfo.distanceKm.toFixed(1)}km`})</span>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                if (leafletMapRef.current && userLocation) {
+                  leafletMapRef.current.setView([userLocation.latitude, userLocation.longitude], 13, { animate: true });
+                }
+              }}
+              className="text-[10px] text-[#2387D9] hover:underline font-semibold ml-1 cursor-pointer"
+            >
+              Re-center
+            </button>
+          </div>
+        )}
+
+        {locationError && (
+          <div className="absolute top-3 left-3 z-20 bg-[#FFE3D9] border border-[#FDBA74] rounded-xl px-2.5 py-1 text-xs text-[#EA580C] flex items-center gap-2 font-sans">
+            <span>{locationError}</span>
+            <button onClick={() => setLocationError(null)} className="text-[#EA580C] hover:text-[#C2410C] ml-1 cursor-pointer">✕</button>
+          </div>
+        )}
+
+        {engine === 'leaflet' ? (
+          <div ref={mapContainerRef} className="w-full h-full z-10" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#F1F8FC]">
+            <Globe className="w-8 h-8 text-[#2387D9] mb-2" />
+            <h4 className="font-sans font-semibold text-sm text-[#24445A]">
+              Google Maps Cartographic Layer
+            </h4>
+            <p className="text-xs text-[#647D8C] max-w-sm mt-1 font-mono">
+              Vector Google Terrain &amp; Satellite layer active. Leaflet offline tile fallback available on toggle.
+            </p>
+            <button
+              onClick={() => setEngine('leaflet')}
+              className="mt-3 px-3 py-1 btn-primary font-semibold text-xs rounded-xl cursor-pointer"
+            >
+              Switch back to Leaflet Survey Surface
+            </button>
+          </div>
+        )}
 
         {/* Floating Map Legend - Pure Light Theme */}
         <div className="absolute bottom-3 left-3 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3.5 text-xs shadow-lg space-y-2 text-[#172B4D]">

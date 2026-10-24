@@ -26,22 +26,25 @@ export interface WaterBody {
   type: WaterBodyType;
   latitude: number;
   longitude: number;
-  elevation_m: number;
-  current_water_level_m: number;
-  normal_water_level_m: number;
-  danger_water_level_m: number;
-  flow_velocity_mps: number;
-  discharge_cms: number;
+  elevation_m?: number | null;
+  elevation_meters?: number | null;
+  current_water_level_m?: number | null;
+  normal_water_level_m?: number | null;
+  danger_water_level_m?: number | null;
+  flow_velocity_mps?: number | null;
+  discharge_cms?: number | null;
   water_temp_c: number;
   current_risk_level: RiskLevel;
-  current_risk_score: number;
+  current_risk_score?: number | null;
   is_demonstration_data: boolean;
 
-  // Full compatibility properties
   risk_score: number;
   flow_rate_cms: number;
   depth_meters: number;
   last_updated: string;
+  basin_region?: string | null;
+  data_source?: string | null;
+  description?: string | null;
 
   // Operational telemetry metadata
   station_id?: string;
@@ -59,11 +62,6 @@ export interface WaterBody {
   recommended_actions?: string[];
   stage_surge_rate?: string;
   review_state?: string;
-
-  elevation_meters?: number | null;
-  basin_region?: string | null;
-  data_source?: string | null;
-  description?: string;
 }
 
 
@@ -530,6 +528,58 @@ export interface LiveWeatherResponse {
   observation_timestamp?: string | null;
   retrieval_timestamp?: string | null;
   disclaimer: string;
+}
+
+// Location-Aware River Discovery Types
+export interface NearbyRiverItem {
+  id?: number | null;
+  name: string;
+  type: string;
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+  distance_meters: number;
+  distance_formatted: string;
+  district?: string | null;
+  basin_region?: string | null;
+  is_monitored_station: boolean;
+  has_prediction: boolean;
+  current_risk_level?: RiskLevel | 'no_prediction' | null;
+  risk_category?: RiskCategory | 'NO_PREDICTION' | null;
+  risk_score?: number | null;
+  data_source?: string | null;
+  last_updated?: string | null;
+  description?: string | null;
+  assessment_scope?: string | null;
+}
+
+export interface NearbyRiversResponse {
+  center_latitude: number;
+  center_longitude: number;
+  radius_km: number;
+  total_found: number;
+  monitored_count: number;
+  unmonitored_osm_count: number;
+  rivers: NearbyRiverItem[];
+  disclaimer: string;
+}
+
+export interface RiverSearchResponse {
+  query: string;
+  total_found: number;
+  results: NearbyRiverItem[];
+}
+
+export interface RiskClassificationRuleResponse {
+  scale: string;
+  thresholds: Record<string, {
+    min: number | null;
+    max_exclusive?: number;
+    max_inclusive?: number;
+    label: string;
+    hex: string;
+  }>;
+  scientific_disclaimer: string;
 }
 
 // Authority Inspection Prioritization Types

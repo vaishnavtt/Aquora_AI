@@ -52,6 +52,24 @@ try:
         WhatIfSimulationResponse,
         ModelStatusResponse,
     )
+    from app.schemas.rivers import (
+        NearbyRiverItem,
+        NearbyRiversResponse,
+        RiverSearchResponse,
+        RiskClassificationRuleResponse,
+    )
+    from app.core.geospatial import (
+        find_nearby_water_bodies,
+        search_waterways_and_stations,
+        is_valid_coordinate,
+        KERALA_OSM_WATERWAYS,
+    )
+    from app.core.risk_classifier import (
+        classify_risk_score,
+        get_risk_classification_rules,
+        RISK_LEVEL_NO_PREDICTION,
+        RISK_CATEGORY_NO_PREDICTION,
+    )
     from app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
     from app.ml.water_level_forecaster import WaterLevelForecaster, get_forecaster_for_station
     from app.schemas.weather import LiveWeatherResponse
@@ -102,6 +120,24 @@ except ImportError:
         WhatIfSimulationRequest,
         WhatIfSimulationResponse,
         ModelStatusResponse,
+    )
+    from backend.app.schemas.rivers import (
+        NearbyRiverItem,
+        NearbyRiversResponse,
+        RiverSearchResponse,
+        RiskClassificationRuleResponse,
+    )
+    from backend.app.core.geospatial import (
+        find_nearby_water_bodies,
+        search_waterways_and_stations,
+        is_valid_coordinate,
+        KERALA_OSM_WATERWAYS,
+    )
+    from backend.app.core.risk_classifier import (
+        classify_risk_score,
+        get_risk_classification_rules,
+        RISK_LEVEL_NO_PREDICTION,
+        RISK_CATEGORY_NO_PREDICTION,
     )
     from backend.app.ml.predictor import PredictionService, get_prediction_service, risk_predictor
     from backend.app.ml.water_level_forecaster import WaterLevelForecaster, get_forecaster_for_station
@@ -182,6 +218,10 @@ def get_water_bodies(
         query = query.filter(WaterBodyModel.type == type.value)
 
     water_bodies = query.all()
+    # Authoritative risk level synchronization
+    for wb in water_bodies:
+        lvl, _ = classify_risk_score(wb.risk_score)
+        wb.current_risk_level = lvl
     return water_bodies
 
 
@@ -215,6 +255,8 @@ def get_water_body_by_coordinates(
             best_wb = wb
 
     if best_wb is not None and min_dist <= tolerance_deg:
+        lvl, _ = classify_risk_score(best_wb.risk_score)
+        best_wb.current_risk_level = lvl
         return best_wb
 
     raise HTTPException(
@@ -245,14 +287,191 @@ def get_water_body_by_id(
 ):
     """
     Retrieves a single monitored water body station by ID.
+    If ID represents an OSM geographic feature, returns an unmonitored representation without fabricated risk.
     """
     water_body = db.query(WaterBodyModel).filter(WaterBodyModel.id == water_body_id).first()
     if not water_body:
+        osm_match = next((w for w in KERALA_OSM_WATERWAYS if w["osm_id"] == water_body_id), None)
+        if osm_match:
+            return WaterBodySchema(
+                id=osm_match["osm_id"],
+                name=osm_match["name"],
+                type=osm_match["type"],
+                latitude=osm_match["latitude"],
+                longitude=osm_match["longitude"],
+                current_risk_level=RISK_LEVEL_NO_PREDICTION,
+                risk_score=0.0,
+                water_temp_c=27.0,
+                flow_rate_cms=0.0,
+                depth_meters=0.0,
+                elevation_meters=15.0,
+                basin_region=osm_match["basin_region"],
+                data_source=osm_match["data_source"],
+                description=osm_match["description"],
+                last_updated=datetime.now(timezone.utc),
+                is_demonstration_data=False,
+            )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Water body with ID {water_body_id} not found in monitored database."
         )
+    lvl, _ = classify_risk_score(water_body.risk_score)
+    water_body.current_risk_level = lvl
     return water_body
+
+
+@router.get(
+    "/rivers/nearby",
+    response_model=NearbyRiversResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Rivers & Geospatial Discovery"],
+    summary="Find Rivers & Water Bodies Near Coordinate",
+    description="Discovers mapped rivers, streams, canals, and monitored stations within a specified radius (e.g. 2, 5, 10, 25 km) using the Haversine formula."
+)
+def get_nearby_rivers(
+    latitude: float = Query(..., ge=-90.0, le=90.0, description="Origin latitude in decimal degrees"),
+    longitude: float = Query(..., ge=-180.0, le=180.0, description="Origin longitude in decimal degrees"),
+    radius_km: float = Query(10.0, ge=0.5, le=50.0, description="Search radius in kilometers (e.g. 2, 5, 10, 25 km)"),
+    include_osm: bool = Query(True, description="Whether to include unmonitored OpenStreetMap geographic waterways"),
+    db: Session = Depends(get_db)
+):
+    """
+    Computes great-circle Haversine distances to all mapped water bodies and rivers within radius_km.
+    Distinguishes monitored stations (with active predictions) from unmonitored OSM geographic features.
+    """
+    all_stations = db.query(WaterBodyModel).all()
+    results = find_nearby_water_bodies(
+        lat=latitude,
+        lon=longitude,
+        radius_km=radius_km,
+        db_stations=all_stations,
+        include_osm=include_osm,
+    )
+    monitored_cnt = sum(1 for r in results if r["is_monitored_station"])
+    osm_cnt = sum(1 for r in results if not r["is_monitored_station"])
+
+    return NearbyRiversResponse(
+        center_latitude=latitude,
+        center_longitude=longitude,
+        radius_km=radius_km,
+        total_found=len(results),
+        monitored_count=monitored_cnt,
+        unmonitored_osm_count=osm_cnt,
+        rivers=[NearbyRiverItem(**r) for r in results],
+    )
+
+
+@router.get(
+    "/rivers/search",
+    response_model=RiverSearchResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Rivers & Geospatial Discovery"],
+    summary="Search Rivers, Waterways, Towns, and Districts",
+    description="Searches for rivers, waterways, districts, and telemetry stations across Kerala."
+)
+def search_rivers(
+    q: str = Query(..., min_length=1, max_length=100, description="Search keyword (river, town, district, or basin)"),
+    limit: int = Query(25, ge=1, le=50, description="Maximum results to return"),
+    db: Session = Depends(get_db)
+):
+    """
+    Searches across monitored stations and OpenStreetMap waterways by keyword.
+    """
+    all_stations = db.query(WaterBodyModel).all()
+    results = search_waterways_and_stations(query=q, db_stations=all_stations, limit=limit)
+    return RiverSearchResponse(
+        query=q,
+        total_found=len(results),
+        results=[
+            NearbyRiverItem(
+                **r,
+                distance_km=0.0,
+                distance_meters=0.0,
+                distance_formatted="—",
+                assessment_scope="Monitored Station" if r.get("is_monitored_station") else "Geographic Waterway (Unmonitored)",
+            )
+            for r in results
+        ],
+    )
+
+
+@router.get(
+    "/rivers/{river_id}",
+    response_model=NearbyRiverItem,
+    status_code=status.HTTP_200_OK,
+    tags=["Rivers & Geospatial Discovery"],
+    summary="Get Specific River or Water Body Details",
+    description="Retrieves metadata, coordinates, and monitoring status for a specific station or OSM waterway ID."
+)
+def get_river_details(
+    river_id: int = Path(..., description="Unique integer ID of monitored station or OSM waterway"),
+    db: Session = Depends(get_db)
+):
+    wb = db.query(WaterBodyModel).filter(WaterBodyModel.id == river_id).first()
+    if wb:
+        level, category = classify_risk_score(wb.risk_score)
+        return NearbyRiverItem(
+            id=wb.id,
+            name=wb.name.replace(" (Demonstration Station)", "").replace(" (DEMO Station)", "").strip(),
+            type=wb.type,
+            latitude=wb.latitude,
+            longitude=wb.longitude,
+            distance_km=0.0,
+            distance_meters=0.0,
+            distance_formatted="—",
+            district=getattr(wb, "basin_region", "Kerala"),
+            basin_region=wb.basin_region,
+            is_monitored_station=True,
+            has_prediction=True,
+            current_risk_level=level,
+            risk_category=category,
+            risk_score=wb.risk_score,
+            data_source=wb.data_source,
+            last_updated=wb.last_updated.isoformat() if hasattr(wb.last_updated, "isoformat") else str(wb.last_updated),
+            description=wb.description,
+            assessment_scope="Monitored Point Station: Telemetry sensors and validated prediction model active.",
+        )
+
+    osm_match = next((w for w in KERALA_OSM_WATERWAYS if w["osm_id"] == river_id), None)
+    if osm_match:
+        return NearbyRiverItem(
+            id=osm_match["osm_id"],
+            name=osm_match["name"],
+            type=osm_match["type"],
+            latitude=osm_match["latitude"],
+            longitude=osm_match["longitude"],
+            distance_km=0.0,
+            distance_meters=0.0,
+            distance_formatted="—",
+            district=osm_match["district"],
+            basin_region=osm_match["basin_region"],
+            is_monitored_station=False,
+            has_prediction=False,
+            current_risk_level=RISK_LEVEL_NO_PREDICTION,
+            risk_category=RISK_CATEGORY_NO_PREDICTION,
+            risk_score=None,
+            data_source=osm_match["data_source"],
+            last_updated=None,
+            description=osm_match["description"],
+            assessment_scope="Unmonitored Geographic Waterway: Hydrodynamic sensors not installed. Model predictions unavailable.",
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"River or water body with ID {river_id} not found."
+    )
+
+
+@router.get(
+    "/risk/rules",
+    response_model=RiskClassificationRuleResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Prediction"],
+    summary="Authoritative Risk Classification Rules",
+    description="Returns the calibrated 0-100 threshold boundaries, category labels, hex colors, and scientific disclaimer."
+)
+def get_classification_rules():
+    return get_risk_classification_rules()
 
 
 @router.get(

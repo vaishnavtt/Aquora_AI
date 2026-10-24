@@ -38,6 +38,14 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
   const [showDisclaimer, setShowDisclaimer] = useState<boolean>(false);
   const [showLayerDetails, setShowLayerDetails] = useState<boolean>(true);
 
+  const isUnmonitored = Boolean(
+    station &&
+    ((station as any).is_monitored_station === false ||
+     station.current_risk_level === ('no_prediction' as any) ||
+     station.id >= 1000 ||
+     station.data_source?.toLowerCase().includes('openstreetmap'))
+  );
+
   useEffect(() => {
     if (!station) {
       setAssessment(null);
@@ -48,6 +56,22 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
     let isMounted = true;
     setLoading(true);
     setError(null);
+
+    // If this is an unmonitored OpenStreetMap geographic feature, do not fabricate a risk assessment
+    if (isUnmonitored) {
+      setAssessment(null);
+      setLoading(false);
+      api.getLiveWeather(station.latitude, station.longitude, station.name)
+        .then((wData) => {
+          if (isMounted) setWeather(wData);
+        })
+        .catch(() => {
+          if (isMounted) setWeather(null);
+        });
+      return () => {
+        isMounted = false;
+      };
+    }
 
     api.getWeatherForWaterBody(station.id)
       .then((wData) => {
@@ -66,21 +90,25 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
       })
       .catch((err: any) => {
         if (isMounted) {
-          // If endpoint has error, fallback to client-side evaluation call
-          api.assessDrowningRisk({
-            water_body_id: station.id,
-            water_body_type: station.type,
-            water_level_m: station.depth_meters,
-            discharge_cms: station.flow_rate_cms,
-            water_temp_c: station.water_temp_c,
-            elevation_m: station.elevation_meters ?? station.elevation_m,
-          })
-            .then((res) => {
-              if (isMounted) setAssessment(res);
+          // If endpoint has error, fallback to client-side evaluation call only if monitored
+          if (!isUnmonitored) {
+            api.assessDrowningRisk({
+              water_body_id: station.id,
+              water_body_type: station.type,
+              water_level_m: station.depth_meters,
+              discharge_cms: station.flow_rate_cms,
+              water_temp_c: station.water_temp_c,
+              elevation_m: station.elevation_meters ?? (station as any).elevation_m ?? 15.0,
             })
-            .catch((fallbackErr: any) => {
-              if (isMounted) setError(fallbackErr.message || 'Risk assessment calculation failed');
-            });
+              .then((res) => {
+                if (isMounted) setAssessment(res);
+              })
+              .catch((fallbackErr: any) => {
+                if (isMounted) setError(fallbackErr.message || 'Risk assessment calculation failed');
+              });
+          } else {
+            setError(null);
+          }
         }
       })
       .finally(() => {
@@ -90,7 +118,7 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
     return () => {
       isMounted = false;
     };
-  }, [station]);
+  }, [station, isUnmonitored]);
 
   if (!station) {
     return (
@@ -104,7 +132,7 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
     );
   }
 
-  const getCategoryBadge = (cat: RiskCategory) => {
+  const getCategoryBadge = (cat?: RiskCategory | 'NO_PREDICTION' | string | null) => {
     switch (cat) {
       case 'LOW':
         return {
@@ -114,7 +142,7 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
           dot: 'bg-emerald-600',
           scoreBadge: 'bg-emerald-100 text-emerald-900 border-emerald-300',
           label: 'LOW RISK',
-          sub: 'Nominal ambient conditions. Standard water safety precautions apply.'
+          sub: 'Nominal ambient baseline conditions. Not a guarantee of recreational or swimming safety.'
         };
       case 'MODERATE':
         return {
@@ -124,7 +152,7 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
           dot: 'bg-amber-500',
           scoreBadge: 'bg-amber-100 text-amber-900 border-amber-300',
           label: 'MODERATE RISK',
-          sub: 'Elevated caution advised. Avoid solitary wading or night swimming.'
+          sub: 'Elevated caution advised. Avoid solitary wading, night swimming, or unmonitored bathing.'
         };
       case 'HIGH':
         return {
@@ -134,10 +162,9 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
           dot: 'bg-orange-600',
           scoreBadge: 'bg-orange-100 text-orange-900 border-orange-300',
           label: 'HIGH RISK',
-          sub: 'Dangerous conditions. Non-expert swimming and wading prohibited.'
+          sub: 'Dangerous conditions. Non-expert swimming and wading strictly prohibited.'
         };
       case 'VERY HIGH':
-      default:
         return {
           bg: 'bg-rose-50',
           border: 'border-rose-200',
@@ -147,10 +174,22 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
           label: 'VERY HIGH RISK',
           sub: 'Critical danger: Absolute water entry ban strongly recommended.'
         };
+      case 'NO_PREDICTION':
+      default:
+        return {
+          bg: 'bg-slate-900/90',
+          border: 'border-slate-700/80',
+          text: 'text-slate-300',
+          dot: 'bg-slate-500',
+          label: 'NO PREDICTION AVAILABLE',
+          sub: 'Unmonitored geographic feature or insufficient telemetry. Point-level models cannot be extrapolated.'
+        };
     }
   };
 
-  const badge = assessment ? getCategoryBadge(assessment.risk_category) : getCategoryBadge('MODERATE');
+  const badge = assessment
+    ? getCategoryBadge(assessment.risk_category)
+    : getCategoryBadge('NO_PREDICTION');
 
   return (
     <div className="rounded-2xl bg-white border border-[#E2E8F0] shadow-xs overflow-hidden">
@@ -582,7 +621,101 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
             )}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="p-5 space-y-5">
+          {/* Unmonitored / No Prediction Banner */}
+          <div className="p-4 rounded-xl border bg-slate-900/90 border-slate-700/80 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <span className="w-3.5 h-3.5 rounded-full bg-slate-500" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black tracking-wide text-slate-300">
+                    NO PREDICTION AVAILABLE
+                  </span>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-black/40 text-slate-400 border border-white/10 font-bold">
+                    UNMONITORED FEATURE
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  OpenStreetMap geographic waterway without dedicated in-situ hydrological telemetry. Hazard classification is unassessed.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Scope & Geographic Limitation Notice */}
+          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 space-y-2">
+            <h4 className="font-semibold text-slate-200 flex items-center gap-2">
+              <Info className="w-4 h-4 text-cyan-400" />
+              Geographic Scope &amp; Scientific Assessment Boundary
+            </h4>
+            <p className="text-slate-400 leading-relaxed">
+              AQUORA AI machine learning and hydrodynamic models are trained specifically for <strong>point-level monitored sensor stations</strong> with calibrated bathymetry, continuous stage sensors, and verified discharge rating curves.
+            </p>
+            <p className="text-slate-400 leading-relaxed">
+              In accordance with hydrological integrity standards, <strong>point-level predictions cannot be extrapolated across an entire river course</strong> or assigned to unmonitored waterways without physical cross-section data.
+            </p>
+            <div className="pt-2 flex flex-wrap items-center gap-3 text-[11px] text-cyan-400/90 border-t border-slate-800">
+              <span>Data Source: <strong>{station.data_source || 'OpenStreetMap (OSM waterways)'}</strong></span>
+              <span>&bull;</span>
+              <span>Coordinates: <strong>{formatCoordinates(station.latitude, station.longitude, 4)}</strong></span>
+              {station.basin_region && (
+                <>
+                  <span>&bull;</span>
+                  <span>Basin: <strong>{station.basin_region}</strong></span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Live Weather Observation for the Unmonitored River Reach */}
+          {weather && (
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/90 space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-slate-200">
+                  <CloudRain className="w-4 h-4 text-cyan-400" />
+                  <span>Live Atmospheric Observations (Open-Meteo API)</span>
+                </div>
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase bg-emerald-950 text-emerald-300 border border-emerald-800/70">
+                  ● Live Coordinates
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] font-mono">
+                <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                  <span className="text-slate-400 text-[10px] block font-sans">Condition &amp; Temp</span>
+                  <span className="text-white font-semibold flex items-center gap-1 mt-0.5">
+                    <Thermometer className="w-3 h-3 text-amber-400" />
+                    {weather.current_temperature_c.toFixed(1)}°C
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate font-sans">
+                    {weather.weather_condition}
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                  <span className="text-slate-400 text-[10px] block font-sans">Current Rain</span>
+                  <span className="text-cyan-300 font-semibold flex items-center gap-1 mt-0.5">
+                    <CloudRain className="w-3 h-3 text-cyan-400" />
+                    {weather.current_precipitation_mm_h.toFixed(1)} mm/h
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-sans">
+                    Wind: {weather.wind_speed_kmh.toFixed(0)} km/h
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                  <span className="text-slate-400 text-[10px] block font-sans">Past 24h Rain</span>
+                  <span className="text-indigo-300 font-semibold flex items-center gap-1 mt-0.5">
+                    <Gauge className="w-3 h-3 text-indigo-400" />
+                    {weather.accumulated_24h_rainfall_mm.toFixed(1)} mm
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-sans">
+                    Forecast: {weather.forecast_24h_rainfall_mm.toFixed(1)} mm
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

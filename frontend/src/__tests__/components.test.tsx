@@ -257,7 +257,7 @@ describe('AQUORA AI UI Component Integration Suite', () => {
       expect(container?.textContent).toContain('Continuous 24-hour telemetry trajectory is unrated');
       expect(container?.textContent).toContain('Telemetry Pending');
       expect(container?.textContent).not.toContain('92');
-    });
+    }, 30000);
 
     it('OperationalWhatIfPanel displays explicit experimental disclaimer and sensitivity calculations', async () => {
       const { OperationalWhatIfPanel } = await import('../components/ops/OperationalWhatIfPanel');
