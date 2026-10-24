@@ -406,8 +406,8 @@ class HazardAssessmentService:
             evaluation_rules_applied=rules_applied,
             rule_summary=rule_summary,
             assessment_timestamp=now.isoformat(),
-            data_source=waterbody.data_source,
-            license=waterbody.license,
+            data_source=waterbody.data_source or "OpenStreetMap Contributors",
+            license=waterbody.license or "ODbL",
             physical_limitations=limitations,
         )
 
