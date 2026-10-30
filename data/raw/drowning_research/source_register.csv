@@ -1,0 +1,10 @@
+source_id,source_name,url,recommended_use
+S1,NCRB ADSI 2018 tables,https://www.ncrb.mha.gov.in/accidental-deaths-suicides-in-india-table-content.html?year=2018,Aggregated official tables; inspect drowning-related tables.
+S2,NCRB ADSI 2019,https://kerala.data.gov.in/catalog/accidental-deaths-suicides-india-adsi-2019,Official annual statistics/resources.
+S3,NCRB ADSI 2020,https://kerala.data.gov.in/catalog/accidental-deaths-suicides-india-adsi-2020,Official annual statistics/resources.
+S4,NCRB ADSI 2023,https://www.data.gov.in/catalog/accidental-deaths-suicides-india-adsi-2023,Inspect downloadable resources for drowning tables.
+S5,NCRB ADSI 2024 catalog,https://data.gov.in/ministrydepartment/National%20Crime%20Records%20Bureau%20%28NCRB%29,Latest catalog listing; inspect relevant resources.
+S6,Kerala Data Portal,https://datahub.kerala.gov.in/datasets,Search state departmental datasets.
+S7,Kerala Online Data Repository,https://odr.ecostat.kerala.gov.in/,Search official statistical datasets.
+S8,MoHFW/DGHS drowning statistics,https://dghs.mohfw.gov.in/uploads/assets/TAaOO7nsx9I0v978vY8cWde6cO0NJBCWEE9s5DcD.pdf,National 2016–2022 totals and state-wise 2022 chart; not incident-level.
+S9,National Water Data Portal,https://nwdp.nwic.gov.in/,Hydrological observations; match only with defensible time/location.

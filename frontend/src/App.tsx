@@ -25,6 +25,9 @@ import { DrowningRiskAssessmentCard } from './components/DrowningRiskAssessmentC
 import { DatasetModelStatusPanel } from './components/DatasetModelStatusPanel';
 import { LoadingSkeleton, EmptyState, ErrorBanner } from './components/States';
 import { BottomSheet } from './components/layout/BottomSheet';
+import { ReportsExportModal } from './components/ops/ReportsExportModal';
+import { AdminConsoleModal } from './components/ops/AdminConsoleModal';
+
 
 import { KERALA_STATIONS } from './data/keralaStations';
 import { WaterBody, HealthResponse, DashboardResponse, RiskChangeEvent, formatCoordinates } from './types';
@@ -84,6 +87,9 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [isUsingDemoData, setIsUsingDemoData] = useState<boolean>(true);
+  const [isReportsOpen, setIsReportsOpen] = useState<boolean>(false);
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+
 
   // Sync URL hash with active section
   useEffect(() => {
@@ -209,6 +215,8 @@ export function App() {
         }}
         onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         isSidebarOpen={isSidebarOpen}
+        onOpenReports={() => setIsReportsOpen(true)}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* Mode Switcher Banner: Natural Aqua & Pale Blue Gradient */}
@@ -546,6 +554,15 @@ export function App() {
           </div>
         </div>
       </footer>
+      <ReportsExportModal
+        isOpen={isReportsOpen}
+        onClose={() => setIsReportsOpen(false)}
+        selectedWaterBody={selectedStation}
+      />
+      <AdminConsoleModal
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+      />
     </div>
   ) : (
     <div className="min-h-screen bg-[#F1F8FC] text-[#24445A] flex flex-col font-sans selection:bg-[#2387D9] selection:text-white">

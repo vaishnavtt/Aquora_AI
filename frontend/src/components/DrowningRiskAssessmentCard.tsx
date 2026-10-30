@@ -409,11 +409,11 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
                       </span>
                     </div>
                     <div className="bg-white p-2.5 rounded-lg border border-[#E2E8F0] shadow-xs">
-                      <span className="text-[#64748B] block text-[10px]">3h Stage Rise</span>
-                      <span className="font-mono text-[#172B4D] font-bold">
-                        {assessment.layer_a_environmental_hazard.water_level_delta_3h_m != null
-                          ? `${assessment.layer_a_environmental_hazard.water_level_delta_3h_m >= 0 ? '+' : ''}${assessment.layer_a_environmental_hazard.water_level_delta_3h_m.toFixed(2)} m`
-                          : 'No observation'}
+                      <span className="text-[#64748B] block text-[10px]">1h Forward Forecast</span>
+                      <span className="font-mono text-[#1677D2] font-bold">
+                        {assessment.layer_a_environmental_hazard.forecasted_water_level_change_1h_m != null
+                          ? `${assessment.layer_a_environmental_hazard.forecasted_water_level_change_1h_m >= 0 ? '+' : ''}${assessment.layer_a_environmental_hazard.forecasted_water_level_change_1h_m.toFixed(2)} m`
+                          : 'Steady state'}
                       </span>
                     </div>
                     <div className="bg-white p-2.5 rounded-lg border border-[#E2E8F0] shadow-xs">
@@ -468,6 +468,21 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
                   </div>
 
                   <div className="space-y-2 text-xs text-[#475569]">
+                    <div className="p-2.5 rounded-lg bg-white border border-[#E2E8F0] space-y-1.5 shadow-xs">
+                      <span className="text-[#64748B] text-[10px] block font-bold uppercase">Safety Infrastructure &amp; Barriers:</span>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono text-center">
+                        <div className={`p-1 rounded border font-bold ${assessment.layer_b_contextual_risk.has_barriers ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'}`}>
+                          {assessment.layer_b_contextual_risk.has_barriers ? '✓ Barriers' : '✗ Unfenced'}
+                        </div>
+                        <div className={`p-1 rounded border font-bold ${assessment.layer_b_contextual_risk.has_warning_signs ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                          {assessment.layer_b_contextual_risk.has_warning_signs ? '✓ Warning Signs' : '✗ No Signs'}
+                        </div>
+                        <div className={`p-1 rounded border font-bold ${assessment.layer_b_contextual_risk.has_rescue_equipment ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                          {assessment.layer_b_contextual_risk.has_rescue_equipment ? '✓ Lifebuoys' : '✗ No Rescue Gear'}
+                        </div>
+                      </div>
+                    </div>
+
                     <div>
                       <span className="text-[#64748B] text-[10px] block font-bold uppercase">Bathymetry Hazard:</span>
                       <p className="leading-relaxed text-[#172B4D] mt-0.5">
@@ -491,6 +506,35 @@ export const DrowningRiskAssessmentCard: React.FC<DrowningRiskAssessmentCardProp
               </div>
             )}
           </div>
+
+          {/* 24-Hour Historical Assessment Trend */}
+          {assessment.historical_trend && assessment.historical_trend.length > 0 && (
+            <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-[#172B4D] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Activity className="w-4 h-4 text-[#1677D2]" />
+                  24-Hour Assessed Risk Category Trend
+                </span>
+                <span className="text-[10px] font-mono text-[#64748B]">3h Assessment Intervals</span>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5 font-mono text-center text-xs">
+                {assessment.historical_trend.map((pt, i) => (
+                  <div key={i} className="p-1.5 rounded-lg bg-white border border-[#E2E8F0] shadow-xs">
+                    <span className="text-[9px] text-[#64748B] block font-sans">{pt.hour_offset === 0 ? 'Now' : `${pt.hour_offset}h`}</span>
+                    <span className="font-bold text-[#172B4D] block mt-0.5">{pt.risk_score.toFixed(0)}</span>
+                    <span className={`text-[8px] font-bold block px-1 py-0.5 rounded mt-0.5 ${
+                      pt.risk_category === 'VERY HIGH' ? 'bg-rose-100 text-rose-800' :
+                      pt.risk_category === 'HIGH' ? 'bg-orange-100 text-orange-800' :
+                      pt.risk_category === 'MODERATE' ? 'bg-amber-100 text-amber-800' :
+                      'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {pt.risk_category}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Primary Hazards Identified */}
           <div className="space-y-2">

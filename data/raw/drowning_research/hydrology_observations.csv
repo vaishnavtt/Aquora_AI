@@ -1,0 +1,1 @@
+observation_id,timestamp_ist,station_id,station_name,district,latitude,longitude,water_level_m,water_level_quality_flag,rainfall_1h_mm,rainfall_3h_mm,rainfall_24h_mm,discharge_m3s,source_agency,source_dataset,source_record_id,observed_or_modelled,notes

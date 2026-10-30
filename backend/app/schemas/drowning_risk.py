@@ -1,5 +1,5 @@
 """
-AQUORA AI - Drowning Risk Assessment & What-If Simulation Schemas
+AQUORA AI - Drowning-Related Environmental Risk Assessment & What-If Simulation Schemas
 Track: Machine Learning, API Architecture & Hydrological Integration
 """
 
@@ -16,6 +16,8 @@ class LayerAEnvironmentalHazard(BaseModel):
     water_level_m: Optional[float] = Field(None, description="Water level stage height in metres")
     water_level_delta_1h_m: Optional[float] = Field(None, description="1-hour stage change (+/- metres)")
     water_level_delta_3h_m: Optional[float] = Field(None, description="3-hour stage change (+/- metres)")
+    forecasted_water_level_change_1h_m: Optional[float] = Field(None, description="Predicted 1-hour forward stage change in metres")
+    forecast_source: Optional[str] = Field(None, description="Source of forward water-level forecast")
     rainfall_1h_mm: Optional[float] = Field(None, description="1-hour rainfall accumulation in mm")
     rainfall_24h_mm: Optional[float] = Field(None, description="24-hour rainfall accumulation in mm")
     estimated_discharge_cms: Optional[float] = Field(None, description="River water discharge volume in m³/sec")
@@ -32,6 +34,11 @@ class LayerBContextualRisk(BaseModel):
     access_characteristics: str = Field(..., description="Physical enclosure / barrier status (e.g. unfenced, public access, regulated)")
     bathymetry_hazard_notes: str = Field(..., description="Underwater geometry characteristics (e.g. steep depth drop, submerged silt, undercurrent)")
     historical_mortality_context: str = Field(..., description="Verified regional historical context from official Kerala statistics (NCRB/Fire Force)")
+    has_barriers: bool = Field(True, description="Whether perimeter safety barriers or fencing exist")
+    has_warning_signs: bool = Field(True, description="Whether public danger warning signs are installed")
+    has_rescue_equipment: bool = Field(False, description="Whether emergency floatation/rescue rings are positioned nearby")
+    safety_infrastructure_status: str = Field("PARTIAL_MEASURES", description="Status of site safety infrastructure: COMPREHENSIVE, PARTIAL_MEASURES, or UNPROTECTED")
+    site_vulnerability_status: str = Field("CONFIRMED", description="Vulnerability status: CONFIRMED or UNKNOWN_SITE_PROFILE")
 
 
 class DrowningRiskAssessmentResponse(BaseModel):
@@ -66,18 +73,24 @@ class DrowningRiskAssessmentResponse(BaseModel):
     # Explanations and Recommendations
     primary_hazards: List[str] = Field(default_factory=list, description="All active physical and contextual hazard factors")
     safety_recommendations: List[str] = Field(default_factory=list, description="Actionable safety directives for the public and operators")
-    data_freshness_status: str = Field(..., description="Data freshness: LIVE_STREAM, RECENT_TELEMETRY, HISTORICAL_BASELINE, or SYNTHETIC_SIMULATION")
+    data_freshness_status: str = Field(..., description="Data freshness: LIVE_STREAM, RECENT_TELEMETRY, HISTORICAL_BASELINE, STALE_TELEMETRY, or HYPOTHETICAL_SIMULATION")
     observation_timestamp: Optional[str] = Field(None, description="Timestamp of the physical environmental observation, or None if unknown/baseline")
     retrieval_timestamp: Optional[str] = Field(None, description="Timestamp when this evaluation was calculated/retrieved by the backend")
     data_source: str = Field("Multi-source Hydro-Environmental", description="Data provenance sources")
     nearest_telemetry_station: Optional[str] = Field(None, description="Name of nearest reference river telemetry station")
     monitoring_station_distance_km: Optional[float] = Field(None, description="Distance in kilometres to nearest reference river telemetry station")
     missing_variables: List[str] = Field(default_factory=list, description="List of unobserved telemetry variables with imputed assumptions")
+    uncertainty_level: str = Field("LOW", description="Uncertainty level: LOW, MODERATE, ELEVATED, HIGH")
+    uncertainty_explanation: str = Field("Observations complete within tolerance.", description="Explanation of uncertainty factors, distance, or missing sensors")
+    coordinate_validity: str = Field("VALID_KERALA_BOUNDS", description="Geographic validity status: VALID_KERALA_BOUNDS or OUT_OF_BOUNDS_COORDINATES")
+    historical_trend: Optional[List[Dict[str, Any]]] = Field(None, description="Historical 24-hour risk assessment trend data if available")
 
 
 class DrowningRiskAssessRequest(BaseModel):
     water_body_id: Optional[int] = Field(None, description="ID of existing water body to evaluate")
     water_body_type: Optional[str] = Field(None, description="Type: river, quarry, waterfall, lake, reservoir, canal")
+    latitude: Optional[float] = Field(None, description="Geographic latitude")
+    longitude: Optional[float] = Field(None, description="Geographic longitude")
     water_level_m: Optional[float] = Field(None, description="Current water stage in metres")
     water_level_delta_1h_m: Optional[float] = Field(None, description="1-hour stage delta in metres")
     water_level_delta_3h_m: Optional[float] = Field(None, description="3-hour stage delta in metres")
@@ -86,7 +99,12 @@ class DrowningRiskAssessRequest(BaseModel):
     discharge_cms: Optional[float] = Field(None, description="River discharge in m³/s")
     water_temp_c: Optional[float] = Field(None, description="Water temperature in °C")
     elevation_m: Optional[float] = Field(None, description="Terrain elevation in metres")
+    depth_meters: Optional[float] = Field(None, description="Water depth in metres")
     is_monsoon_season: Optional[bool] = Field(None, description="Monsoon status flag")
+    has_barriers: Optional[bool] = Field(None, description="Whether perimeter safety barriers exist")
+    has_warning_signs: Optional[bool] = Field(None, description="Whether public danger warning signs exist")
+    has_rescue_equipment: Optional[bool] = Field(None, description="Whether emergency rescue equipment exists")
+    observation_timestamp: Optional[str] = Field(None, description="ISO timestamp of measurement")
 
 
 class WhatIfSimulationRequest(BaseModel):

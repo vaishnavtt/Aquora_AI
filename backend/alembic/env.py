@@ -21,7 +21,15 @@ if BASE_DIR not in sys.path:
 
 from app.core.config import settings
 from app.db.session import Base
-from app.models import WaterBodyModel, AlertModel, AlertDeliveryModel
+from app.models import (
+    WaterBodyModel,
+    AlertModel,
+    AlertDeliveryModel,
+    MappedWaterbodyModel,
+    WaterbodyObservationModel,
+    InspectionRecordModel,
+    UserModel,
+)
 
 # Set database URL dynamically from app settings if not explicitly overridden
 current_url = config.get_main_option("sqlalchemy.url")

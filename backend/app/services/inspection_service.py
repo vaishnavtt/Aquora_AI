@@ -15,12 +15,20 @@ Scientific & Operational Principles:
 import math
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.models.water_body import WaterBodyModel
+from app.models.inspection import InspectionRecordModel
 from app.schemas.inspection import (
     SiteInspectionPriorityItem,
     InspectionPrioritizationResponse,
+    InspectionCreateRequest,
+    InspectionUpdateRequest,
+    InspectionRecordResponse,
+    InspectionListResponse,
+    InspectionTrendItem,
+    InspectionTrendsResponse,
 )
 from app.services.drowning_risk_service import (
     drowning_risk_service,
@@ -48,7 +56,8 @@ AUTHORITY_DISCLAIMER = (
 
 class InspectionService:
     """
-    Evaluates all registered water bodies and ranks them into actionable inspection priority tiers.
+    Evaluates all registered water bodies and ranks them into actionable inspection priority tiers,
+    with persistent tracking of official site audits and remediation lifecycle.
     """
 
     def get_prioritization(self, db: Session) -> InspectionPrioritizationResponse:
@@ -56,6 +65,21 @@ class InspectionService:
         water_bodies: List[WaterBodyModel] = db.query(WaterBodyModel).all()
 
         prioritized_items: List[SiteInspectionPriorityItem] = []
+
+        # Pre-fetch latest completed inspection date per water body from database
+        latest_completed_map: Dict[int, str] = {}
+        try:
+            completed_records = (
+                db.query(InspectionRecordModel)
+                .filter(InspectionRecordModel.status == "COMPLETED")
+                .order_by(desc(InspectionRecordModel.completed_date))
+                .all()
+            )
+            for rec in completed_records:
+                if rec.water_body_id not in latest_completed_map and rec.completed_date:
+                    latest_completed_map[rec.water_body_id] = rec.completed_date.strftime("%Y-%m-%d")
+        except Exception:
+            pass  # Table might be empty or in-memory test session
 
         for wb in water_bodies:
             # 1. Run provisional two-layer assessment
@@ -145,9 +169,8 @@ class InspectionService:
                     "Verify visibility of emergency contact numbers",
                 ])
 
-            # 7. Last inspection date: NO FABRICATED RECORDS!
-            # Kept as None because no certified municipal inspection database is currently linked.
-            last_insp_date = None
+            # 7. Last inspection date: Truthful data from database records
+            last_insp_date = latest_completed_map.get(wb.id, None)
 
             prioritized_items.append(
                 SiteInspectionPriorityItem(
@@ -194,5 +217,237 @@ class InspectionService:
             disclaimer=AUTHORITY_DISCLAIMER,
         )
 
+    def create_inspection(self, db: Session, req: InspectionCreateRequest) -> InspectionRecordResponse:
+        """
+        Creates and persists a new site inspection assignment.
+        Automatically snapshots current hazard and priority scores for the location.
+        """
+        wb = db.query(WaterBodyModel).filter(WaterBodyModel.id == req.water_body_id).first()
+        if not wb:
+            raise ValueError(f"Water body #{req.water_body_id} does not exist in database.")
+
+        assessment = drowning_risk_service.assess_drowning_risk(water_body=wb)
+        hazard_score = assessment.layer_a_environmental_hazard.hazard_score
+        composite_score = assessment.risk_score
+        wb_type = (wb.type or "river").lower()
+
+        # Compute priority score
+        nearest_station, distance_km = find_nearest_telemetry_station(wb.latitude, wb.longitude)
+        uncertainty_penalty = 15.0 if assessment.data_freshness_status in ("HISTORICAL_BASELINE", "UNAVAILABLE") else 0.0
+        if distance_km and distance_km > 25.0:
+            uncertainty_penalty += 5.0
+
+        base_score = 0.40 * hazard_score + 0.35 * assessment.layer_b_contextual_risk.vulnerability_score + uncertainty_penalty
+        if wb_type in ("quarry", "abandoned_quarry"):
+            base_score = max(base_score, 72.0)
+        priority_score = round(float(min(100.0, max(0.0, base_score))), 1)
+
+        if priority_score >= 75.0 or (wb_type == "quarry" and priority_score >= 70.0):
+            priority_tier = "CRITICAL"
+        elif priority_score >= 60.0:
+            priority_tier = "HIGH"
+        elif priority_score >= 40.0:
+            priority_tier = "MEDIUM"
+        else:
+            priority_tier = "ROUTINE"
+
+        suggested = req.suggested_focus if req.suggested_focus else [
+            "Inspect perimeter barriers and warning signage",
+            "Audit depth markers and safe egress foothold condition",
+            "Verify presence of emergency flotation equipment",
+        ]
+
+        now_utc = datetime.now(timezone.utc)
+        record = InspectionRecordModel(
+            water_body_id=wb.id,
+            water_body_name=wb.name,
+            water_body_type=wb.type,
+            district=wb.basin_region or "Kerala",
+            priority_tier=priority_tier,
+            priority_rank_score=priority_score,
+            status="SCHEDULED",
+            inspector_name=req.inspector_name or "Unassigned Authority Team",
+            scheduled_date=req.scheduled_date or now_utc,
+            environmental_hazard_score=hazard_score,
+            composite_risk_score=composite_score,
+            findings_notes=req.findings_notes,
+            action_required=False,
+            created_at=now_utc,
+            updated_at=now_utc,
+        )
+        record.contributing_factors = assessment.primary_hazards[:3]
+        record.suggested_focus = suggested
+        record.safety_measures_verified = []
+
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+
+        return self._record_to_response(record)
+
+    def list_inspections(
+        self,
+        db: Session,
+        status: Optional[str] = None,
+        water_body_id: Optional[int] = None,
+        priority_tier: Optional[str] = None,
+        action_required: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> InspectionListResponse:
+        """
+        Lists persisted inspection records with multi-dimensional filtering and status metrics.
+        """
+        query = db.query(InspectionRecordModel)
+
+        if status:
+            query = query.filter(InspectionRecordModel.status == status.upper())
+        if water_body_id is not None:
+            query = query.filter(InspectionRecordModel.water_body_id == water_body_id)
+        if priority_tier:
+            query = query.filter(InspectionRecordModel.priority_tier == priority_tier.upper())
+        if action_required is not None:
+            query = query.filter(InspectionRecordModel.action_required == action_required)
+
+        total = query.count()
+        records = query.order_by(desc(InspectionRecordModel.created_at)).offset(offset).limit(limit).all()
+
+        # Calculate counts
+        all_query = db.query(InspectionRecordModel)
+        if water_body_id is not None:
+            all_query = all_query.filter(InspectionRecordModel.water_body_id == water_body_id)
+
+        scheduled_cnt = all_query.filter(InspectionRecordModel.status == "SCHEDULED").count()
+        in_progress_cnt = all_query.filter(InspectionRecordModel.status == "IN_PROGRESS").count()
+        completed_cnt = all_query.filter(InspectionRecordModel.status == "COMPLETED").count()
+        cancelled_cnt = all_query.filter(InspectionRecordModel.status == "CANCELLED").count()
+        action_req_cnt = all_query.filter(InspectionRecordModel.action_required == True).count()
+
+        return InspectionListResponse(
+            total=total,
+            scheduled_count=scheduled_cnt,
+            in_progress_count=in_progress_cnt,
+            completed_count=completed_cnt,
+            cancelled_count=cancelled_cnt,
+            action_required_count=action_req_cnt,
+            inspections=[self._record_to_response(r) for r in records],
+        )
+
+    def get_inspection_by_id(self, db: Session, inspection_id: int) -> Optional[InspectionRecordResponse]:
+        record = db.query(InspectionRecordModel).filter(InspectionRecordModel.id == inspection_id).first()
+        return self._record_to_response(record) if record else None
+
+    def update_inspection(
+        self,
+        db: Session,
+        inspection_id: int,
+        req: InspectionUpdateRequest,
+    ) -> Optional[InspectionRecordResponse]:
+        """
+        Updates an inspection's status, inspector findings, verified safety measures, and remediation flags.
+        """
+        record = db.query(InspectionRecordModel).filter(InspectionRecordModel.id == inspection_id).first()
+        if not record:
+            return None
+
+        now_utc = datetime.now(timezone.utc)
+        if req.status is not None:
+            record.status = req.status.upper()
+            if record.status == "COMPLETED" and not record.completed_date:
+                record.completed_date = req.completed_date or now_utc
+        if req.inspector_name is not None:
+            record.inspector_name = req.inspector_name
+        if req.findings_notes is not None:
+            record.findings_notes = req.findings_notes
+        if req.safety_measures_verified is not None:
+            record.safety_measures_verified = req.safety_measures_verified
+        if req.action_required is not None:
+            record.action_required = req.action_required
+        if req.completed_date is not None:
+            record.completed_date = req.completed_date
+
+        record.updated_at = now_utc
+        db.commit()
+        db.refresh(record)
+
+        return self._record_to_response(record)
+
+    def get_inspection_trends(self, db: Session) -> InspectionTrendsResponse:
+        """
+        Calculates inspection volume and priority trends across historical records.
+        Truthful requirement: Displays trends only when sufficient historical records exist (>= 5 records).
+        """
+        records = db.query(InspectionRecordModel).order_by(InspectionRecordModel.created_at).all()
+        total_count = len(records)
+        min_required = 5
+
+        if total_count < min_required:
+            return InspectionTrendsResponse(
+                has_sufficient_history=False,
+                total_records=total_count,
+                minimum_required_records=min_required,
+                summary=(
+                    f"Insufficient historical inspection data ({total_count}/{min_required} records). "
+                    f"Log at least {min_required} formal audits to generate statistical trend projections."
+                ),
+                trends=[],
+            )
+
+        # Group by month/period
+        period_groups: Dict[str, List[InspectionRecordModel]] = {}
+        for r in records:
+            period_key = r.created_at.strftime("%Y-%m") if r.created_at else "Historical"
+            if period_key not in period_groups:
+                period_groups[period_key] = []
+            period_groups[period_key].append(r)
+
+        trend_items = []
+        for period, group in sorted(period_groups.items()):
+            comp_cnt = sum(1 for item in group if item.status == "COMPLETED")
+            action_cnt = sum(1 for item in group if item.action_required)
+            avg_score = round(sum(item.priority_rank_score for item in group) / max(len(group), 1), 1)
+            trend_items.append(
+                InspectionTrendItem(
+                    period=period,
+                    total_inspections=len(group),
+                    completed_count=comp_cnt,
+                    action_required_count=action_cnt,
+                    avg_priority_score=avg_score,
+                )
+            )
+
+        return InspectionTrendsResponse(
+            has_sufficient_history=True,
+            total_records=total_count,
+            minimum_required_records=min_required,
+            summary=f"Analyzed {total_count} official site inspection records across {len(trend_items)} monitoring periods.",
+            trends=trend_items,
+        )
+
+    def _record_to_response(self, record: InspectionRecordModel) -> InspectionRecordResponse:
+        return InspectionRecordResponse(
+            id=record.id,
+            water_body_id=record.water_body_id,
+            water_body_name=record.water_body_name,
+            water_body_type=record.water_body_type,
+            district=record.district,
+            priority_tier=record.priority_tier,
+            priority_rank_score=record.priority_rank_score,
+            status=record.status,
+            inspector_name=record.inspector_name,
+            scheduled_date=record.scheduled_date,
+            completed_date=record.completed_date,
+            environmental_hazard_score=record.environmental_hazard_score,
+            composite_risk_score=record.composite_risk_score,
+            contributing_factors=record.contributing_factors,
+            suggested_focus=record.suggested_focus,
+            safety_measures_verified=record.safety_measures_verified,
+            findings_notes=record.findings_notes,
+            action_required=record.action_required,
+            created_at=record.created_at,
+            updated_at=record.updated_at,
+        )
+
 
 inspection_service = InspectionService()
+

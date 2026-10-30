@@ -7,6 +7,8 @@ load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'))
 
 class Settings(BaseModel):
+    SECRET_KEY: str = os.getenv('SECRET_KEY', 'aquora-secret-key-kerala-disaster-resilience-2026-supersecure')
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', '480'))
     PROJECT_NAME: str = "AQUORA AI"
     VERSION: str = "1.0.0"
     API_V1_PREFIX: str = "/api/v1"

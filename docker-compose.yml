@@ -1,0 +1,58 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aquora-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - DATABASE_URL=sqlite:////app/data/aquora.db
+      - SECRET_KEY=${SECRET_KEY:-aquora-secret-key-kerala-disaster-resilience-2026-supersecure}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
+      - ALERT_TEST_MODE=${ALERT_TEST_MODE:-false}
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+      - ALERT_WEBHOOK_AUTH_TOKEN=${ALERT_WEBHOOK_AUTH_TOKEN:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - ALERT_FROM_EMAIL=${ALERT_FROM_EMAIL:-alerts@aquora.local}
+      - ALERT_TO_EMAIL=${ALERT_TO_EMAIL:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER:-}
+      - ALERT_TO_PHONE=${ALERT_TO_PHONE:-}
+      - OPEN_METEO_API_ENABLED=${OPEN_METEO_API_ENABLED:-true}
+      - NWIC_API_KEY=${NWIC_API_KEY:-}
+    volumes:
+      - aquora-data:/app/data
+    networks:
+      - aquora-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aquora-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - aquora-net
+
+volumes:
+  aquora-data:
+    name: aquora-sqlite-storage
+
+networks:
+  aquora-net:
+    name: aquora-network
+    driver: bridge
+

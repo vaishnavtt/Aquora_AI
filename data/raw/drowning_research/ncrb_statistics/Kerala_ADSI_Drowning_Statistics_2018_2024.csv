@@ -1,0 +1,8 @@
+year,state_ut,drowning_cases,persons_injured,persons_died,male_deaths,female_deaths,transgender_deaths,source_publication,source_table,source_file
+2018,KERALA,1298,14,1343,1105,238,0,ADSI 2018,Table 1.9,ADSI_2018_Drowning.csv
+2019,KERALA,1452,11,1490,1232,258,0,ADSI 2019,Table 1.9,ADSI_2019_Drowning.csv
+2020,KERALA,1211,29,1250,1028,222,0,ADSI 2020,Table 1.10,ADSI_2020_Drowning.csv
+2021,KERALA,1274,12,1307,1073,234,0,ADSI 2021,Table 1.10,ADSI_2021_Drowning.csv
+2022,KERALA,1382,7,1419,1180,239,0,ADSI 2022,Table 1.10,ADSI_2022_Drowning.csv
+2023,KERALA,1295,23,1344,1130,214,0,ADSI 2023,Table 1.10,ADSI_2023_Drowning.csv
+2024,KERALA,1349,11,1385,1160,225,0,ADSI 2024,Table 1.10,ADSI_2024_Table_1.10(1).csv

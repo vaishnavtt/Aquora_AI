@@ -42,6 +42,21 @@ try:
     from app.schemas.inspection import (
         SiteInspectionPriorityItem,
         InspectionPrioritizationResponse,
+        InspectionCreateRequest,
+        InspectionUpdateRequest,
+        InspectionRecordResponse,
+        InspectionListResponse,
+        InspectionTrendItem,
+        InspectionTrendsResponse,
+    )
+    from app.schemas.auth import (
+        UserRole,
+        UserResponse,
+        LoginRequest,
+        TokenResponse,
+        UserCreateRequest,
+        UserUpdateRequest,
+        PasswordChangeRequest,
     )
     from app.schemas.waterbody_gis import (
         GeoJSONGeometry,
@@ -96,6 +111,21 @@ except ImportError:
     from backend.app.schemas.inspection import (
         SiteInspectionPriorityItem,
         InspectionPrioritizationResponse,
+        InspectionCreateRequest,
+        InspectionUpdateRequest,
+        InspectionRecordResponse,
+        InspectionListResponse,
+        InspectionTrendItem,
+        InspectionTrendsResponse,
+    )
+    from backend.app.schemas.auth import (
+        UserRole,
+        UserResponse,
+        LoginRequest,
+        TokenResponse,
+        UserCreateRequest,
+        UserUpdateRequest,
+        PasswordChangeRequest,
     )
     from backend.app.schemas.waterbody_gis import (
         GeoJSONGeometry,
@@ -142,6 +172,12 @@ __all__ = [
     "HazardMonitoringStatusResponse",
     "SiteInspectionPriorityItem",
     "InspectionPrioritizationResponse",
+    "InspectionCreateRequest",
+    "InspectionUpdateRequest",
+    "InspectionRecordResponse",
+    "InspectionListResponse",
+    "InspectionTrendItem",
+    "InspectionTrendsResponse",
     "GeoJSONGeometry",
     "WaterbodyFeatureSchema",
     "WaterbodyViewportResponse",
@@ -149,5 +185,12 @@ __all__ = [
     "WaterbodyStatsResponse",
     "WaterbodySearchResponse",
     "WaterbodyObservationItem",
+    "UserRole",
+    "UserResponse",
+    "LoginRequest",
+    "TokenResponse",
+    "UserCreateRequest",
+    "UserUpdateRequest",
+    "PasswordChangeRequest",
 ]
 

@@ -1,0 +1,162 @@
+{
+  "total_tests": 31,
+  "passed": 31,
+  "failed": 0,
+  "details": [
+    {
+      "test": "GET /health",
+      "status": "PASS",
+      "evidence": "Status: 200, health: healthy, db: connected"
+    },
+    {
+      "test": "GET /water-bodies",
+      "status": "PASS",
+      "evidence": "Status: 200, returned 22 water bodies"
+    },
+    {
+      "test": "GET /waterbodies/search?q=ramamangalam",
+      "status": "PASS",
+      "evidence": "Status: 200, matches: 1"
+    },
+    {
+      "test": "GET /rivers/nearby (Haversine discovery)",
+      "status": "PASS",
+      "evidence": "Found 17 nearby rivers, nearest dist: 0.0 km"
+    },
+    {
+      "test": "GET /waterbodies/stats",
+      "status": "PASS",
+      "evidence": "Total waterbodies: 59"
+    },
+    {
+      "test": "GET /waterbodies/viewport",
+      "status": "PASS",
+      "evidence": "Status: 200, returned 33 spatial features"
+    },
+    {
+      "test": "GET /drowning-risk/water-bodies (Two-layer architecture)",
+      "status": "PASS",
+      "evidence": "Returned 22 assessments; Layer A & Layer B verified"
+    },
+    {
+      "test": "POST /drowning-risk/assess",
+      "status": "PASS",
+      "evidence": "Risk score: 65.0, non-calibrated probability verified: True"
+    },
+    {
+      "test": "POST /drowning-risk/simulate",
+      "status": "PASS",
+      "evidence": "Hypothetical: True, Delta risk: 27.7"
+    },
+    {
+      "test": "GET /drowning-risk/model-status",
+      "status": "PASS",
+      "evidence": "Champion: HistGradientBoosting Classifier, OOT Test Accuracy: 0.9876"
+    },
+    {
+      "test": "GET /river-data/history/{station_name}",
+      "status": "PASS",
+      "evidence": "Returned 48 points, source: Kerala State Water Resources Department (Kerala SW) via NWIC"
+    },
+    {
+      "test": "GET /river-data/forecast-vs-observation/{station}",
+      "status": "PASS",
+      "evidence": "Aligned 24 pairs, Model MAE: 0.0087m"
+    },
+    {
+      "test": "POST /forecast/water-level (Ridge Regression 1h)",
+      "status": "PASS",
+      "evidence": "Current: 3.24m, Forecast: 3.2534m, Delta: 0.0134m"
+    },
+    {
+      "test": "POST /forecast/water-level (Pala Station)",
+      "status": "PASS",
+      "evidence": "Pala forecast: 3.2675m, Trend: rising"
+    },
+    {
+      "test": "POST /forecast/water-level (Trinayakudam Station)",
+      "status": "PASS",
+      "evidence": "Trinayakudam forecast: 3.2413m, Trend: steady"
+    },
+    {
+      "test": "POST /forecast/water-level (Maniyar Dam Rejection)",
+      "status": "PASS",
+      "evidence": "Safely rejected with status 400: Forecasting rejected: Station MANIYAR DAM is a dam barrage governed by..."
+    },
+    {
+      "test": "GET /weather/live (Open-Meteo with cache/fallback)",
+      "status": "PASS",
+      "evidence": "Temp: 31.5C, Condition: Clear sky, Source: Open-Meteo Live API (High-Resolution NWP)"
+    },
+    {
+      "test": "GET /weather/water-body/1",
+      "status": "PASS",
+      "evidence": "Site: Station Emerald (Simulated Lake), Temp: 12.8C"
+    },
+    {
+      "test": "GET /authority/inspection-prioritization",
+      "status": "PASS",
+      "evidence": "Ranked 22 sites into priority tiers (Critical count: 2)"
+    },
+    {
+      "test": "POST /authority/inspections (DB Write)",
+      "status": "PASS",
+      "evidence": "Created inspection ID: 4, status: SCHEDULED"
+    },
+    {
+      "test": "PATCH /authority/inspections/{id} (DB Lifecycle Update)",
+      "status": "PASS",
+      "evidence": "Updated ID 4 to status: COMPLETED, verified measures: ['Warning board intact', 'Lifebuoy verified']"
+    },
+    {
+      "test": "GET /authority/inspections/trends/summary (Truthful sample rule)",
+      "status": "PASS",
+      "evidence": "Has sufficient history: False, Records: 4"
+    },
+    {
+      "test": "GET /alerts/status",
+      "status": "PASS",
+      "evidence": "Webhook: False, Email: False, Test Mode: False"
+    },
+    {
+      "test": "POST /alerts/dispatch (Safe test mode)",
+      "status": "PASS",
+      "evidence": "Delivery ID: 7435f0cb-ace3-4415-af41-9a8ff5900c62, Status: TEST_MODE_SIMULATED, Test mode: True"
+    },
+    {
+      "test": "GET /alerts/deliveries",
+      "status": "PASS",
+      "evidence": "Returned 10 delivery audit log entries"
+    },
+    {
+      "test": "GET /dashboard",
+      "status": "PASS",
+      "evidence": "Total sites: 22, High risk: 5, Safe sites: 10"
+    },
+    {
+      "test": "GET /monitoring/status",
+      "status": "PASS",
+      "evidence": "Scheduler running: False, Monitored: 4"
+    },
+    {
+      "test": "POST /predict (Heuristic Baseline)",
+      "status": "PASS",
+      "evidence": "Risk score: 54.0, level: moderate, model: baseline-heuristic-v0.1"
+    },
+    {
+      "test": "GET /water-bodies/999999 (Negative 404 check)",
+      "status": "PASS",
+      "evidence": "Safely returned 404 Not Found"
+    },
+    {
+      "test": "GET /rivers/nearby with out-of-bounds coords (Validation check)",
+      "status": "PASS",
+      "evidence": "Safely returned 422 Unprocessable Entity"
+    },
+    {
+      "test": "POST /forecast/water-level with < 13 readings (Validation check)",
+      "status": "PASS",
+      "evidence": "Safely returned 422 Unprocessable Entity"
+    }
+  ]
+}

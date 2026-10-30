@@ -1,0 +1,29 @@
+year,state_ut,drowning_category,number_of_cases,injured_male,injured_female,injured_transgender,injured_total,died_male,died_female,died_transgender,died_total,ncrb_case_code,source_publication,source_table,source_file,geographic_granularity,incident_level_data
+2018,KERALA,Drowning (Total),1298,8,6,0,14,1105,238,0,1343,10008,ADSI 2018,Table 1.9,ADSI_2018_Drowning.csv,State/UT aggregate,No
+2018,KERALA,Drowning (Boat Capsize),25,0,0,0,0,28,0,0,28,10009,ADSI 2018,Table 1.9,ADSI_2018_Drowning.csv,State/UT aggregate,No
+2018,KERALA,Drowning (Accidental Falls into Waterbody),1047,7,4,0,11,891,187,0,1078,10010,ADSI 2018,Table 1.9,ADSI_2018_Drowning.csv,State/UT aggregate,No
+2018,KERALA,Drowning (Other Cases),226,1,2,0,3,186,51,0,237,10011,ADSI 2018,Table 1.9,ADSI_2018_Drowning.csv,State/UT aggregate,No
+2019,KERALA,Drowning (Total),1452,11,0,0,11,1232,258,0,1490,10008,ADSI 2019,Table 1.9,ADSI_2019_Drowning.csv,State/UT aggregate,No
+2019,KERALA,Drowning (Boat Capsize),10,4,0,0,4,11,0,0,11,10009,ADSI 2019,Table 1.9,ADSI_2019_Drowning.csv,State/UT aggregate,No
+2019,KERALA,Drowning (Accidental Falls into Waterbody),1289,4,0,0,4,1100,222,0,1322,10010,ADSI 2019,Table 1.9,ADSI_2019_Drowning.csv,State/UT aggregate,No
+2019,KERALA,Drowning (Other Cases),153,3,0,0,3,121,36,0,157,10011,ADSI 2019,Table 1.9,ADSI_2019_Drowning.csv,State/UT aggregate,No
+2020,KERALA,Drowning (Total),1211,23,6,0,29,1028,222,0,1250,10008,ADSI 2020,Table 1.10,ADSI_2020_Drowning.csv,State/UT aggregate,No
+2020,KERALA,Drowning (Boat Capsize),16,0,0,0,0,20,0,0,20,10009,ADSI 2020,Table 1.10,ADSI_2020_Drowning.csv,State/UT aggregate,No
+2020,KERALA,Drowning (Accidental Falls into Waterbody),1043,15,3,0,18,884,193,0,1077,10010,ADSI 2020,Table 1.10,ADSI_2020_Drowning.csv,State/UT aggregate,No
+2020,KERALA,Drowning (Other Cases),152,8,3,0,11,124,29,0,153,10011,ADSI 2020,Table 1.10,ADSI_2020_Drowning.csv,State/UT aggregate,No
+2021,KERALA,Drowning (Total),1274,11,1,0,12,1073,234,0,1307,10008,ADSI 2021,Table 1.10,ADSI_2021_Drowning.csv,State/UT aggregate,No
+2021,KERALA,Drowning (Boat Capsize),15,0,0,0,0,18,1,0,19,10009,ADSI 2021,Table 1.10,ADSI_2021_Drowning.csv,State/UT aggregate,No
+2021,KERALA,Drowning (Accidental Falls into Waterbody),1098,8,1,0,9,929,198,0,1127,10010,ADSI 2021,Table 1.10,ADSI_2021_Drowning.csv,State/UT aggregate,No
+2021,KERALA,Drowning (Other Cases),161,3,0,0,3,126,35,0,161,10011,ADSI 2021,Table 1.10,ADSI_2021_Drowning.csv,State/UT aggregate,No
+2022,KERALA,Drowning (Total),1382,5,2,0,7,1180,239,0,1419,10008,ADSI 2022,Table 1.10,ADSI_2022_Drowning.csv,State/UT aggregate,No
+2022,KERALA,Drowning (Boat Capsize),13,0,0,0,0,16,2,0,18,10009,ADSI 2022,Table 1.10,ADSI_2022_Drowning.csv,State/UT aggregate,No
+2022,KERALA,Drowning (Accidental Falls into Waterbody),1280,5,0,0,5,1095,219,0,1314,10010,ADSI 2022,Table 1.10,ADSI_2022_Drowning.csv,State/UT aggregate,No
+2022,KERALA,Drowning (Other Cases),89,0,2,0,2,69,18,0,87,10011,ADSI 2022,Table 1.10,ADSI_2022_Drowning.csv,State/UT aggregate,No
+2023,KERALA,Drowning (Total),1295,19,4,0,23,1130,214,0,1344,10008,ADSI 2023,Table 1.10,ADSI_2023_Drowning.csv,State/UT aggregate,No
+2023,KERALA,Drowning (Boat Capsize),11,0,0,0,0,19,1,0,20,10009,ADSI 2023,Table 1.10,ADSI_2023_Drowning.csv,State/UT aggregate,No
+2023,KERALA,Drowning (Accidental Falls into Waterbody),1211,15,2,0,17,1060,195,0,1255,10010,ADSI 2023,Table 1.10,ADSI_2023_Drowning.csv,State/UT aggregate,No
+2023,KERALA,Drowning (Other Cases),73,4,2,0,6,51,18,0,69,10011,ADSI 2023,Table 1.10,ADSI_2023_Drowning.csv,State/UT aggregate,No
+2024,KERALA,Drowning (Total),1349,11,0,0,11,1160,225,0,1385,10008,ADSI 2024,Table 1.10,ADSI_2024_Table_1.10(1).csv,State/UT aggregate,No
+2024,KERALA,Drowning (Boat Capsize),19,5,0,0,5,18,0,0,18,10009,ADSI 2024,Table 1.10,ADSI_2024_Table_1.10(1).csv,State/UT aggregate,No
+2024,KERALA,Drowning (Accidental Falls into Waterbody),1307,6,0,0,6,1126,219,0,1345,10010,ADSI 2024,Table 1.10,ADSI_2024_Table_1.10(1).csv,State/UT aggregate,No
+2024,KERALA,Drowning (Other Cases),23,0,0,0,0,16,6,0,22,10011,ADSI 2024,Table 1.10,ADSI_2024_Table_1.10(1).csv,State/UT aggregate,No

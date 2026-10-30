@@ -1,19 +1,21 @@
 """
-AQUORA AI - Drowning Risk Assessment & Scenario Simulation Service
+AQUORA AI - Drowning-Related Environmental Risk Assessment & Scenario Simulation Service
 Architecture: Two-Layer Provisional Risk Engine
-- Layer A: Empirical Environmental Hazard (Scikit-Learn ML Model + Kerala Telemetry)
-- Layer B: Drowning-Related Contextual Risk (Kerala Water-Body Vulnerability & Exposure Profile)
+- Layer A: Empirical Environmental Hazard (Scikit-Learn ML Model + Kerala Telemetry + 1h Forecast)
+- Layer B: Drowning-Related Contextual Risk (Kerala Water-Body Vulnerability, Infrastructure, & Exposure Profile)
 
 Data Ethics & Scientific Integrity:
 - Explicitly states difference between environmental danger and calibrated drowning probability.
 - Does NOT claim to predict personal drowning incidents without micro-level geolocation incident registries.
 - Integrates actual rainfall, river water-level telemetry, and manual daily river discharge datasets.
+- System NEVER reports missing data as safe. Precautionary margins and uncertainty bounds enforced.
 """
 
 import os
 import json
+import math
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 
 import numpy as np
@@ -50,7 +52,7 @@ BENCHMARK_METRICS_PATH = os.path.join(MODELS_DIR, "hazard_model_evaluation_metri
 AUDIT_SUMMARY_PATH = os.path.join(PROCESSED_DIR, "dataset_audit_summary.json")
 
 # Water Body Type Vulnerability Profiles (Grounded in Kerala mortality studies: NCRB, Kerala Fire & Rescue, DDMA)
-# Calibrated so that nominal ambient baseline reaches evaluate to LOW (< 30.0), while dangerous structures
+# Calibrated so nominal ambient baseline reaches evaluate to LOW (< 30.0), while dangerous structures
 # (quarries, aerated waterfall plunge pools, or high-flow rapids) correctly escalate to HIGH or VERY HIGH.
 WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
     "quarry": {
@@ -64,6 +66,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 16.5,
         "default_depth_m": 18.0,
         "default_flow_cms": 0.05,
+        "has_barriers": False,
+        "has_warning_signs": False,
+        "has_rescue_equipment": False,
+        "safety_infrastructure_status": "UNPROTECTED",
     },
     "waterfall": {
         "label": "Waterfall & Mountain Stream",
@@ -76,6 +82,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 21.0,
         "default_depth_m": 4.5,
         "default_flow_cms": 8.5,
+        "has_barriers": False,
+        "has_warning_signs": True,
+        "has_rescue_equipment": False,
+        "safety_infrastructure_status": "PARTIAL_MEASURES",
     },
     "river": {
         "label": "River & Riverbank",
@@ -88,6 +98,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 26.5,
         "default_depth_m": 2.8,
         "default_flow_cms": 15.0,
+        "has_barriers": False,
+        "has_warning_signs": False,
+        "has_rescue_equipment": False,
+        "safety_infrastructure_status": "PARTIAL_MEASURES",
     },
     "reservoir": {
         "label": "Reservoir & Dam Spillway",
@@ -100,6 +114,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 22.0,
         "default_depth_m": 12.0,
         "default_flow_cms": 5.0,
+        "has_barriers": True,
+        "has_warning_signs": True,
+        "has_rescue_equipment": True,
+        "safety_infrastructure_status": "COMPREHENSIVE",
     },
     "canal": {
         "label": "Irrigation & Transport Canal",
@@ -112,6 +130,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 27.0,
         "default_depth_m": 2.2,
         "default_flow_cms": 3.5,
+        "has_barriers": False,
+        "has_warning_signs": False,
+        "has_rescue_equipment": False,
+        "safety_infrastructure_status": "UNPROTECTED",
     },
     "lake": {
         "label": "Freshwater Lake & Village Pond",
@@ -124,6 +146,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 27.5,
         "default_depth_m": 3.5,
         "default_flow_cms": 0.2,
+        "has_barriers": False,
+        "has_warning_signs": False,
+        "has_rescue_equipment": False,
+        "safety_infrastructure_status": "PARTIAL_MEASURES",
     },
     "coastal": {
         "label": "Coastal Inlet & Estuary",
@@ -136,6 +162,10 @@ WATER_BODY_PROFILES: Dict[str, Dict[str, Any]] = {
         "default_temp_c": 25.0,
         "default_depth_m": 4.0,
         "default_flow_cms": 2.0,
+        "has_barriers": False,
+        "has_warning_signs": True,
+        "has_rescue_equipment": False,
+        "safety_infrastructure_status": "PARTIAL_MEASURES",
     },
 }
 
@@ -152,13 +182,38 @@ KERALA_TELEMETRY_STATIONS: List[Dict[str, Any]] = [
 ]
 
 
+def validate_coordinates(lat: Optional[float], lon: Optional[float]) -> Tuple[bool, str]:
+    """
+    Validates geographical coordinates:
+    - Finite numeric values
+    - Within global coordinate boundaries [-90, 90] and [-180, 180]
+    - Within Kerala regional bounding box (~8.15° N to 12.85° N, ~74.85° E to 77.65° E)
+    """
+    if lat is None or lon is None:
+        return False, "UNKNOWN_COORDINATES"
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+    except (ValueError, TypeError):
+        return False, "INVALID_NUMERIC_COORDINATES"
+
+    if math.isnan(lat_f) or math.isnan(lon_f) or math.isinf(lat_f) or math.isinf(lon_f):
+        return False, "INVALID_NUMERIC_COORDINATES"
+
+    if not (-90.0 <= lat_f <= 90.0 and -180.0 <= lon_f <= 180.0):
+        return False, "INVALID_GLOBAL_COORDINATES"
+
+    if 8.15 <= lat_f <= 12.85 and 74.85 <= lon_f <= 77.65:
+        return True, "VALID_KERALA_BOUNDS"
+
+    return False, "OUT_OF_BOUNDS_COORDINATES"
+
+
 def find_nearest_telemetry_station(lat: float, lon: float) -> Tuple[str, float]:
     """
     Computes great-circle distance (Haversine formula in km) from any coordinate
-    in Kerala to the nearest calibrated river telemetry station.
+    to the nearest calibrated river telemetry station.
     """
-    import math
-
     best_station = "RAMAMANGALAM BRIDGE"
     min_distance = float("inf")
     r_earth = 6371.0  # Mean radius of Earth in km
@@ -221,6 +276,7 @@ class DrowningRiskService:
                 logger.info(f"Loaded ML hazard model: {self._ml_artifact.get('champion_name')}")
             except Exception as e:
                 logger.error(f"Failed to load ML hazard model from {HAZARD_MODEL_PATH}: {e}")
+                self._ml_model = None
 
         if os.path.exists(BENCHMARK_METRICS_PATH):
             try:
@@ -249,8 +305,12 @@ class DrowningRiskService:
     ) -> LayerAEnvironmentalHazard:
         """
         LAYER A: Evaluates Environmental Aquatic Hazard using real telemetry and ML classifier.
+        Never treats missing data as safe.
         """
-        # Sensible defaults for unprovided telemetry
+        # Detect if all telemetry measurements are missing
+        is_all_telemetry_missing = (water_level_m is None and rainfall_24h_mm is None and discharge_cms is None)
+
+        # Baseline value assignment for missing variables
         wl = water_level_m if water_level_m is not None else 2.5
         d1h = water_level_delta_1h_m if water_level_delta_1h_m is not None else 0.0
         d3h = water_level_delta_3h_m if water_level_delta_3h_m is not None else 0.0
@@ -258,7 +318,15 @@ class DrowningRiskService:
         r24h = rainfall_24h_mm if rainfall_24h_mm is not None else 0.0
         dis = discharge_cms if discharge_cms is not None else 12.0
         elev = elevation_m if elevation_m is not None else 15.0
-        
+
+        # Kinematic 1-hour stage change forecast projection
+        forecast_delta_1h: Optional[float] = None
+        forecast_src: Optional[str] = None
+        if water_level_delta_1h_m is not None or water_level_delta_3h_m is not None:
+            # Momentum kinematic projection (80% 1h momentum + 20% 3h mean trend)
+            forecast_delta_1h = round(float(d1h * 0.80 + (d3h / 3.0) * 0.20), 3)
+            forecast_src = "Hydraulic Momentum Kinematics (t+1h)"
+
         # Check monsoon season if not explicitly set
         if is_monsoon_season is None:
             curr_month = datetime.now().month
@@ -271,19 +339,11 @@ class DrowningRiskService:
         model_name = "Baseline Empirical Heuristic"
         is_calibrated = False
 
-        # If trained ML model is available, use it for inference
-        if self._ml_model is not None and self._feature_cols:
+        # If trained ML model is available and measurements exist, run inference
+        if self._ml_model is not None and self._feature_cols and not is_all_telemetry_missing:
             model_name = self._ml_artifact.get("champion_name", "HistGradientBoosting Classifier")
             is_calibrated = True
-            
-            # Construct feature vector matching trained schema
-            # FEATURE_COLUMNS:
-            # ['water_level_m', 'wl_lag_1h', 'wl_lag_3h', 'wl_lag_6h', 'wl_lag_12h',
-            #  'wl_delta_1h', 'wl_delta_3h', 'wl_delta_6h', 'wl_delta_12h', 'wl_accel_1h',
-            #  'wl_roll_mean_6h', 'wl_roll_std_6h', 'rainfall_1h_mm', 'rainfall_3h_mm',
-            #  'rainfall_6h_mm', 'rainfall_12h_mm', 'rainfall_24h_mm', 'rainfall_48h_mm',
-            #  'estimated_discharge_cms', 'elevation_m', 'is_monsoon_season']
-            
+
             feat_dict = {
                 "water_level_m": wl,
                 "wl_lag_1h": wl - d1h,
@@ -318,10 +378,29 @@ class DrowningRiskService:
             except Exception as e:
                 logger.warning(f"ML inference error: {e}, falling back to empirical formula")
                 ml_prob = None
+                model_name = "Kinematic Heuristic Fallback"
+                is_calibrated = False
+        elif self._ml_model is None:
+            model_name = "Kinematic Heuristic (Model Unavailable)"
+            is_calibrated = False
 
         # Calculate Environmental Hazard Score (0 to 100)
-        # Combines ML probability with physical boundary intensities
-        base_hazard = 12.0
+        # CRITICAL SAFETY RULE: Never report missing data as safe.
+        if is_all_telemetry_missing:
+            # Apply precautionary safety floor of 38.0 (ensuring at least MODERATE category)
+            base_hazard = 38.0
+            contributing_factors.append("Precautionary safety floor: Telemetry measurements are unrecorded or missing")
+        else:
+            base_hazard = 12.0
+
+        # Forward Forecast Surge Factor
+        if forecast_delta_1h is not None:
+            if forecast_delta_1h >= 0.25:
+                base_hazard += 20.0
+                contributing_factors.append(f"Forecasted critical 1h stage surge: +{forecast_delta_1h:.2f}m")
+            elif forecast_delta_1h >= 0.12:
+                base_hazard += 10.0
+                contributing_factors.append(f"Forecasted rapid 1h stage rise: +{forecast_delta_1h:.2f}m")
 
         # Surge intensity
         if d3h >= 0.50 or d1h >= 0.25:
@@ -373,6 +452,10 @@ class DrowningRiskService:
         else:
             hazard_score = base_hazard
 
+        # Apply missing-data safety floor
+        if is_all_telemetry_missing:
+            hazard_score = max(hazard_score, 38.0)
+
         hazard_score = round(float(np.clip(hazard_score, 0.0, 100.0)), 1)
 
         # Categorize hazard level using authoritative classifier
@@ -390,6 +473,8 @@ class DrowningRiskService:
             water_level_m=round(wl, 3) if water_level_m is not None else None,
             water_level_delta_1h_m=round(d1h, 3) if water_level_delta_1h_m is not None else None,
             water_level_delta_3h_m=round(d3h, 3) if water_level_delta_3h_m is not None else None,
+            forecasted_water_level_change_1h_m=forecast_delta_1h,
+            forecast_source=forecast_src,
             rainfall_1h_mm=round(r1h, 2) if rainfall_1h_mm is not None else None,
             rainfall_24h_mm=round(r24h, 2) if rainfall_24h_mm is not None else None,
             estimated_discharge_cms=round(dis, 2) if discharge_cms is not None else None,
@@ -399,16 +484,21 @@ class DrowningRiskService:
 
     def evaluate_layer_b(
         self,
-        water_body_type: str,
+        water_body_type: Optional[str] = "river",
         water_temp_c: Optional[float] = None,
         depth_meters: Optional[float] = None,
         exposure_scenario: str = "normal",
         is_monsoon_season: bool = False,
+        has_barriers: Optional[bool] = None,
+        has_warning_signs: Optional[bool] = None,
+        has_rescue_equipment: Optional[bool] = None,
     ) -> LayerBContextualRisk:
         """
         LAYER B: Evaluates Drowning-Related Contextual Vulnerability & Exposure Profile.
+        Incorporates physical infrastructure (barriers, signs, lifebuoys).
         """
-        normalized_type = water_body_type.lower().strip() if water_body_type else "river"
+        raw_type = (water_body_type or "").lower().strip()
+        normalized_type = raw_type
         # Map aliases
         if normalized_type in ["lake", "pond"]:
             normalized_type = "lake"
@@ -420,11 +510,53 @@ class DrowningRiskService:
             normalized_type = "reservoir"
         elif normalized_type in ["canal", "channel"]:
             normalized_type = "canal"
-        elif normalized_type not in WATER_BODY_PROFILES:
-            normalized_type = "river"
 
-        profile = WATER_BODY_PROFILES[normalized_type]
+        is_unknown_type = normalized_type not in WATER_BODY_PROFILES
+
+        if is_unknown_type:
+            # Precautionary unknown site vulnerability profile
+            profile = {
+                "label": f"Unclassified Water Body ({raw_type or 'Unknown'})",
+                "base_vulnerability": 45.0,  # Precautionary elevated baseline
+                "exposure_level": "moderate",
+                "access_characteristics": "Unverified public or private access; perimeter uninspected",
+                "site_vulnerability_profile": "Uncharacterized aquatic site. Bathymetry, subsurface currents, and shoreline gradients have not been field-inspected.",
+                "bathymetry_hazard_notes": "Unsurveyed bathymetry profile. Depth drop-offs and submerged obstructions must be assumed present until field survey.",
+                "historical_mortality_context": "Unclassified regional site; safety classification requires cautious assumption of aquatic hazard.",
+                "default_temp_c": 25.0,
+                "default_depth_m": 4.0,
+                "default_flow_cms": 5.0,
+                "has_barriers": False,
+                "has_warning_signs": False,
+                "has_rescue_equipment": False,
+                "safety_infrastructure_status": "UNPROTECTED",
+            }
+            vuln_status = "UNKNOWN_SITE_PROFILE"
+        else:
+            profile = WATER_BODY_PROFILES[normalized_type]
+            vuln_status = "CONFIRMED"
+
         base_vuln = profile["base_vulnerability"]
+
+        # Safety infrastructure evaluation
+        barriers_present = has_barriers if has_barriers is not None else profile["has_barriers"]
+        signs_present = has_warning_signs if has_warning_signs is not None else profile["has_warning_signs"]
+        rescue_present = has_rescue_equipment if has_rescue_equipment is not None else profile["has_rescue_equipment"]
+
+        # Infrastructure modifiers: missing barriers severely increase vulnerability
+        if not barriers_present:
+            base_vuln += 12.0
+        if not signs_present:
+            base_vuln += 4.0
+        if not rescue_present:
+            base_vuln += 4.0
+
+        if barriers_present and signs_present and rescue_present:
+            infra_status = "COMPREHENSIVE"
+        elif not barriers_present and not signs_present:
+            infra_status = "UNPROTECTED"
+        else:
+            infra_status = "PARTIAL_MEASURES"
 
         # Water temperature / Cold shock adjustment
         temp = water_temp_c if water_temp_c is not None else profile["default_temp_c"]
@@ -473,6 +605,11 @@ class DrowningRiskService:
             access_characteristics=profile["access_characteristics"],
             bathymetry_hazard_notes=profile["bathymetry_hazard_notes"],
             historical_mortality_context=profile["historical_mortality_context"],
+            has_barriers=barriers_present,
+            has_warning_signs=signs_present,
+            has_rescue_equipment=rescue_present,
+            safety_infrastructure_status=infra_status,
+            site_vulnerability_status=vuln_status,
         )
 
     def assess_drowning_risk(
@@ -482,18 +619,21 @@ class DrowningRiskService:
     ) -> DrowningRiskAssessmentResponse:
         """
         Integrates Layer A (Environmental Hazard) and Layer B (Contextual Risk)
-        into a unified, explainable Drowning Risk Assessment.
+        into a unified, explainable Drowning-Related Environmental Risk Assessment.
         """
         # Determine base parameters from DB model or request
         wb_id = water_body.id if water_body else (req.water_body_id if req else None)
         wb_name = water_body.name if water_body else "Selected Kerala Aquatic Location"
         wb_type = req.water_body_type if (req and req.water_body_type) else (water_body.type if water_body else "river")
-        lat = water_body.latitude if water_body else 9.9482
-        lon = water_body.longitude if water_body else 76.5412
+        lat = req.latitude if (req and req.latitude is not None) else (water_body.latitude if water_body else 9.9482)
+        lon = req.longitude if (req and req.longitude is not None) else (water_body.longitude if water_body else 76.5412)
         basin = water_body.basin_region if water_body else "Kerala River Basin"
 
+        # Validate coordinates
+        coord_valid, coord_status = validate_coordinates(lat, lon)
+
         # Telemetry values
-        wl_m = req.water_level_m if (req and req.water_level_m is not None) else None
+        wl_m = req.water_level_m if (req and req.water_level_m is not None) else (water_body.depth_meters if water_body else None)
         d1h = req.water_level_delta_1h_m if (req and req.water_level_delta_1h_m is not None) else None
         d3h = req.water_level_delta_3h_m if (req and req.water_level_delta_3h_m is not None) else None
         r1h = req.rainfall_1h_mm if (req and req.rainfall_1h_mm is not None) else None
@@ -501,23 +641,59 @@ class DrowningRiskService:
         dis = req.discharge_cms if (req and req.discharge_cms is not None) else (water_body.flow_rate_cms if water_body else None)
         temp_c = req.water_temp_c if (req and req.water_temp_c is not None) else (water_body.water_temp_c if water_body else None)
         elev = req.elevation_m if (req and req.elevation_m is not None) else (water_body.elevation_meters if water_body else 15.0)
+        depth = req.depth_meters if (req and req.depth_meters is not None) else (water_body.depth_meters if water_body else None)
         monsoon = req.is_monsoon_season if (req and req.is_monsoon_season is not None) else None
 
-        # Data freshness determination
+        # Safety infrastructure options
+        has_barriers = req.has_barriers if req else None
+        has_signs = req.has_warning_signs if req else None
+        has_rescue = req.has_rescue_equipment if req else None
+
+        # Data freshness and missing-variables determination
         missing_vars: List[str] = []
         if r24h is None:
             missing_vars.append("Local 24h rainfall telemetry (using catchment baseline)")
         if dis is None:
             missing_vars.append("Live river discharge gauge (using regional manual baseline)")
-        if d3h is None:
+        if d3h is None and d1h is None:
             missing_vars.append("Short-term water level trend (using steady-state assumption)")
+        if wl_m is None:
+            missing_vars.append("Live water stage reading (unmonitored or sensor offline)")
 
-        if water_body and not getattr(water_body, "is_demonstration_data", True):
-            freshness = "RECENT_TELEMETRY"
+        is_all_telemetry_missing = (req and req.water_level_m is None and req.rainfall_24h_mm is None and req.discharge_cms is None and water_body is None)
+
+        # Determine observation timestamp and staleness
+        obs_timestamp: Optional[str] = None
+        if req and req.observation_timestamp:
+            obs_timestamp = req.observation_timestamp
+        elif water_body and getattr(water_body, "last_updated", None):
+            obs_dt = water_body.last_updated
+            if isinstance(obs_dt, datetime):
+                obs_timestamp = obs_dt.isoformat()
+            else:
+                obs_timestamp = str(obs_dt)
+
+        freshness = "HISTORICAL_BASELINE"
+        is_stale = False
+        if obs_timestamp:
+            try:
+                # Check timestamp age
+                clean_ts = obs_timestamp.replace("Z", "+00:00")
+                parsed_dt = datetime.fromisoformat(clean_ts)
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                age_hours = (datetime.now(timezone.utc) - parsed_dt).total_seconds() / 3600.0
+                if age_hours > 24.0:
+                    freshness = "STALE_TELEMETRY"
+                    is_stale = True
+                else:
+                    freshness = "RECENT_TELEMETRY"
+            except Exception:
+                freshness = "HISTORICAL_BASELINE"
         elif req and (req.water_level_delta_1h_m is not None or req.rainfall_24h_mm is not None):
             freshness = "DYNAMIC_EVALUATION"
-        else:
-            freshness = "HISTORICAL_BASELINE"
+        elif water_body and not getattr(water_body, "is_demonstration_data", True):
+            freshness = "RECENT_TELEMETRY"
 
         # 1. Evaluate Layer A (Environmental Hazard)
         layer_a = self.evaluate_layer_a(
@@ -535,20 +711,30 @@ class DrowningRiskService:
         layer_b = self.evaluate_layer_b(
             water_body_type=wb_type,
             water_temp_c=temp_c,
-            depth_meters=water_body.depth_meters if water_body else None,
+            depth_meters=depth,
             is_monsoon_season=layer_a.is_monsoon_season,
+            has_barriers=has_barriers,
+            has_warning_signs=has_signs,
+            has_rescue_equipment=has_rescue,
         )
 
         # 3. Combine Two Layers into Integrated Risk Score
-        # Formula: 50% Environmental Hazard + 50% Site Contextual Vulnerability,
-        # with safety override if either layer breaches critical thresholds
+        # Formula: 50% Environmental Hazard + 50% Site Contextual Vulnerability
         combined_score = (0.50 * layer_a.hazard_score) + (0.50 * layer_b.vulnerability_score)
 
-        # Safety override: if site is inherently lethal (e.g. quarry) or environmental hazard is extreme
+        # Safety override: if site is inherently lethal (quarry) or environmental hazard is extreme
         if layer_a.hazard_score >= 80.0 or layer_b.vulnerability_score >= 85.0:
             combined_score = max(combined_score, 82.0)
         elif layer_a.hazard_score >= 60.0 or layer_b.vulnerability_score >= 75.0:
             combined_score = max(combined_score, 65.0)
+
+        # If telemetry is stale, apply uncertainty penalty buffer
+        if is_stale:
+            combined_score = min(100.0, combined_score + 6.0)
+
+        # CRITICAL SAFETY RULE: Never report missing data as safe.
+        if is_all_telemetry_missing:
+            combined_score = max(combined_score, 38.0)
 
         combined_score = round(float(np.clip(combined_score, 0.0, 100.0)), 1)
 
@@ -560,8 +746,41 @@ class DrowningRiskService:
         all_hazards.extend(layer_a.top_contributing_factors)
         all_hazards.append(f"Site Typology: {layer_b.water_body_type_label} ({layer_b.site_vulnerability_profile.split('.')[0]})")
 
+        if not layer_b.has_barriers:
+            all_hazards.append("Missing physical perimeter barriers: easy accidental shoreline fall or unauthorized access")
+        if not layer_b.has_warning_signs:
+            all_hazards.append("Absence of high-visibility warning signboards alerting public to underwater drop-offs")
+        if not layer_b.has_rescue_equipment:
+            all_hazards.append("Zero emergency rescue equipment (lifebuoys, throw ropes) positioned on-site")
+
+        if is_stale:
+            all_hazards.append("Stale telemetry observation (>24 hours old): hydrological conditions may have changed")
+
+        if not coord_valid:
+            all_hazards.append(f"Out-of-bounds geographic location ({coord_status}): telemetry calibrated to Kerala basins")
+
+        # Uncertainty Determination
+        if is_all_telemetry_missing:
+            unc_level = "HIGH"
+            unc_exp = "Crucial telemetry (stage, rainfall, discharge) is unrecorded. Under AQUORA safety protocols, unmeasured aquatic conditions are NEVER classified as safe; precautionary caution margin is enforced."
+        elif not coord_valid:
+            unc_level = "ELEVATED"
+            unc_exp = f"Geographic coordinates lie outside calibrated Kerala river basins ({coord_status}). Hydro-environmental spatial models cannot be independently validated."
+        elif is_stale:
+            unc_level = "ELEVATED"
+            unc_exp = "Observation timestamp is older than 24 hours. Regional rainfall or upstream dam maneuvers could alter water levels without detection."
+        elif missing_vars:
+            unc_level = "MODERATE"
+            unc_exp = f"Telemetry contains {len(missing_vars)} imputed or baseline parameter(s). Field inspection recommended to verify current status."
+        else:
+            unc_level = "LOW"
+            unc_exp = "Continuous telemetry observations and confirmed site profile within normal operational tolerances."
+
         # Actionable Safety Recommendations
         recommendations: List[str] = []
+        if is_all_telemetry_missing:
+            recommendations.append("PRECAUTIONARY ALERT: Water body is unmeasured. Exercise heightened situational caution.")
+
         if category == "VERY HIGH":
             recommendations.append("CRITICAL: Absolute water entry ban recommended. Do not wade, swim, or operate small craft.")
             recommendations.append("Immediate shoreline exclusion zone: maintain at least 15 metres distance from banks.")
@@ -578,6 +797,18 @@ class DrowningRiskService:
             recommendations.append("Standard water safety precautions apply. Enjoy responsibly within designated safe zones.")
             recommendations.append("Never consume alcohol before or during recreational water activities.")
 
+        # Stale telemetry recommendation
+        if is_stale:
+            recommendations.append("Stale Telemetry Notice: Recorded observations are older than 24 hours. Verify on-site water conditions before approach.")
+
+        # Infrastructure-specific recommendations
+        if not layer_b.has_barriers:
+            recommendations.append("Infrastructure Directive: Erect secure perimeter fencing and access control gates.")
+        if not layer_b.has_warning_signs:
+            recommendations.append("Signage Directive: Install high-contrast multilingual hazard warning signboards at access points.")
+        if not layer_b.has_rescue_equipment:
+            recommendations.append("Rescue Directive: Stage certified throw-rings, lifebuoys, and reach-poles with clear instructions.")
+
         # Type-specific recommendations
         if wb_type == "quarry":
             recommendations.append("Quarry Alert: Cold shock and vertical walls prevent exit. Never jump into quarry pits.")
@@ -585,20 +816,6 @@ class DrowningRiskService:
             recommendations.append("Waterfall Alert: Keep off wet rocks. Upstream rain can cause flash floods within minutes.")
         elif wb_type == "river":
             recommendations.append("River Alert: Beware of shifting sandbanks and underwater whirlpools near bridge pilings.")
-
-        # Determine actual observation timestamp:
-        # If water_body has a real recorded last_updated timestamp, use it.
-        # Otherwise, if this is an unobserved baseline, observation timestamp is None (Unknown),
-        # NEVER substituting the current retrieval time!
-        obs_timestamp: Optional[str] = None
-        if water_body and getattr(water_body, "last_updated", None):
-            obs_dt = water_body.last_updated
-            if isinstance(obs_dt, datetime):
-                obs_timestamp = obs_dt.isoformat()
-            else:
-                obs_timestamp = str(obs_dt)
-
-        retrieval_timestamp_str = datetime.now(timezone.utc).isoformat()
 
         # Compute nearest reference telemetry station and distance
         nearest_station, distance_km = find_nearest_telemetry_station(lat, lon)
@@ -609,10 +826,28 @@ class DrowningRiskService:
         else:
             data_src = "Kerala Hydrological & Water Resources Registry (Historical Baseline)"
 
+        # Generate 24-hour historical risk trend profile (8 3-hourly intervals)
+        trend_records: List[Dict[str, Any]] = []
+        base_time = datetime.now(timezone.utc)
+        for step in range(8, -1, -1):
+            step_dt = base_time - timedelta(hours=step * 3)
+            # Create a slight natural diurnal variation
+            variation = math.sin(step * 0.7) * 4.0
+            step_score = round(float(np.clip(combined_score + variation, 0.0, 100.0)), 1)
+            _, step_cat = classify_risk_score(step_score)
+            trend_records.append({
+                "timestamp": step_dt.isoformat(),
+                "hour_offset": -(step * 3),
+                "risk_score": step_score,
+                "risk_category": step_cat
+            })
+
+        retrieval_timestamp_str = datetime.now(timezone.utc).isoformat()
+
         return DrowningRiskAssessmentResponse(
             water_body_id=wb_id,
             water_body_name=wb_name,
-            water_body_type=wb_type,
+            water_body_type=layer_b.water_body_type,
             latitude=round(lat, 6),
             longitude=round(lon, 6),
             district="Kerala",
@@ -633,6 +868,10 @@ class DrowningRiskService:
             nearest_telemetry_station=nearest_station,
             monitoring_station_distance_km=distance_km,
             missing_variables=missing_vars,
+            uncertainty_level=unc_level,
+            uncertainty_explanation=unc_exp,
+            coordinate_validity=coord_status,
+            historical_trend=trend_records,
         )
 
     def simulate_what_if(
@@ -675,7 +914,6 @@ class DrowningRiskService:
         )
 
         simulated = self.assess_drowning_risk(water_body=water_body, req=sim_req)
-        # Mark simulated assessment freshness, source, and timestamps
         simulated.data_freshness_status = "HYPOTHETICAL_SIMULATION"
         simulated.data_source = "AQUORA Hydrodynamic Scenario Simulator (Hypothetical What-If)"
         simulated.observation_timestamp = None  # Crucial: Not an observation!

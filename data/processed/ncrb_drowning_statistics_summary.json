@@ -1,0 +1,175 @@
+{
+  "title": "Official NCRB Kerala Historical Drowning Statistics (2018\u20132024)",
+  "state_ut": "KERALA",
+  "temporal_coverage": "2018-2024",
+  "years": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "total_drowning_deaths": 9538,
+  "total_drowning_cases": 9261,
+  "total_persons_injured": 107,
+  "annual_mean_deaths": 1362.57,
+  "fatality_rate_percent": 98.89,
+  "category_breakdown": [
+    {
+      "category_name": "Accidental Falls into Waterbody",
+      "ncrb_code": 10010,
+      "total_deaths": 8518,
+      "percentage_of_all_deaths": 89.31,
+      "total_cases": 8275,
+      "total_injuries": 70
+    },
+    {
+      "category_name": "Boat Capsize",
+      "ncrb_code": 10009,
+      "total_deaths": 134,
+      "percentage_of_all_deaths": 1.4,
+      "total_cases": 109,
+      "total_injuries": 9
+    },
+    {
+      "category_name": "Other Cases",
+      "ncrb_code": 10011,
+      "total_deaths": 886,
+      "percentage_of_all_deaths": 9.29,
+      "total_cases": 877,
+      "total_injuries": 28
+    }
+  ],
+  "gender_breakdown": [
+    {
+      "gender": "Male",
+      "deaths": 7908,
+      "percentage_of_deaths": 82.91,
+      "injuries": 88
+    },
+    {
+      "gender": "Female",
+      "deaths": 1630,
+      "percentage_of_deaths": 17.09,
+      "injuries": 19
+    },
+    {
+      "gender": "Transgender",
+      "deaths": 0,
+      "percentage_of_deaths": 0.0,
+      "injuries": 0
+    }
+  ],
+  "annual_series": [
+    {
+      "year": 2018,
+      "cases": 1298,
+      "total_deaths": 1343,
+      "total_injured": 14,
+      "male_deaths": 1105,
+      "female_deaths": 238,
+      "falls_deaths": 1078,
+      "boat_capsize_deaths": 28,
+      "other_cases_deaths": 237,
+      "falls_deaths_share_pct": 80.27,
+      "source_publication": "ADSI 2018",
+      "source_table": "Table 1.9"
+    },
+    {
+      "year": 2019,
+      "cases": 1452,
+      "total_deaths": 1490,
+      "total_injured": 11,
+      "male_deaths": 1232,
+      "female_deaths": 258,
+      "falls_deaths": 1322,
+      "boat_capsize_deaths": 11,
+      "other_cases_deaths": 157,
+      "falls_deaths_share_pct": 88.72,
+      "source_publication": "ADSI 2019",
+      "source_table": "Table 1.9"
+    },
+    {
+      "year": 2020,
+      "cases": 1211,
+      "total_deaths": 1250,
+      "total_injured": 29,
+      "male_deaths": 1028,
+      "female_deaths": 222,
+      "falls_deaths": 1077,
+      "boat_capsize_deaths": 20,
+      "other_cases_deaths": 153,
+      "falls_deaths_share_pct": 86.16,
+      "source_publication": "ADSI 2020",
+      "source_table": "Table 1.10"
+    },
+    {
+      "year": 2021,
+      "cases": 1274,
+      "total_deaths": 1307,
+      "total_injured": 12,
+      "male_deaths": 1073,
+      "female_deaths": 234,
+      "falls_deaths": 1127,
+      "boat_capsize_deaths": 19,
+      "other_cases_deaths": 161,
+      "falls_deaths_share_pct": 86.23,
+      "source_publication": "ADSI 2021",
+      "source_table": "Table 1.10"
+    },
+    {
+      "year": 2022,
+      "cases": 1382,
+      "total_deaths": 1419,
+      "total_injured": 7,
+      "male_deaths": 1180,
+      "female_deaths": 239,
+      "falls_deaths": 1314,
+      "boat_capsize_deaths": 18,
+      "other_cases_deaths": 87,
+      "falls_deaths_share_pct": 92.6,
+      "source_publication": "ADSI 2022",
+      "source_table": "Table 1.10"
+    },
+    {
+      "year": 2023,
+      "cases": 1295,
+      "total_deaths": 1344,
+      "total_injured": 23,
+      "male_deaths": 1130,
+      "female_deaths": 214,
+      "falls_deaths": 1255,
+      "boat_capsize_deaths": 20,
+      "other_cases_deaths": 69,
+      "falls_deaths_share_pct": 93.38,
+      "source_publication": "ADSI 2023",
+      "source_table": "Table 1.10"
+    },
+    {
+      "year": 2024,
+      "cases": 1349,
+      "total_deaths": 1385,
+      "total_injured": 11,
+      "male_deaths": 1160,
+      "female_deaths": 225,
+      "falls_deaths": 1345,
+      "boat_capsize_deaths": 18,
+      "other_cases_deaths": 22,
+      "falls_deaths_share_pct": 97.11,
+      "source_publication": "ADSI 2024",
+      "source_table": "Table 1.10"
+    }
+  ],
+  "source_provenance": {
+    "organization": "National Crime Records Bureau (NCRB)",
+    "ministry": "Ministry of Home Affairs, Government of India",
+    "publication_series": "Accidental Deaths & Suicides in India (ADSI)",
+    "table_references": "Table 1.9 (2018\u20132019), Table 1.10 (2020\u20132024)",
+    "geographic_granularity": "State / UT Aggregate (Kerala)",
+    "incident_level_data": false,
+    "corroboration": "Matches MoHFW / DGHS 2022 Strategic Framework benchmark of 1,419 deaths"
+  },
+  "scientific_integrity_notice": "DATA ETHICS DECLARATION: These statistics are authoritative macro-level annual state summaries. They do NOT contain micro-level incident coordinates, exact timestamps, or victim identifiers. In strict compliance with AQUORA AI scientific standards, these records are NOT used to train incident-level predictive machine-learning models or alter physical environmental hazard computations."
+}

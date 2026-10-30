@@ -197,12 +197,24 @@ class TestFourFeaturesAudit(unittest.TestCase):
 
     def test_task3_no_invented_inspection_dates(self):
         """Verify that no fabricated inspection dates are invented."""
+        try:
+            from app.models.inspection import InspectionRecordModel
+            completed_ids = {
+                r.water_body_id for r in self.db.query(InspectionRecordModel).filter(
+                    InspectionRecordModel.status == "COMPLETED",
+                    InspectionRecordModel.completed_date.isnot(None)
+                ).all()
+            }
+        except Exception:
+            completed_ids = set()
+
         prioritization = inspection_service.get_prioritization(self.db)
 
         for site in prioritization.prioritized_sites:
-            # Last inspection date must be None because no certified government inspection log is linked
-            self.assertIsNone(site.last_inspection_date)
-
+            if site.water_body_id not in completed_ids:
+                self.assertIsNone(site.last_inspection_date)
+            else:
+                self.assertRegex(site.last_inspection_date, r"^\d{4}-\d{2}-\d{2}$")
     def test_task3_authority_inspection_endpoint(self):
         """Verify GET /api/v1/authority/inspection-prioritization endpoint."""
         res = self.client.get("/api/v1/authority/inspection-prioritization")

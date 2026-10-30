@@ -59,3 +59,73 @@ class InspectionPrioritizationResponse(BaseModel):
         ...,
         description="Mandatory advisory notice: Automated decision-support guidance; does not constitute a statutory regulatory mandate"
     )
+
+
+class InspectionCreateRequest(BaseModel):
+    water_body_id: int = Field(..., description="ID of the water body to inspect")
+    inspector_name: Optional[str] = Field(None, description="Name or badge ID of assigned inspector")
+    scheduled_date: Optional[datetime] = Field(None, description="Scheduled inspection timestamp")
+    findings_notes: Optional[str] = Field(None, description="Initial assignment notes or objective")
+    suggested_focus: Optional[List[str]] = Field(default_factory=list, description="Specific safety items to audit")
+
+
+class InspectionUpdateRequest(BaseModel):
+    status: Optional[str] = Field(None, description="Status: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED")
+    inspector_name: Optional[str] = Field(None, description="Name of inspector")
+    findings_notes: Optional[str] = Field(None, description="On-site inspector findings and observations")
+    safety_measures_verified: Optional[List[str]] = Field(None, description="Checklist of verified safety measures")
+    action_required: Optional[bool] = Field(None, description="Flag indicating urgent municipal remediation needed")
+    completed_date: Optional[datetime] = Field(None, description="Timestamp when inspection was completed")
+
+
+class InspectionRecordResponse(BaseModel):
+    id: int
+    water_body_id: int
+    water_body_name: str
+    water_body_type: str
+    district: str
+    priority_tier: str
+    priority_rank_score: float
+    status: str
+    inspector_name: Optional[str] = None
+    scheduled_date: Optional[datetime] = None
+    completed_date: Optional[datetime] = None
+    environmental_hazard_score: Optional[float] = None
+    composite_risk_score: Optional[float] = None
+    contributing_factors: List[str] = Field(default_factory=list)
+    suggested_focus: List[str] = Field(default_factory=list)
+    safety_measures_verified: List[str] = Field(default_factory=list)
+    findings_notes: Optional[str] = None
+    action_required: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InspectionListResponse(BaseModel):
+    total: int
+    scheduled_count: int
+    in_progress_count: int
+    completed_count: int
+    cancelled_count: int
+    action_required_count: int
+    inspections: List[InspectionRecordResponse]
+
+
+class InspectionTrendItem(BaseModel):
+    period: str
+    total_inspections: int
+    completed_count: int
+    action_required_count: int
+    avg_priority_score: float
+
+
+class InspectionTrendsResponse(BaseModel):
+    has_sufficient_history: bool
+    total_records: int
+    minimum_required_records: int = 5
+    summary: str
+    trends: List[InspectionTrendItem] = Field(default_factory=list)
+

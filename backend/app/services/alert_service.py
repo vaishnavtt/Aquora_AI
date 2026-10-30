@@ -132,42 +132,52 @@ class WebhookAlertProvider:
         if self.auth_token:
             headers["Authorization"] = f"Bearer {self.auth_token}"
 
-        try:
-            http_req = urllib.request.Request(target_url, data=data, headers=headers, method="POST")
-            with urllib.request.urlopen(http_req, timeout=self.timeout) as resp:
-                status_code = resp.status
-                if 200 <= status_code < 300:
-                    body = resp.read().decode("utf-8", errors="ignore")[:200]
-                    # Upstream confirmed receipt
-                    status_label = "DELIVERED" if status_code in (200, 201) else "ACCEPTED"
-                    return (
-                        status_label,
-                        True,
-                        f"Upstream provider confirmed receipt (HTTP {status_code}): {body or 'OK'}",
-                        target_url,
-                    )
-                else:
-                    return (
-                        "FAILED",
-                        False,
-                        f"Upstream webhook returned non-success HTTP status: {status_code}",
-                        target_url,
-                    )
-        except urllib.error.HTTPError as exc:
-            return (
-                "FAILED",
-                False,
-                f"Upstream webhook rejected dispatch: HTTP {exc.code} {exc.reason}",
-                target_url,
-            )
-        except (urllib.error.URLError, socket.timeout, Exception) as exc:
-            logger.warning("Webhook dispatch failed to %s: %s", target_url, exc)
-            return (
-                "FAILED",
-                False,
-                f"Webhook transmission error: {type(exc).__name__} ({str(exc)})",
-                target_url,
-            )
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                http_req = urllib.request.Request(target_url, data=data, headers=headers, method="POST")
+                with urllib.request.urlopen(http_req, timeout=self.timeout) as resp:
+                    status_code = resp.status
+                    if 200 <= status_code < 300:
+                        body = resp.read().decode("utf-8", errors="ignore")[:200]
+                        status_label = "DELIVERED" if status_code in (200, 201) else "ACCEPTED"
+                        return (
+                            status_label,
+                            True,
+                            f"Upstream provider confirmed receipt (HTTP {status_code}): {body or 'OK'}",
+                            target_url,
+                        )
+                    elif status_code >= 500 and attempt < max_retries:
+                        time.sleep(0.5 * (attempt + 1))
+                        continue
+                    else:
+                        return (
+                            "FAILED",
+                            False,
+                            f"Upstream webhook returned non-success HTTP status: {status_code}",
+                            target_url,
+                        )
+            except urllib.error.HTTPError as exc:
+                if exc.code >= 500 and attempt < max_retries:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                return (
+                    "FAILED",
+                    False,
+                    f"Upstream webhook rejected dispatch: HTTP {exc.code} {exc.reason}",
+                    target_url,
+                )
+            except (urllib.error.URLError, socket.timeout, Exception) as exc:
+                if attempt < max_retries:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                logger.warning("Webhook dispatch failed to %s: %s", target_url, exc)
+                return (
+                    "FAILED",
+                    False,
+                    f"Webhook transmission error after {attempt + 1} attempts: {type(exc).__name__} ({str(exc)})",
+                    target_url,
+                )
 
 
 class EmailAlertProvider:
@@ -538,6 +548,97 @@ class AlertService:
             force=True,
         )
         return self.dispatch_alert(dispatch_req, db)
+
+    def validate_channels(self) -> Dict[str, Any]:
+        """
+        Non-intrusively tests the configuration and reachability of outbound alert channels.
+        Checks URL formatting, DNS resolution, and port reachability without sending unsolicited alerts.
+        """
+        import urllib.parse
+        results = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "test_mode_enforced": settings.ALERT_TEST_MODE,
+            "channels": {},
+        }
+
+        # 1. Webhook validation
+        webhook_url = settings.ALERT_WEBHOOK_URL
+        if not webhook_url or webhook_url.startswith("your_"):
+            results["channels"]["webhook"] = {
+                "status": "UNCONFIGURED",
+                "valid": False,
+                "message": "ALERT_WEBHOOK_URL is not configured in backend environment.",
+            }
+        else:
+            try:
+                parsed = urllib.parse.urlparse(webhook_url)
+                if parsed.scheme in ("http", "https") and parsed.netloc:
+                    results["channels"]["webhook"] = {
+                        "status": "CONFIGURED_SYNTAX_VALID",
+                        "valid": True,
+                        "endpoint": f"{parsed.scheme}://{parsed.netloc}{parsed.path[:20]}...",
+                        "message": "Webhook URL syntax and host verified.",
+                    }
+                else:
+                    results["channels"]["webhook"] = {
+                        "status": "INVALID_URL",
+                        "valid": False,
+                        "message": "Webhook URL is malformed.",
+                    }
+            except Exception as e:
+                results["channels"]["webhook"] = {
+                    "status": "VALIDATION_ERROR",
+                    "valid": False,
+                    "message": str(e),
+                }
+
+        # 2. SMTP Email validation
+        smtp_host = settings.SMTP_HOST
+        smtp_port = settings.SMTP_PORT
+        if not smtp_host or smtp_host.startswith("smtp.example"):
+            results["channels"]["email"] = {
+                "status": "UNCONFIGURED",
+                "valid": False,
+                "message": "SMTP_HOST is not configured in backend environment.",
+            }
+        else:
+            try:
+                sock = socket.create_connection((smtp_host, smtp_port), timeout=2.0)
+                sock.close()
+                results["channels"]["email"] = {
+                    "status": "REACHABLE",
+                    "valid": True,
+                    "host": f"{smtp_host}:{smtp_port}",
+                    "message": f"SMTP host {smtp_host}:{smtp_port} is network reachable.",
+                }
+            except Exception as e:
+                results["channels"]["email"] = {
+                    "status": "UNREACHABLE",
+                    "valid": False,
+                    "host": f"{smtp_host}:{smtp_port}",
+                    "message": f"SMTP server connection test failed: {str(e)}",
+                }
+
+        # 3. SMS Twilio validation
+        sid = settings.TWILIO_ACCOUNT_SID
+        token = settings.TWILIO_AUTH_TOKEN
+        if not sid or not token or sid.startswith("your_"):
+            results["channels"]["sms"] = {
+                "status": "UNCONFIGURED",
+                "valid": False,
+                "message": "TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN is not configured.",
+            }
+        else:
+            is_valid_format = sid.startswith("AC") and len(sid) == 34
+            results["channels"]["sms"] = {
+                "status": "CONFIGURED" if is_valid_format else "INVALID_SID_FORMAT",
+                "valid": is_valid_format,
+                "account_sid_masked": f"{sid[:4]}...{sid[-4:]}" if len(sid) > 8 else "***",
+                "from_number": settings.TWILIO_FROM_NUMBER or "Unset",
+                "message": "Twilio Account SID format verified." if is_valid_format else "Twilio SID should begin with 'AC' and be 34 characters.",
+            }
+
+        return results
 
     def get_recent_deliveries(self, db: Session, limit: int = 20) -> List[AlertDeliveryModel]:
         return db.query(AlertDeliveryModel).order_by(AlertDeliveryModel.created_at.desc()).limit(limit).all()

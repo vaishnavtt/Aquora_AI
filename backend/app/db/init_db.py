@@ -8,6 +8,7 @@ incidents or emergency situations are fabricated.
 
 import os
 import sys
+import json
 from datetime import datetime, timezone
 
 # Ensure project root is available in sys.path
@@ -23,6 +24,10 @@ from app.models.water_body import WaterBodyModel
 from app.models.alert import AlertModel
 from app.models.alert_delivery import AlertDeliveryModel
 from app.models.mapped_waterbody import MappedWaterbodyModel, WaterbodyObservationModel
+from app.models.inspection import InspectionRecordModel
+from app.models.user import UserModel
+from app.core.security import generate_salt, hash_password
+
 from app.services.waterbody_ingestion_service import waterbody_ingestion_service
 
 def get_demonstration_water_bodies() -> list[WaterBodyModel]:
@@ -434,6 +439,64 @@ def get_kerala_water_bodies() -> list[WaterBodyModel]:
         ),
     ]
 
+
+def seed_default_users(db: Session):
+    """Provisions default administrative, officer, inspector, and observer accounts if not present."""
+    default_accounts = [
+        {
+            "email": "admin@aquora.gov.in",
+            "username": "admin",
+            "full_name": "KSDMA State Administrator",
+            "password": "Admin@Aquora2026!",
+            "role": "ADMIN",
+            "organization": "Kerala State Disaster Management Authority",
+        },
+        {
+            "email": "officer@ksdma.kerala.gov.in",
+            "username": "officer",
+            "full_name": "EOC Disaster Management Officer",
+            "password": "Officer@Ksdma2026!",
+            "role": "OFFICER",
+            "organization": "KSDMA Emergency Operations Centre",
+        },
+        {
+            "email": "inspector@kwa.kerala.gov.in",
+            "username": "inspector",
+            "full_name": "KWA Field Safety Auditor",
+            "password": "Inspector@Kwa2026!",
+            "role": "INSPECTOR",
+            "organization": "Kerala Water Authority",
+        },
+        {
+            "email": "viewer@aquora.local",
+            "username": "viewer",
+            "full_name": "Public Stakeholder / Observer",
+            "password": "Viewer@Aquora2026!",
+            "role": "VIEWER",
+            "organization": "Public Safety Monitoring Desk",
+        },
+    ]
+
+    for acc in default_accounts:
+        existing = db.query(UserModel).filter(
+            (UserModel.username == acc["username"]) | (UserModel.email == acc["email"])
+        ).first()
+        if not existing:
+            salt = generate_salt()
+            hashed = hash_password(acc["password"], salt)
+            user = UserModel(
+                email=acc["email"],
+                username=acc["username"],
+                full_name=acc["full_name"],
+                hashed_password=hashed,
+                salt=salt,
+                role=acc["role"],
+                organization=acc["organization"],
+                is_active=True,
+            )
+            db.add(user)
+    db.commit()
+
 def init_database():
     """Initializes SQLite schema tables and populates baseline demonstration records if empty."""
     Base.metadata.create_all(bind=engine)
@@ -519,6 +582,8 @@ def init_database():
                 waterbody_ingestion_service.ingest_seed_dataset(db)
             except Exception as e:
                 print(f"Notice: Initial waterbody dataset sync note: {e}")
+            seed_default_users(db)
+
     finally:
         db.close()
 

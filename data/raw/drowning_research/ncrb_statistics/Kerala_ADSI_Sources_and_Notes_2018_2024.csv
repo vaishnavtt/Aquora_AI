@@ -1,0 +1,8 @@
+year,source_file,source_publication,source_table,source_repository,verification_note
+2018,ADSI_2018_Drowning.csv,ADSI 2018,Table 1.9,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.
+2019,ADSI_2019_Drowning.csv,ADSI 2019,Table 1.9,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.
+2020,ADSI_2020_Drowning.csv,ADSI 2020,Table 1.10,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.
+2021,ADSI_2021_Drowning.csv,ADSI 2021,Table 1.10,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.
+2022,ADSI_2022_Drowning.csv,ADSI 2022,Table 1.10,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.
+2023,ADSI_2023_Drowning.csv,ADSI 2023,Table 1.10,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.
+2024,ADSI_2024_Table_1.10(1).csv,ADSI 2024,Table 1.10,reclaimchennai/NCRB (third-party structured extraction),Extracted from user-uploaded CSV; validate against original NCRB PDF before formal publication.

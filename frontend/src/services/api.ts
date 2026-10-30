@@ -32,6 +32,11 @@ import {
   RiskClassificationRuleResponse,
   InspectionPrioritizationResponse,
   SiteInspectionPriorityItem,
+  InspectionRecord,
+  InspectionCreateRequest,
+  InspectionUpdateRequest,
+  InspectionListResponse,
+  InspectionTrendsResponse,
   WaterbodyFeature,
   WaterbodyViewportResponse,
   HazardAssessmentResult,
@@ -901,6 +906,53 @@ export const api = {
     return await res.json();
   },
 
+  async getInspections(params?: { water_body_id?: number; status?: string; priority?: string }, signal?: AbortSignal): Promise<InspectionListResponse> {
+    const url = new URL(`${API_BASE_URL}/authority/inspections`);
+    if (params?.water_body_id) url.searchParams.set('water_body_id', String(params.water_body_id));
+    if (params?.status) url.searchParams.set('status', params.status);
+    if (params?.priority) url.searchParams.set('priority', params.priority);
+    const res = await fetch(url.toString(), { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch inspections: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async createInspection(payload: InspectionCreateRequest): Promise<InspectionRecord> {
+    const res = await fetch(`${API_BASE_URL}/authority/inspections`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to create inspection: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async updateInspection(id: number, payload: InspectionUpdateRequest): Promise<InspectionRecord> {
+    const res = await fetch(`${API_BASE_URL}/authority/inspections/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to update inspection: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
+
+  async getInspectionTrends(signal?: AbortSignal): Promise<InspectionTrendsResponse> {
+    const res = await fetch(`${API_BASE_URL}/authority/inspections/trends/summary`, { signal });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatApiError(err, `Failed to fetch inspection trends: ${res.statusText} (${res.status})`));
+    }
+    return await res.json();
+  },
 };
 
 export interface HistoricalScenario {
@@ -1148,3 +1200,168 @@ export async function fetchWaterbodyStats(): Promise<WaterbodyStatsResponse | nu
 
 
 
+
+// ==========================================
+// Authentication, Administration & Reporting Services
+// ==========================================
+
+import type {
+  UserResponse,
+  LoginResponse,
+  DistrictSummaryResponse,
+  TelemetryProvidersResponse,
+  AdminDiagnosticsResponse,
+  LogEntry,
+} from '../types';
+
+export async function loginUser(username: string, password: string): Promise<LoginResponse> {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Authentication failed' }));
+    throw new Error(err.detail || 'Login failed');
+  }
+  return await res.json();
+}
+
+export async function fetchCurrentUser(token: string): Promise<UserResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function logoutUser(): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+  } catch {
+    // Session cleared on client
+  }
+}
+
+export function getExportWaterBodiesUrl(): string {
+  return `${API_BASE_URL}/data/export/water-bodies`;
+}
+
+export function getExportInspectionsUrl(): string {
+  return `${API_BASE_URL}/data/export/inspections`;
+}
+
+export function getDatabaseBackupUrl(): string {
+  return `${API_BASE_URL}/data/backup`;
+}
+
+export async function importWaterBodiesCsv(csvText: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/data/import/water-bodies`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: csvText,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Import failed' }));
+    throw new Error(err.detail || 'CSV import failed');
+  }
+  return await res.json();
+}
+
+export function getHazardReportHtmlUrl(waterBodyId: number): string {
+  return `${API_BASE_URL}/reports/hazard-assessment/${waterBodyId}`;
+}
+
+export async function fetchHazardReportJson(waterBodyId: number): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/hazard-assessment/${waterBodyId}/json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchDistrictSummary(): Promise<DistrictSummaryResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/district-summary`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAdminDiagnostics(): Promise<AdminDiagnosticsResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/diagnostics`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAdminUsers(role?: string): Promise<UserResponse[]> {
+  try {
+    const url = role ? `${API_BASE_URL}/admin/users?role=${role}` : `${API_BASE_URL}/admin/users`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function updateAdminUserStatus(
+  userId: number,
+  isActive?: boolean,
+  role?: string
+): Promise<UserResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: isActive, role }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAdminLogs(limit: number = 50): Promise<LogEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/logs?limit=${limit}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.logs || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function validateAlertChannels(): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/alerts/validate-channels`, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchTelemetryProvidersStatus(): Promise<TelemetryProvidersResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/telemetry/providers/status`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
+}

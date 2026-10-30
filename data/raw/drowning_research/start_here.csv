@@ -1,0 +1,9 @@
+Item,Description
+Dataset,Kerala Drowning Research Dataset — Starter Pack
+Scope,All 14 Kerala districts; target years 2018–2025
+Status,Starter research dataset. It is NOT a complete incident-level dataset.
+Important,Blank values mean unknown/not yet sourced. They do NOT mean zero.
+Incident records,"No incident-level records, coordinates or timestamps have been fabricated."
+ML warning,Do not train an incident classifier from blank templates or aggregated annual totals.
+Next step,"Request anonymised incident-level records from Kerala Police, Fire & Rescue Services or SDMA, then match to hydrology."
+Privacy,"Do not collect names, phone numbers or other personal identifiers."

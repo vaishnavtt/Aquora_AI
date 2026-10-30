@@ -1,0 +1,182 @@
+{
+  "dataset_name": "Kerala Drowning Research Dataset \u2014 Starter Pack",
+  "version": "1.1.0",
+  "created_date": "2026-10-30",
+  "geographic_coverage": {
+    "region": "Kerala, India",
+    "district_count": 14,
+    "districts": [
+      "Alappuzha",
+      "Ernakulam",
+      "Idukki",
+      "Kannur",
+      "Kasaragod",
+      "Kollam",
+      "Kottayam",
+      "Kozhikode",
+      "Malappuram",
+      "Palakkad",
+      "Pathanamthitta",
+      "Thiruvananthapuram",
+      "Thrissur",
+      "Wayanad"
+    ]
+  },
+  "intended_period": {
+    "start_year": 2018,
+    "end_year": 2025,
+    "target_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
+  },
+  "original_sources": [
+    {
+      "source_id": "S1",
+      "name": "NCRB Accidental Deaths & Suicides in India (ADSI) 2018",
+      "url": "https://www.ncrb.mha.gov.in/accidental-deaths-suicides-in-india-table-content.html?year=2018",
+      "description": "Aggregated official state and district statistical tables on accidental deaths including drowning."
+    },
+    {
+      "source_id": "S2",
+      "name": "NCRB ADSI 2019 (Open Government Data)",
+      "url": "https://kerala.data.gov.in/catalog/accidental-deaths-suicides-india-adsi-2019",
+      "description": "Official annual accidental death statistics cataloged on Kerala Open Data Portal."
+    },
+    {
+      "source_id": "S3",
+      "name": "NCRB ADSI 2020 (Open Government Data)",
+      "url": "https://kerala.data.gov.in/catalog/accidental-deaths-suicides-india-adsi-2020",
+      "description": "Official annual accidental death statistics cataloged on Kerala Open Data Portal."
+    },
+    {
+      "source_id": "S4",
+      "name": "NCRB ADSI 2023 (Open Government Data)",
+      "url": "https://www.data.gov.in/catalog/accidental-deaths-suicides-india-adsi-2023",
+      "description": "Downloadable annual statistical tables for drowning and other accidental mortalities."
+    },
+    {
+      "source_id": "S5",
+      "name": "NCRB ADSI 2024 Catalog",
+      "url": "https://data.gov.in/ministrydepartment/National%20Crime%20Records%20Bureau%20%28NCRB%29",
+      "description": "Latest government open data catalog index for accidental deaths."
+    },
+    {
+      "source_id": "S6",
+      "name": "Kerala State Data Portal (DataHub)",
+      "url": "https://datahub.kerala.gov.in/datasets",
+      "description": "Official Kerala state departmental and municipal open datasets."
+    },
+    {
+      "source_id": "S7",
+      "name": "Kerala Online Data Repository (DES)",
+      "url": "https://odr.ecostat.kerala.gov.in/",
+      "description": "Department of Economics & Statistics (DES) official statistical publications."
+    },
+    {
+      "source_id": "S8",
+      "name": "Ministry of Health & Family Welfare (MoHFW/DGHS)",
+      "url": "https://dghs.mohfw.gov.in/uploads/assets/TAaOO7nsx9I0v978vY8cWde6cO0NJBCWEE9s5DcD.pdf",
+      "description": "National Strategic Framework for Drowning Prevention; national 2016\u20132022 totals and 2022 state-wise mortality chart (Kerala: 1,419 deaths)."
+    },
+    {
+      "source_id": "S9",
+      "name": "National Water Data Portal (NWIC)",
+      "url": "https://nwdp.nwic.gov.in/",
+      "description": "Hydrological observations (river stage, discharge, rainfall) for spatial-temporal pairing."
+    }
+  ],
+  "dataset_limitations": {
+    "scientific_integrity_status": "Starter research pack and empty schema templates. NOT a complete incident-level training dataset.",
+    "blank_value_interpretation": "CRITICAL: Blank values in templates denote unknown / unpopulated / not-yet-sourced entries. They MUST NEVER be interpreted, parsed, or imputed as zero.",
+    "ml_training_readiness": "NOT READY for supervised machine-learning incident classification or mortality regression. Training on blank templates or annual aggregate totals is mathematically invalid and produces spurious models.",
+    "synthetic_data_prohibition": "No incident records, GPS coordinates, victim profiles, or timestamps have been fabricated or synthesized.",
+    "privacy_protection": "Schema excludes personal names, phone numbers, addresses, and individual identifiers in compliance with ethical research guidelines.",
+    "macro_statistics_disclaimer": "NCRB ADSI statistics (2018-2024) are annual state-level aggregates. They do NOT contain micro-level incident coordinates, exact timestamps, or victim identifiers. They MUST NOT be used to train incident-level predictive machine-learning models."
+  },
+  "file_descriptions": {
+    "start_here.csv": {
+      "category": "DOCUMENTATION",
+      "rows": 8,
+      "columns": 2,
+      "description": "Starter pack overview, scope, research principles, and ethical warnings against training on blank templates."
+    },
+    "district_year_template.csv": {
+      "category": "RESEARCH_TEMPLATE",
+      "rows": 112,
+      "columns": 9,
+      "description": "Structured template covering all 14 Kerala districts across 8 years (2018\u20132025). Metrics are currently blank with status NOT_YET_SOURCED, awaiting extraction from official ADSI tables."
+    },
+    "incident_registry.csv": {
+      "category": "RESEARCH_TEMPLATE",
+      "rows": 0,
+      "columns": 26,
+      "description": "Empty schema specification for future geolocated micro-incident recording (date, time, exact coordinates, waterbody, outcome, weather/hydrology coupling, verification status)."
+    },
+    "hydrology_observations.csv": {
+      "category": "RESEARCH_TEMPLATE",
+      "rows": 0,
+      "columns": 18,
+      "description": "Empty schema specification for recording high-frequency in-situ hydrological telemetry (stage, rainfall, discharge) paired with verified incident timestamps."
+    },
+    "waterbody_inventory.csv": {
+      "category": "RESEARCH_TEMPLATE",
+      "rows": 0,
+      "columns": 17,
+      "description": "Empty schema specification for cataloging site-level physical characteristics (bathymetry, depth, flow velocity) and safety infrastructure (barriers, warning signs, lifebuoys)."
+    },
+    "sourced_context.csv": {
+      "category": "SOURCED_HISTORICAL_STATISTICS",
+      "rows": 6,
+      "columns": 5,
+      "description": "Verified official historical statistics from MoHFW/DGHS citing NCRB: National annual drowning deaths (2018\u20132022: 30,178 to 38,503/year) and Kerala state total for 2022 (1,419 deaths)."
+    },
+    "source_register.csv": {
+      "category": "SOURCED_METADATA",
+      "rows": 9,
+      "columns": 4,
+      "description": "Authoritative register of 9 primary data sources (S1 to S9) with verified government URLs and recommended research applications."
+    },
+    "ncrb_statistics/Kerala_ADSI_Drowning_Statistics_2018_2024.csv": {
+      "category": "SOURCED_HISTORICAL_STATISTICS",
+      "rows": 8,
+      "columns": 11,
+      "description": "Annual Kerala state drowning totals (2018-2024) from official NCRB ADSI publications (Table 1.9 for 2018-2019, Table 1.10 for 2020-2024). Preserves cases, injuries, deaths, and male/female/transgender breakdowns."
+    },
+    "ncrb_statistics/Kerala_ADSI_Drowning_Category_Detail_2018_2024.csv": {
+      "category": "SOURCED_HISTORICAL_STATISTICS",
+      "rows": 29,
+      "columns": 18,
+      "description": "Disaggregated accidental drowning categories across 7 years (Total, Boat Capsize, Accidental Falls into Waterbody, Other Cases) with full gender distribution for injuries and fatalities, NCRB case codes (10008-10011), and source tables."
+    },
+    "ncrb_statistics/Kerala_ADSI_Category_Validation_2018_2024.csv": {
+      "category": "DATASET_VALIDATION",
+      "rows": 22,
+      "columns": 6,
+      "description": "Internal mathematical verification records confirming that reported Total identically matches the sum of sub-categories (Boat Capsize + Accidental Falls + Other Cases) across cases, injuries, and deaths with 0 difference."
+    },
+    "ncrb_statistics/Kerala_ADSI_Sources_and_Notes_2018_2024.csv": {
+      "category": "SOURCED_METADATA",
+      "rows": 8,
+      "columns": 6,
+      "description": "Official publication references, table numbers, source files, and repository provenance notes for each annual extraction (2018-2024)."
+    },
+    "ncrb_statistics/Kerala_ADSI_Drowning_Statistics_2018_2024.xlsx": {
+      "category": "MULTI_SHEET_SOURCE_WORKBOOK",
+      "sheets": [
+        "Kerala_Annual_Summary",
+        "Drowning_Category_Detail",
+        "Category_Validation",
+        "Sources_and_Notes"
+      ],
+      "description": "Primary master multi-tab spreadsheet preserving complete NCRB accidental death extracts for Kerala."
+    }
+  },
+  "last_updated": "2026-10-30"
+}

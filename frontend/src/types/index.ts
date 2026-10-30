@@ -387,6 +387,8 @@ export interface LayerAEnvironmentalHazard {
   water_level_m?: number | null;
   water_level_delta_1h_m?: number | null;
   water_level_delta_3h_m?: number | null;
+  forecasted_water_level_change_1h_m?: number | null;
+  forecast_source?: string | null;
   rainfall_1h_mm?: number | null;
   rainfall_24h_mm?: number | null;
   estimated_discharge_cms?: number | null;
@@ -403,6 +405,18 @@ export interface LayerBContextualRisk {
   access_characteristics: string;
   bathymetry_hazard_notes: string;
   historical_mortality_context: string;
+  has_barriers?: boolean;
+  has_warning_signs?: boolean;
+  has_rescue_equipment?: boolean;
+  safety_infrastructure_status?: string;
+  site_vulnerability_status?: string;
+}
+
+export interface HistoricalAssessmentTrendPoint {
+  timestamp: string;
+  hour_offset: number;
+  risk_score: number;
+  risk_category: string;
 }
 
 export interface DrowningRiskAssessment {
@@ -429,6 +443,10 @@ export interface DrowningRiskAssessment {
   nearest_telemetry_station?: string | null;
   monitoring_station_distance_km?: number | null;
   missing_variables: string[];
+  uncertainty_level?: string;
+  uncertainty_explanation?: string;
+  coordinate_validity?: string;
+  historical_trend?: HistoricalAssessmentTrendPoint[];
 }
 
 export interface WhatIfSimulationRequest {
@@ -715,5 +733,191 @@ export interface WaterbodyStatsResponse {
   last_ingestion_date?: string | null;
 }
 
+export type InspectionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface InspectionRecord {
+  id: number;
+  water_body_id: number;
+  water_body_name: string;
+  water_body_type: string;
+  district: string;
+  priority_tier: string;
+  priority_rank_score: number;
+  status: InspectionStatus;
+  inspector_name?: string | null;
+  scheduled_date?: string | null;
+  completed_date?: string | null;
+  environmental_hazard_score?: number | null;
+  composite_risk_score?: number | null;
+  contributing_factors: string[];
+  suggested_focus: string[];
+  safety_measures_verified: string[];
+  findings_notes?: string | null;
+  action_required: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface InspectionCreateRequest {
+  water_body_id: number;
+  water_body_name: string;
+  water_body_type?: string;
+  district?: string;
+  priority_tier?: string;
+  priority_rank_score?: number;
+  inspector_name?: string;
+  scheduled_date?: string;
+  environmental_hazard_score?: number;
+  composite_risk_score?: number;
+  contributing_factors?: string[];
+  suggested_focus?: string[];
+  findings_notes?: string;
+  action_required?: boolean;
+}
+
+export interface InspectionUpdateRequest {
+  status?: InspectionStatus;
+  inspector_name?: string;
+  completed_date?: string;
+  safety_measures_verified?: string[];
+  findings_notes?: string;
+  action_required?: boolean;
+}
+
+export interface InspectionListResponse {
+  inspections: InspectionRecord[];
+  total_count: number;
+  scheduled_count: number;
+  in_progress_count: number;
+  completed_count: number;
+  cancelled_count: number;
+}
+
+export interface InspectionTrendItem {
+  period: string;
+  completed_inspections: number;
+  actions_mandated: number;
+  average_hazard_score: number;
+}
+
+export interface InspectionTrendsResponse {
+  has_sufficient_history: boolean;
+  inspections_count: number;
+  min_required_records: number;
+  explanation: string;
+  trends: InspectionTrendItem[];
+}
 
 
+
+
+
+// ==========================================
+// Authentication, Administration & Reporting Types
+// ==========================================
+
+export type UserRole = 'ADMIN' | 'OFFICER' | 'INSPECTOR' | 'VIEWER';
+
+export interface UserResponse {
+  id: number;
+  email: string;
+  username: string;
+  full_name: string;
+  role: UserRole;
+  organization?: string | null;
+  is_active: boolean;
+  created_at?: string | null;
+  last_login?: string | null;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in_seconds: number;
+  user: UserResponse;
+}
+
+export interface DistrictStatItem {
+  district: string;
+  monitored_sites_count: number;
+  high_risk_count: number;
+  moderate_risk_count: number;
+  safe_count: number;
+  pending_inspections_count: number;
+  completed_inspections_count: number;
+  avg_risk_score: number;
+  top_risk_site?: {
+    id: number;
+    name: string;
+    risk_score: number;
+    risk_level: string;
+  } | null;
+}
+
+export interface DistrictSummaryResponse {
+  state: string;
+  total_districts: number;
+  generated_at: string;
+  districts: DistrictStatItem[];
+}
+
+export interface TelemetryProviderItem {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  base_url?: string;
+  requires_auth: boolean;
+  api_key_configured?: boolean;
+  registration_info?: string;
+  historical_fallback_status?: string;
+  historical_coverage?: string;
+  is_live: boolean;
+}
+
+export interface TelemetryProvidersResponse {
+  timestamp: string;
+  providers: TelemetryProviderItem[];
+}
+
+export interface AdminDiagnosticsResponse {
+  system_status: string;
+  timestamp: string;
+  version: string;
+  runtime: {
+    python_version: string;
+    platform: string;
+    uptime_seconds: number;
+    uptime_formatted: string;
+  };
+  database: {
+    type: string;
+    file_path: string;
+    size_bytes: number;
+    size_formatted: string;
+    table_record_counts: Record<string, number>;
+  };
+  machine_learning: {
+    forecaster_stations: string[];
+    hazard_classifier_trained: boolean;
+    dataset_audit_count: number;
+  };
+  background_monitoring: {
+    scheduler_active: boolean;
+    polling_interval_seconds: number;
+    safe_simulation_mode: boolean;
+  };
+  alert_dispatch_mode: {
+    test_mode_enforced: boolean;
+    webhook_configured: boolean;
+    smtp_configured: boolean;
+    sms_configured: boolean;
+  };
+}
+
+export interface LogEntry {
+  timestamp: string;
+  level: string;
+  logger: string;
+  message: string;
+}

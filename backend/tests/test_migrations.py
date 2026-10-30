@@ -34,6 +34,10 @@ from app.models.water_body import WaterBodyModel
 from app.models.alert import AlertModel
 from app.models.alert_delivery import AlertDeliveryModel
 
+BASELINE_REVISION = "dfd0da3e179f"
+HEAD_REVISION = "c527260f050e"
+
+
 
 @pytest.fixture
 def temp_db_env():
@@ -84,6 +88,8 @@ def test_fresh_database_migration(temp_db_env):
     assert "water_bodies" in table_names
     assert "alerts" in table_names
     assert "alert_deliveries" in table_names
+    assert "inspections" in table_names
+    assert "users" in table_names
     assert "alembic_version" in table_names
 
     # Check indexes on water_bodies
@@ -98,7 +104,7 @@ def test_fresh_database_migration(temp_db_env):
     # 3. Check version is head
     with engine.connect() as conn:
         rev = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert rev == "dfd0da3e179f"
+        assert rev == HEAD_REVISION
 
     # 4. Verify application can use the migrated database with SQLAlchemy models
     Session = sessionmaker(bind=engine)
@@ -270,7 +276,7 @@ def test_existing_legacy_database_adoption_and_data_preservation(temp_db_env):
     engine = create_engine(db_url)
     with engine.connect() as conn:
         rev = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert rev == "dfd0da3e179f"
+        assert rev == HEAD_REVISION
 
         # Water bodies preserved
         wb_rows = conn.execute(text("SELECT id, name, risk_score, flow_rate_cms FROM water_bodies ORDER BY id;")).fetchall()
@@ -341,7 +347,7 @@ def test_repeated_upgrade_is_idempotent_and_safe(temp_db_env):
         count_after = conn.execute(text("SELECT COUNT(*) FROM water_bodies;")).scalar()
         assert count_after == count_before
         rev = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert rev == "dfd0da3e179f"
+        assert rev == HEAD_REVISION
 
     engine.dispose()
 
@@ -364,7 +370,13 @@ def test_downgrade_and_rollback_on_disposable_database(temp_db_env):
     engine = create_engine(db_url)
     with engine.connect() as conn:
         rev_head = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert rev_head == "dfd0da3e179f"
+        assert rev_head == HEAD_REVISION
+
+    # Stepwise downgrade to baseline
+    command.downgrade(cfg, BASELINE_REVISION)
+    with engine.connect() as conn:
+        rev_mid = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
+        assert rev_mid == BASELINE_REVISION
 
     # Downgrade to base
     command.downgrade(cfg, "base")
@@ -378,7 +390,7 @@ def test_downgrade_and_rollback_on_disposable_database(temp_db_env):
     command.upgrade(cfg, "head")
     with engine.connect() as conn:
         rev_reapplied = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert rev_reapplied == "dfd0da3e179f"
+        assert rev_reapplied == HEAD_REVISION
 
     engine.dispose()
 
@@ -440,7 +452,7 @@ def test_migration_failure_does_not_silently_mark_success(temp_db_env):
     engine = create_engine(db_url)
     with engine.connect() as conn:
         current_rev = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert current_rev == "dfd0da3e179f"
+        assert current_rev == HEAD_REVISION
 
         # Attempt to execute an invalid migration operation directly inside a failed transaction
         with pytest.raises(Exception):
@@ -469,7 +481,7 @@ def test_subsequent_schema_migration_lifecycle(temp_db_env):
     engine = create_engine(db_url)
     with engine.connect() as conn:
         rev_before = conn.execute(text("SELECT version_num FROM alembic_version;")).scalar()
-        assert rev_before == "dfd0da3e179f"
+        assert rev_before == HEAD_REVISION
 
     # Apply a subsequent forward migration step inside a transaction
     with engine.begin() as conn:

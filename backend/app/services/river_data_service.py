@@ -699,8 +699,8 @@ class RiverDataService:
         for _, row in sample_df.iterrows():
             wl_t = float(row["wl_t"])
             actual_t1 = float(row["target_wl_1h"])
-            feat_values = row[forecaster.feature_names].values.reshape(1, -1)
-            predicted_delta = float(forecaster.model.predict(feat_values)[0])
+            feat_df = row[forecaster.feature_names].to_frame().T
+            predicted_delta = float(forecaster.model.predict(feat_df)[0])
             forecasted_t1 = round(wl_t + predicted_delta, 4)
 
             err_model = round(abs(forecasted_t1 - actual_t1), 4)

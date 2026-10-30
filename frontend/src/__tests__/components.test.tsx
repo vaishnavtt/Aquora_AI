@@ -10,11 +10,26 @@ import { DEMO_WATER_BODIES } from '../services/api';
 // @ts-ignore
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+// Mock recharts components for fast synchronous test rendering
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
+  ComposedChart: ({ children }: any) => <div data-testid="composed-chart">{children}</div>,
+  Area: () => null,
+  XAxis: () => null,
+  YAxis: () => null,
+  Tooltip: () => null,
+  CartesianGrid: () => null,
+  ReferenceLine: () => null,
+}));
+
 describe('AQUORA AI UI Component Integration Suite', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
 
   beforeEach(() => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.reject(new Error('Network error (Mocked offline fallback)'))
+    );
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);

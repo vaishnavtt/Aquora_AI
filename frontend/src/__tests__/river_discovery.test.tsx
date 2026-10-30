@@ -80,6 +80,9 @@ describe('AQUORA AI - Location-Aware River Discovery & Classification Suite', ()
   let root: Root | null = null;
 
   beforeEach(() => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.reject(new Error('Network error (Mocked offline fallback)'))
+    );
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
