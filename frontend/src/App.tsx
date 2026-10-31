@@ -3,6 +3,7 @@ import { OpsHeader } from './components/ops/Header';
 import { OpsSidebar, OpsNavSection } from './components/ops/Sidebar';
 import { KPICards } from './components/ops/KPICards';
 import { StatusTicker } from './components/ops/StatusTicker';
+import { CWCLiveTelemetrySection } from './components/ops/CWCLiveTelemetrySection';
 import { ExposureRiskPanel } from './components/ops/ExposureRiskPanel';
 import { OperationsMap } from './components/ops/OperationsMap';
 import { OperationalWhatIfPanel } from './components/ops/OperationalWhatIfPanel';
@@ -336,6 +337,11 @@ export function App() {
               {/* Situation Card */}
               <KPICards
                 waterBodies={filteredStations}
+                onSelectStationByName={handleSelectStationByName}
+              />
+
+              {/* Central Water Commission (CWC) Live Telemetry Section */}
+              <CWCLiveTelemetrySection
                 onSelectStationByName={handleSelectStationByName}
               />
 

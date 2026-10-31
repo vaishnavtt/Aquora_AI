@@ -473,12 +473,19 @@ class HistoricalRiverDataProvider(RiverDataProvider):
         )
 
 
+try:
+    from app.services.cwc_live_provider import cwc_live_provider, resolve_cwc_station
+except ImportError:
+    from backend.app.services.cwc_live_provider import cwc_live_provider, resolve_cwc_station
+
+
 class RiverDataService:
     """Orchestrates live telemetry checking with graceful fallback to historical context."""
 
     def __init__(self):
         self.live_nwic_provider = LiveNWICProvider()
         self.live_usgs_provider = LiveUSGSProvider()
+        self.cwc_live_provider = cwc_live_provider
         self.historical_provider = HistoricalRiverDataProvider()
         self._cached_features_dfs: Dict[str, Any] = {}
 
@@ -511,6 +518,11 @@ class RiverDataService:
         # Route USGS stations / California live streams
         if "USGS" in clean or "STANFORD" in clean or "FRANCISQUITO" in clean or any(ch.isdigit() for ch in clean):
             return self.live_usgs_provider.fetch_station_data(station_query)
+
+        # Route Central Water Commission (CWC) Live Telemetry stations
+        cwc_code = resolve_cwc_station(station_query)
+        if cwc_code and mode_clean != "historical":
+            return self.cwc_live_provider.fetch_station_data(station_query)
 
         # Route Kerala SW stations
         kerala_st = resolve_kerala_station(station_query)

@@ -76,6 +76,8 @@ try:
     from app.schemas.weather import LiveWeatherResponse
     from app.services.weather_service import weather_service, get_weather_service
     from app.services.river_data_service import river_data_service
+    from app.schemas.cwc_telemetry import CWCLiveStationReading, CWCLiveTelemetryResponse
+    from app.services.cwc_live_provider import cwc_live_provider, CWC_KERALA_STATIONS_CONFIG
     from app.services.alert_service import alert_service
     from app.services.hazard_monitoring_service import hazard_monitoring_service
     from app.schemas.inspection import (
@@ -155,6 +157,8 @@ except ImportError:
     from backend.app.schemas.weather import LiveWeatherResponse
     from backend.app.services.weather_service import weather_service, get_weather_service
     from backend.app.services.river_data_service import river_data_service
+    from backend.app.schemas.cwc_telemetry import CWCLiveStationReading, CWCLiveTelemetryResponse
+    from backend.app.services.cwc_live_provider import cwc_live_provider, CWC_KERALA_STATIONS_CONFIG
     from backend.app.services.alert_service import alert_service
     from backend.app.services.hazard_monitoring_service import hazard_monitoring_service
     from backend.app.schemas.inspection import (
@@ -924,6 +928,42 @@ def get_river_data(
     return river_data_service.get_river_data(station_name, mode=mode)
 
 
+@router.get(
+    "/cwc/telemetry",
+    response_model=CWCLiveTelemetryResponse,
+    tags=["CWC Live Telemetry"],
+    summary="CWC Live Kerala River Telemetry",
+    description="Retrieves authentic, real-time river water levels across verified Kerala stations from CWC Flood Forecast System."
+)
+async def get_cwc_live_telemetry(
+    force_refresh: bool = Query(False, description="Force refresh from upstream CWC API")
+):
+    """
+    Returns authentic live telemetry for verified Kerala river stations monitored by the Central Water Commission (CWC).
+    """
+    return await cwc_live_provider.fetch_all_kerala_stations_async(force_refresh=force_refresh)
+
+
+@router.get(
+    "/cwc/telemetry/{station_code}",
+    response_model=CWCLiveStationReading,
+    tags=["CWC Live Telemetry"],
+    summary="CWC Station Live Reading",
+    description="Retrieves the latest verified water level for an individual CWC station code or name."
+)
+async def get_cwc_station_reading(
+    station_code: str,
+    force_refresh: bool = Query(False, description="Force refresh from upstream CWC API")
+):
+    """
+    Returns live observation for a specific CWC station code (e.g. 012-SWRDKOCHI, Neeleeswaram, Arangali).
+    """
+    try:
+        return await cwc_live_provider.fetch_station_reading_async(station_code, force_refresh=force_refresh)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 # ==========================================
 # Automated Hazard Monitoring Endpoints
 # ==========================================
@@ -1043,6 +1083,17 @@ def get_telemetry_providers_status():
                 "default_site": settings.USGS_DEFAULT_SITE,
                 "requires_auth": False,
                 "is_live": True,
+            },
+            {
+                "id": "cwc",
+                "name": "Central Water Commission (CWC) Flood Forecasting System",
+                "type": "Live River Telemetry (Real-time GSM/Sensor Feed)",
+                "status": "LIVE_ACTIVE",
+                "base_url": settings.CWC_API_BASE_URL,
+                "requires_auth": False,
+                "is_live": True,
+                "stations_monitored": len(CWC_KERALA_STATIONS_CONFIG),
+                "coverage": "Real-time river stage & reservoir telemetry across Periyar, Chalakkudy, Bharathappuzha, Chaliyar, Kuttiyadi, and Valapattanam basins",
             },
             {
                 "id": "nwic",

@@ -921,3 +921,41 @@ export interface LogEntry {
   logger: string;
   message: string;
 }
+
+
+export interface CWCLiveStationReading {
+  station_code: string;
+  station_name: string;
+  river: string;
+  district: string;
+  latitude: number;
+  longitude: number;
+  current_water_level_m: number | null;
+  observation_time_iso: string | null;
+  observation_time_ist: string | null;
+  retrieval_timestamp: string;
+  data_source: string;
+  data_freshness: 'LIVE' | 'RECENT' | 'STALE' | 'UNAVAILABLE' | string;
+  status: 'LIVE' | 'RECENT' | 'STALE' | 'UNAVAILABLE' | string;
+  is_live: boolean;
+  is_cached: boolean;
+  unit: string;
+  warning_threshold_m: number | null;
+  danger_threshold_m: number | null;
+  highest_flood_level_m: number | null;
+  highest_flood_date: string | null;
+  level_status: 'NORMAL' | 'WARNING' | 'DANGER' | 'UNKNOWN' | string;
+  notice?: string | null;
+}
+
+export interface CWCLiveTelemetryResponse {
+  timestamp: string;
+  provider: string;
+  provider_status: 'CONNECTED' | 'DEGRADED' | 'UNAVAILABLE' | string;
+  api_endpoint: string;
+  total_stations: number;
+  live_stations_count: number;
+  stations: CWCLiveStationReading[];
+  notice: string;
+  disclaimer: string;
+}

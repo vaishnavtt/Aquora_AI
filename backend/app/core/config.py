@@ -62,4 +62,10 @@ class Settings(BaseModel):
     USGS_API_BASE_URL: str = os.getenv("USGS_API_BASE_URL", "https://waterservices.usgs.gov/nwis/iv/")
     USGS_DEFAULT_SITE: str = os.getenv("USGS_DEFAULT_SITE", "11164500")
 
+    # Central Water Commission (CWC) Live Telemetry Configuration
+    CWC_API_BASE_URL: str = os.getenv("CWC_API_BASE_URL", "https://ffs.india-water.gov.in")
+    CWC_TIMEOUT_SECONDS: float = float(os.getenv("CWC_TIMEOUT_SECONDS", "8.0"))
+    CWC_CACHE_TTL_SECONDS: float = float(os.getenv("CWC_CACHE_TTL_SECONDS", "300.0"))
+    CWC_TELEMETRY_ENABLED: bool = os.getenv("CWC_TELEMETRY_ENABLED", "true").lower() in ("true", "1", "yes")
+
 settings = Settings()
