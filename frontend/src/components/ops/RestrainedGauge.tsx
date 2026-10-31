@@ -35,9 +35,9 @@ export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
   };
 
   const arcPath = (startAngle: number, endAngle: number) => {
-    const start = polarToCartesian(cx, cy, radius, endAngle);
-    const end = polarToCartesian(cx, cy, radius, startAngle);
-    const largeArc = endAngle - startAngle <= 180 ? '0' : '1';
+    const start = polarToCartesian(cx, cy, radius, startAngle);
+    const end = polarToCartesian(cx, cy, radius, endAngle);
+    const largeArc = endAngle - startAngle > 180 ? '1' : '0';
     return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`;
   };
 
@@ -97,7 +97,16 @@ export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
             strokeLinecap="round"
           />
 
-          {/* Colored risk bands with rounded endpoints */}
+          {/* Rounded start cap for lowest band */}
+          <circle
+            cx={cx - radius}
+            cy={cy}
+            r={strokeWidth / 2}
+            fill={bands[0].color}
+            opacity={hasScore ? 0.95 : 0.3}
+          />
+
+          {/* Colored risk bands */}
           {bands.map((band) => (
             <path
               key={band.from}
@@ -109,6 +118,15 @@ export const RestrainedGauge: React.FC<RestrainedGaugeProps> = ({
               opacity={hasScore ? 0.95 : 0.3}
             />
           ))}
+
+          {/* Rounded end cap for highest band */}
+          <circle
+            cx={cx + radius}
+            cy={cy}
+            r={strokeWidth / 2}
+            fill={bands[bands.length - 1].color}
+            opacity={hasScore ? 0.95 : 0.3}
+          />
 
           {/* Precision instrument needle (visible when scored) */}
           {hasScore && (
